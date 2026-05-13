@@ -1,8 +1,9 @@
 import { HomeFeed } from '@/components/home/feed';
 
-export default function HomePage() {
+export default async function HomePage() {
+  await new Promise((r) => setTimeout(r, 2000));
   return (
-    <main className="min-h-screen bg-background">
+    <main className="bg-background min-h-screen">
       <HomeFeed />
     </main>
   );
