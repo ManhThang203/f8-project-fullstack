@@ -6,6 +6,8 @@ dist
 **/dist
 .turbo
 **/.turbo
+*.tsbuildinfo
+**/*.tsbuildinfo
 .env
 .env.local
 .git

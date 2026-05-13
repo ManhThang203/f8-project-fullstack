@@ -36,10 +36,15 @@ RUN pnpm build
 FROM node:22-alpine AS runner
 ENV NODE_ENV=production
 RUN apk add --no-cache ffmpeg tini
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
 WORKDIR /app
 
 COPY --from=builder /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
+
 COPY --from=builder /app/apps/server/dist apps/server/dist
+COPY --from=builder /app/apps/server/src apps/server/src
 COPY --from=builder /app/apps/server/package.json apps/server/package.json
 COPY --from=builder /app/apps/web/.next apps/web/.next
 COPY --from=builder /app/apps/web/public apps/web/public
@@ -47,9 +52,12 @@ COPY --from=builder /app/apps/web/package.json apps/web/package.json
 COPY --from=builder /app/apps/web/next.config.ts apps/web/next.config.ts
 COPY --from=builder /app/packages packages
 COPY --from=builder /app/node_modules node_modules
+# pnpm workspace: each app resolves deps via its own node_modules symlinks into .pnpm (root alone is not enough).
+COPY --from=builder /app/apps/server/node_modules apps/server/node_modules
+COPY --from=builder /app/apps/web/node_modules apps/web/node_modules
 
 EXPOSE 3000 4000
 
 # tini reaps zombie children (workers, ffmpeg subprocesses).
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["node", "apps/server/dist/index.js"]
+CMD ["pnpm", "--filter", "@threads/server", "start"]
