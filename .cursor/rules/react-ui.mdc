@@ -1,0 +1,12 @@
+# React UI Rules
+
+- Use Tailwind utility classes
+- Prefer composition over prop-heavy components
+- Extract reusable UI patterns into shared components
+- Keep components visually consistent with design system docs
+- Use clsx/cn utility for conditional classes
+- Avoid inline styles unless values are dynamic
+- Use semantic HTML when possible
+- Keep render trees shallow
+- Prefer controlled form inputs
+- Use aria attributes for accessibility

@@ -1,0 +1,9 @@
+# UI Core Rules
+
+- Use CSS variables for all colors
+- Use spacing scale only
+- Use typography tokens only
+- No transition: all
+- Minimum touch target: 44x44
+- Use skeleton loaders for initial loading
+- Use flat feed layout, avoid card shadows

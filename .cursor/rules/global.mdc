@@ -1,0 +1,86 @@
+---
+alwaysApply: true
+---
+
+# Global UI Rules
+
+Any time UI code is written or modified, follow all rules, docs, and skills below **before writing a single line**.
+
+---
+
+## 1. Authority hierarchy
+
+When sources conflict, priority is:
+1. `.cursor/rules/` (always-apply rules — non-negotiable)
+2. `docs/ui/` (design system specification)
+3. `.cursor/skills/` (task-specific checklists)
+
+---
+
+## 2. Always-applied rules
+
+Read and enforce **all four** rules files on every UI task:
+
+| File | Covers |
+|---|---|
+| `.cursor/rules/ui-core.mdc` | CSS variables, spacing scale, touch targets, skeleton loaders |
+| `.cursor/rules/react-ui.mdc` | Tailwind usage, component composition, `cn` utility, controlled inputs |
+| `.cursor/rules/accessibility.mdc` | Focus styles, ARIA labels, WCAG AA, keyboard nav, reduced motion |
+| `.cursor/rules/karpathy-guidelines.mdc` | Surgical changes, no speculative features, minimal footprint |
+
+---
+
+## 3. Design system docs — read before implementing
+
+Read the relevant `docs/ui/` file **before** touching that concern.
+
+| When you are about to… | Read first |
+|---|---|
+| Pick any color | `docs/ui/colors.md` — CSS vars only, never hex |
+| Set any size / gap / padding | `docs/ui/spacing.md` — 4px scale only |
+| Set any font size / weight | `docs/ui/typography.md` — Geist, max 2 weights, token names |
+| Build a page or screen | `docs/ui/layout.md` + `docs/ui/responsive.md` |
+| Add motion or transition | `docs/ui/motion.md` — functional motion only, no `transition: all` |
+| Show empty / loading / error | `docs/ui/loading.md` |
+| Add media (image, video) | `docs/ui/media.md` |
+| Show icons | `docs/ui/icons.md` — Lucide only |
+| Handle dark / light mode | `docs/ui/dark-mode.md` |
+| Add any interactive element | `docs/ui/accessibility.md` |
+| Unsure of visual direction | `docs/ui/philosophy.md` |
+
+For components already documented, read the component spec first:
+
+- `docs/ui/components/button.md`
+- `docs/ui/components/input.md`
+- `docs/ui/components/avatar.md`
+- `docs/ui/components/badge.md`
+- `docs/ui/components/modal.md`
+- `docs/ui/components/toast.md`
+- `docs/ui/components/post-card.md`
+
+---
+
+## 4. Skills — use the right checklist for each task
+
+| Task | Skill file |
+|---|---|
+| New React component | `.cursor/skills/create-component.md` |
+| Full page / screen | `.cursor/skills/create-screen.md` |
+| Form with validation | `.cursor/skills/create-form.md` |
+| Feed / list view | `.cursor/skills/create-feed.md` |
+| Modal / dialog | `.cursor/skills/create-modal.md` |
+| Loading / skeleton state | `.cursor/skills/create-loading-state.md` |
+| Reviewing existing UI | `.cursor/skills/review-ui.md` |
+
+---
+
+## 5. Absolute constraints (never skip)
+
+- **No hardcoded colors** — use `bg-*`, `text-*`, `border-*` token classes or `var(--*)` only.
+- **No arbitrary spacing** — use the 4px scale; Tailwind classes like `p-4`, `gap-3`, not `p-[13px]`.
+- **No `transition: all`** — always specify the property explicitly.
+- **No mixed icon libraries** — Lucide React only.
+- **No inline styles** unless the value is truly dynamic (e.g. computed width from JS).
+- **Dark mode is primary** — design dark first, verify light second.
+- **Touch target ≥ 44×44 px** on all interactive elements.
+- **Reuse before creating** — check `apps/web/components/shared/` and `apps/web/modules/*/components/` before writing a new component.

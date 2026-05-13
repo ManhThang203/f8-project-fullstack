@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Threads light theme — off-white surface, near-black text */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --border: 0 0% 90%;
+    --ring: 0 0% 70%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --accent: 0 0% 94%;
+    --accent-foreground: 0 0% 9%;
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 0 0% 7%;
+    --foreground: 0 0% 96%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 96%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 64%;
+    --border: 0 0% 18%;
+    --ring: 0 0% 35%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --accent: 0 0% 16%;
+    --accent-foreground: 0 0% 96%;
+  }
+
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+}

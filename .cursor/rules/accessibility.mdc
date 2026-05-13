@@ -1,0 +1,11 @@
+# Accessibility Rules
+
+- Every interactive element must have visible focus styles
+- Minimum touch target: 44x44
+- Use aria-label for icon-only buttons
+- Maintain WCAG AA contrast
+- Use keyboard accessible interactions
+- Avoid motion-heavy interactions
+- Respect prefers-reduced-motion
+- Use semantic headings in logical order
+- Use sr-only text where necessary
