@@ -1,0 +1,25 @@
+import { MetaWordmark } from '@/components/shared/meta-wordmark';
+import { ThreadsLogo } from '@/components/shared/threads-logo';
+import { cn } from '@/lib/utils';
+
+type ThreadsSplashProps = {
+  className?: string;
+};
+
+/**
+ * Threads-style splash: solid black canvas + centered logo + bottom “from Meta” strip
+ * (infinity + wordmark in one SVG via MetaWordmark).
+ */
+export function ThreadsSplash({ className }: ThreadsSplashProps) {
+  return (
+    <div className={cn('flex min-h-screen flex-col bg-black text-white', className)}>
+      <div className="flex flex-1 flex-col items-center justify-center px-6">
+        <ThreadsLogo className="motion-safe:animate-threads-pulse motion-reduce:animate-none h-24 w-24 shrink-0 text-white" />
+      </div>
+      <footer className="flex flex-col items-center gap-1 px-6 pb-8 pt-2">
+        <p className="text-xs font-normal text-muted-foreground">from</p>
+        <MetaWordmark className="h-4 w-auto max-w-40 shrink-0 text-white" />
+      </footer>
+    </div>
+  );
+}

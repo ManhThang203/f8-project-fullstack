@@ -13,9 +13,13 @@
     "migrate:dev": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
     "studio": "prisma studio",
+    "seed": "prisma db seed",
     "format": "prisma format",
     "type-check": "tsc --noEmit",
     "clean": "rimraf dist .turbo generated node_modules/.prisma"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.0.0",
