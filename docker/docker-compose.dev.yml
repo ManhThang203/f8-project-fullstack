@@ -1,0 +1,114 @@
+# Hot-reload dev stack: edit code on the host; no image rebuild for app changes.
+# Infra matches docker-compose.yml; app is one container running `pnpm dev` (Next + API via Turbo).
+#
+# From repo root:
+#   docker compose -f docker/docker-compose.dev.yml --env-file docker/.env.docker up --build
+# Or: pnpm docker:dev
+#
+# After changing pnpm-lock.yaml:  docker compose -f docker/docker-compose.dev.yml run --rm app pnpm install
+# Or remove node_modules volumes: docker compose -f docker/docker-compose.dev.yml down -v
+
+name: threads-clone-dev
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: threads-postgres-dev
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data-dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: threads-redis-dev
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data-dev:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    container_name: threads-minio-dev
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    env_file:
+      - .env.docker
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data-dev:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: threads-mailhog-dev
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dev
+    image: threads-clone:dev
+    container_name: threads-app-dev
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      NODE_ENV: development
+      # Next API routes and web proxy to Express in the same container.
+      UPSTREAM_API_URL: http://127.0.0.1:4000
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    ports:
+      - "3000:3000"
+      - "4000:4000"
+    volumes:
+      - ..:/app
+      - dev_root_node_modules:/app/node_modules
+      - dev_web_node_modules:/app/apps/web/node_modules
+      - dev_server_node_modules:/app/apps/server/node_modules
+      - dev_db_node_modules:/app/packages/db/node_modules
+      - dev_shared_node_modules:/app/packages/shared/node_modules
+      - dev_eslint_node_modules:/app/packages/eslint-config/node_modules
+      - dev_tsconfig_node_modules:/app/packages/typescript-config/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres-data-dev:
+  redis-data-dev:
+  minio-data-dev:
+  dev_root_node_modules:
+  dev_web_node_modules:
+  dev_server_node_modules:
+  dev_db_node_modules:
+  dev_shared_node_modules:
+  dev_eslint_node_modules:
+  dev_tsconfig_node_modules:

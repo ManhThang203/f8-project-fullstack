@@ -10,7 +10,7 @@ dotenv.config({ path: path.join(repoRoot, '.env.local') });
 
 const { prisma } = await import('../src/index.js');
 
-/** Stable demo user id referenced by `NEXT_PUBLIC_DEMO_USER_ID` in the web app. */
+/** Stable id referenced by `NEXT_PUBLIC_DEMO_USER_ID` for dev header (user row only; login qua Better Auth = đăng ký hoặc tạo Account). */
 const DEMO_USER_ID = 'seed_demo_user_001';
 
 async function main() {
@@ -38,7 +38,7 @@ async function main() {
         },
         {
           authorId: DEMO_USER_ID,
-          content: 'Đăng bài mới từ ô nhập bên dưới (dev: gửi header x-dev-user-id).',
+          content: 'Đăng ký tài khoản (Better Auth) hoặc dùng header dev với user seed.',
         },
       ],
     });
