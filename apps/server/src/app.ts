@@ -8,8 +8,10 @@ import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env.js';
 import { logger } from './lib/logger.js';
 import { swaggerSpec } from './lib/swagger.js';
+import { attachDevAuthContext } from './middleware/dev-auth.middleware.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
 import { healthRouter } from './modules/health/health.routes.js';
+import { postsRouter } from './modules/posts/posts.routes.js';
 
 export function buildApp(): Express {
   const app = express();
@@ -25,8 +27,10 @@ export function buildApp(): Express {
   app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
   app.get('/openapi.json', (_req, res) => res.json(swaggerSpec));
 
-  // v1 routes — modules are mounted here as they land in subsequent phases.
+  // v1 routes — optional dev session (`x-dev-user-id`) is resolved before handlers.
+  app.use('/api/v1', attachDevAuthContext);
   app.use('/api/v1/health', healthRouter);
+  app.use('/api/v1/posts', postsRouter);
 
   app.use(errorMiddleware);
   return app;

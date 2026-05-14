@@ -1,5 +1,5 @@
 {
-  "extends": "@threads/typescript-config/server.json",
+  "extends": "../../packages/typescript-config/server.json",
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",

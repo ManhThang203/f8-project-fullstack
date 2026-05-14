@@ -1,7 +1,13 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { config as loadDotenv } from 'dotenv';
 import { z } from 'zod';
 
-loadDotenv();
+/** Monorepo root (contains workspace `.env`). Turbo runs dev with `cwd` in `apps/server`, so default dotenv misses root env. */
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
+loadDotenv({ path: path.join(repoRoot, '.env') });
+loadDotenv({ path: path.join(repoRoot, '.env.local') });
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),

@@ -1,5 +1,5 @@
 {
-  "extends": "@threads/typescript-config/library.json",
+  "extends": "../typescript-config/library.json",
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "dist",
