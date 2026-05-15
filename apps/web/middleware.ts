@@ -3,6 +3,11 @@ import type { NextRequest } from 'next/server';
 
 import { hasBetterAuthSessionCookie, isAuthPage, isPathPublic, sanitizeReturnTo } from './lib/auth-guard';
 
+function withPathname(request: NextRequest, response: NextResponse) {
+  response.headers.set('x-pathname', request.nextUrl.pathname);
+  return response;
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hasSession = hasBetterAuthSessionCookie(request);
@@ -10,21 +15,21 @@ export function middleware(request: NextRequest) {
   if (hasSession && isAuthPage(pathname)) {
     const rawNext = request.nextUrl.searchParams.get('next');
     const to = sanitizeReturnTo(rawNext);
-    return NextResponse.redirect(new URL(to, request.url));
+    return withPathname(request, NextResponse.redirect(new URL(to, request.url)));
   }
 
   if (isPathPublic(pathname)) {
-    return NextResponse.next();
+    return withPathname(request, NextResponse.next());
   }
 
   if (hasSession) {
-    return NextResponse.next();
+    return withPathname(request, NextResponse.next());
   }
 
   const loginUrl = new URL('/login', request.url);
   const returnTo = pathname + request.nextUrl.search;
   loginUrl.searchParams.set('next', returnTo);
-  return NextResponse.redirect(loginUrl);
+  return withPathname(request, NextResponse.redirect(loginUrl));
 }
 
 export const config = {

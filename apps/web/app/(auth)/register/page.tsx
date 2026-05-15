@@ -9,8 +9,10 @@ export default function RegisterPage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-background px-4 py-12">
-          <p className="mx-auto max-w-md text-center text-sm text-muted-foreground">Đang tải…</p>
+        <main className="min-h-[100dvh] bg-muted/40 px-4 py-10 sm:px-6">
+          <div className="mx-auto max-w-md rounded-2xl border border-border/60 bg-card p-6 text-center shadow-md sm:p-8">
+            <p className="text-sm text-muted-foreground">Đang tải…</p>
+          </div>
         </main>
       }
     >

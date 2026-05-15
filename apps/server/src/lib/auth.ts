@@ -19,6 +19,7 @@ function slugFromEmail(email: string): string {
   return (cleaned || 'user').slice(0, 24);
 }
 
+/** Đặt username chưa ai dùng (từ `base`, thêm số ngẫu nhiên nếu trùng). Trả về 1 chuỗi username. */
 async function uniqueUsername(base: string): Promise<string> {
   const root = base.slice(0, 24);
   for (let attempt = 0; attempt < 12; attempt++) {
