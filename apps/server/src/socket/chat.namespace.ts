@@ -10,6 +10,7 @@ import { logger } from '../lib/logger.js';
 import { verifySocketToken } from '../lib/socket-token.js';
 import * as chatService from '../modules/chat/chat.service.js';
 
+// Đăng nhập vào namespace `/chat` bằng token Socket.io.
 function registerChatAuth(chatNs: Namespace) {
   chatNs.use((socket, next) => {
     const raw =
@@ -41,6 +42,7 @@ function registerChatAuth(chatNs: Namespace) {
   });
 }
 
+// Tham gia các phòng nhóm cho user.
 async function joinGroupRooms(socket: Socket, userId: string) {
   const memberships = await prisma.chatGroupMember.findMany({
     where: { userId },
@@ -50,7 +52,7 @@ async function joinGroupRooms(socket: Socket, userId: string) {
     socket.join(`group:${m.groupId}`);
   }
 }
-
+// Đăng nhập vào namespace `/chat` bằng token Socket.io.
 export function registerChatNamespace(chatNs: Namespace) {
   registerChatAuth(chatNs);
 

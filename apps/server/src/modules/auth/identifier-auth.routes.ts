@@ -20,7 +20,7 @@ export const handleSignInIdentifier: RequestHandler = async (req, res) => {
   const raw = identifier.trim();
   const key = raw.toLowerCase();
   const useEmail = key.includes('@');
-
+  // địa chỉ email hoặc tên đăng nhập
   const headers = fromNodeHeaders(req.headers);
 
   try {

@@ -105,7 +105,7 @@ export function LoginForm() {
     const res = await fetch('/api/auth/sign-in/identifier', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      credentials: 'include', // gửi kèm cookie session
       body: JSON.stringify({
         identifier: data.identifier.trim(),
         password: data.password,

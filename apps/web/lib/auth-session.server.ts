@@ -5,6 +5,9 @@ import type { ServerAuthUser } from '@/lib/auth-user.types';
 /**
  * Đọc session trên server bằng cookie trình duyệt → gọi trực tiếp Express
  * (không qua client `useSession`, tránh cookie/hydration không khớp).
+ *
+ * Nếu API không chạy hoặc `UPSTREAM_API_URL` sai, trả `null` (không throw) để
+ * layout không vỡ khi chỉ bật `next dev`.
  */
 export async function getServerSession(): Promise<{ user: ServerAuthUser } | null> {
   const jar = await cookies();
@@ -18,14 +21,20 @@ export async function getServerSession(): Promise<{ user: ServerAuthUser } | nul
   const proto = h.get('x-forwarded-proto') ?? 'http';
 
   const upstream = (process.env.UPSTREAM_API_URL ?? 'http://localhost:4000').replace(/\/$/, '');
-  const res = await fetch(`${upstream}/api/auth/get-session`, {
-    headers: {
-      cookie: cookieHeader,
-      'x-forwarded-host': host,
-      'x-forwarded-proto': proto,
-    },
-    cache: 'no-store',
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${upstream}/api/auth/get-session`, {
+      headers: {
+        cookie: cookieHeader,
+        'x-forwarded-host': host,
+        'x-forwarded-proto': proto,
+      },
+      cache: 'no-store',
+    });
+  } catch {
+    // API chưa chạy, sai UPSTREAM_API_URL, hoặc từ chối kết nối → không ném lỗi lên layout.
+    return null;
+  }
 
   if (!res.ok) return null;
 

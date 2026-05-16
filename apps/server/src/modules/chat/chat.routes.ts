@@ -46,7 +46,7 @@ router.get('/conversations', requireAuth, async (req, res, next) => {
     next(e);
   }
 });
-
+// GET — lấy lịch sử chat 1–1.
 router.get(
   '/messages/:peerUserId',
   requireAuth,
@@ -66,22 +66,17 @@ router.get(
     }
   },
 );
-
-router.post(
-  '/direct/read',
-  requireAuth,
-  validate(directReadBody),
-  async (req, res, next) => {
-    try {
-      const { peerUserId } = req.body as z.infer<typeof directReadBody>;
-      await chatService.markDirectThreadRead(req.auth!.userId, peerUserId);
-      res.json(ok({ peerUserId }));
-    } catch (e) {
-      next(e);
-    }
-  },
-);
-
+/** POST — đánh dấu “đã đọc” cuộc trò chuyện 1–1 tới thời điểm hiện tại. */
+router.post('/direct/read', requireAuth, validate(directReadBody), async (req, res, next) => {
+  try {
+    const { peerUserId } = req.body as z.infer<typeof directReadBody>;
+    await chatService.markDirectThreadRead(req.auth!.userId, peerUserId);
+    res.json(ok({ peerUserId }));
+  } catch (e) {
+    next(e);
+  }
+});
+// POST — tạo nhóm mới + đẩy creator và các member ban đầu vào `ChatGroupMember`.
 router.post('/groups', requireAuth, validate(createGroupBody), async (req, res, next) => {
   try {
     const body = req.body as z.infer<typeof createGroupBody>;
@@ -95,7 +90,7 @@ router.post('/groups', requireAuth, validate(createGroupBody), async (req, res, 
     next(e);
   }
 });
-
+// GET — lấy lịch sử chat nhóm.
 router.get(
   '/groups/:groupId/messages',
   requireAuth,
@@ -115,7 +110,7 @@ router.get(
     }
   },
 );
-
+// POST — đánh dấu “đã đọc” cuộc trò chuyện nhóm tới thời điểm hiện tại.
 router.post(
   '/groups/:groupId/read',
   requireAuth,

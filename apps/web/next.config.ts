@@ -23,9 +23,7 @@ loadRootEnvFile('.env.local', true);
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@threads/shared'],
-  experimental: {
-    typedRoutes: true,
-  },
+  typedRoutes: true,
   /** TypeScript ESM uses `.js` in import paths while sources are `.ts` — map for webpack. */
   webpack: (config) => {
     config.resolve = config.resolve ?? {};
