@@ -35,8 +35,8 @@ export class AppError extends Error {
   static notFound(message = 'Not found') {
     return new AppError({ status: 404, code: 'NOT_FOUND', message });
   }
-  static conflict(message: string) {
-    return new AppError({ status: 409, code: 'CONFLICT', message });
+  static conflict(message: string, details?: unknown) {
+    return new AppError({ status: 409, code: 'CONFLICT', message, details });
   }
   static rateLimited(message = 'Too many requests') {
     return new AppError({ status: 429, code: 'RATE_LIMITED', message });

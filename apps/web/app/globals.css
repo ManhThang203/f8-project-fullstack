@@ -17,6 +17,9 @@
     --primary-foreground: 0 0% 98%;
     --accent: 0 0% 94%;
     --accent-foreground: 0 0% 9%;
+    /* Auth marketing hero (purple tint) — dùng trang đăng nhập / đăng ký */
+    --auth-hero: 262 58% 56%;
+    --auth-hero-soft: 262 48% 94%;
     --radius: 1rem;
   }
 
@@ -33,6 +36,8 @@
     --primary-foreground: 0 0% 9%;
     --accent: 0 0% 16%;
     --accent-foreground: 0 0% 96%;
+    --auth-hero: 262 52% 68%;
+    --auth-hero-soft: 262 28% 22%;
   }
 
   * {
