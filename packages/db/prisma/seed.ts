@@ -10,8 +10,11 @@ dotenv.config({ path: path.join(repoRoot, '.env.local') });
 
 const { prisma } = await import('../src/index.js');
 
-/** Stable id referenced by `NEXT_PUBLIC_DEMO_USER_ID` for dev header (user row only; login qua Better Auth = đăng ký hoặc tạo Account). */
+/** Stable id referenced by `NEXT_PUBLIC_DEMO_USER_ID` for dev header. */
 const DEMO_USER_ID = 'seed_demo_user_001';
+
+/** Số bài gốc (parentId = null) để test cuộn feed + cursor pagination (limit mặc định 20 → ~5 trang). */
+const SEED_ROOT_POST_COUNT = 100;
 
 async function main() {
   await prisma.user.upsert({
@@ -25,24 +28,25 @@ async function main() {
     update: { name: 'Người dùng demo' },
   });
 
-  const existing = await prisma.post.count({
-    where: { authorId: DEMO_USER_ID, parentId: null, deletedAt: null },
+  // Xóa bài cũ của demo (chỉ bài gốc) để mỗi lần seed có đúng 100 bài, thứ tự createdAt ổn định.
+  const deleted = await prisma.post.deleteMany({
+    where: { authorId: DEMO_USER_ID, parentId: null },
   });
 
-  if (existing === 0) {
-    await prisma.post.createMany({
-      data: [
-        {
-          authorId: DEMO_USER_ID,
-          content: 'Chào mừng đến Threads Clone — đây là bài đăng seed đầu tiên.',
-        },
-        {
-          authorId: DEMO_USER_ID,
-          content: 'Đăng ký tài khoản (Better Auth) hoặc dùng header dev với user seed.',
-        },
-      ],
-    });
-  }
+  const now = Date.now();
+  const posts = Array.from({ length: SEED_ROOT_POST_COUNT }, (_, i) => ({
+    authorId: DEMO_USER_ID,
+    content: `Bài seed ${i + 1}/${SEED_ROOT_POST_COUNT} — test cuộn feed và phân trang (cursor).`,
+    // i = 0 mới nhất; cách nhau 1 phút để sort createdAt desc rõ ràng.
+    createdAt: new Date(now - i * 60_000),
+  }));
+
+  const created = await prisma.post.createMany({ data: posts });
+
+  // eslint-disable-next-line no-console
+  console.log(
+    `[seed] user demo ok | removed ${deleted.count} old root posts | created ${created.count} posts`,
+  );
 }
 
 main()

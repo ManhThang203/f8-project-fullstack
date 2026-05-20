@@ -62,7 +62,7 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
     // @ts-expect-error undici duplex for streaming body
     duplex: 'half',
   };
-
+  // Next ghép URL upstream
   const upstream = await fetch(url, init);
   // Helper tách `Set-Cookie` thành nhiều dòng + lọc `content-encoding` để
   // tránh `ERR_CONTENT_DECODING_FAILED` (xem `lib/proxy-to-upstream.ts`).

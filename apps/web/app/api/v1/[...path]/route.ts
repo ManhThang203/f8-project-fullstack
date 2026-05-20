@@ -34,7 +34,7 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
     // @ts-expect-error - undici-specific flag, required when streaming a body
     duplex: 'half',
   };
-
+  // Next ghép URL upstream
   const upstream = await fetch(url, init);
   return nextResponseFromUpstream(upstream);
 }
