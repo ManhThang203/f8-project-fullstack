@@ -30,6 +30,18 @@ COPY . .
 # Prisma Generate reads `DATABASE_URL` via `prisma.config.ts` / `env()`; URL is not embedded in the schema.
 ENV DATABASE_URL="postgresql://threads:threads@localhost:5432/threads?schema=public"
 RUN pnpm --filter @threads/db generate
+
+# Next.js nhúng `NEXT_PUBLIC_*` vào JS lúc `pnpm build` — runtime `env_file` không đổi được giá trị đã build.
+# Truyền qua `docker compose build` (xem docker-compose.yml `args`) hoặc `docker build --build-arg ...`.
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
+ARG NEXT_PUBLIC_API_URL=/api
+ARG NEXT_PUBLIC_SOCKET_URL=http://localhost:4000
+ARG NEXT_PUBLIC_DEMO_USER_ID=seed_demo_user_001
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_SOCKET_URL=$NEXT_PUBLIC_SOCKET_URL
+ENV NEXT_PUBLIC_DEMO_USER_ID=$NEXT_PUBLIC_DEMO_USER_ID
+
 RUN pnpm build
 
 # ─── runner stage: minimal runtime image ────────────────────────────────────
@@ -57,6 +69,10 @@ COPY --from=builder /app/apps/server/node_modules apps/server/node_modules
 COPY --from=builder /app/apps/web/node_modules apps/web/node_modules
 
 EXPOSE 3000 4000
+
+COPY docker/api-entrypoint.sh /usr/local/bin/api-entrypoint.sh
+# Windows checkout có thể để CRLF → shebang hỏng trong Linux.
+RUN sed -i 's/\r$//' /usr/local/bin/api-entrypoint.sh && chmod +x /usr/local/bin/api-entrypoint.sh
 
 # tini reaps zombie children (workers, ffmpeg subprocesses).
 ENTRYPOINT ["/sbin/tini", "--"]

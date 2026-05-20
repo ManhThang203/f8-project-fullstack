@@ -27,14 +27,32 @@ const envSchema = z.object({
   BETTER_AUTH_SECRET: z.string().min(1).default('change_me_in_production'),
   BETTER_AUTH_URL: z.string().url().default('http://localhost:3000'),
 
+  GOOGLE_CLIENT_ID: z.string().optional().default(''),
+  GOOGLE_CLIENT_SECRET: z.string().optional().default(''),
+
+  SMTP_HOST: z.string().default('localhost'),
+  SMTP_PORT: z.coerce.number().int().positive().default(1025),
+  SMTP_USER: z.string().optional().default(''),
+  SMTP_PASS: z.string().optional().default(''),
+  SMTP_FROM: z.string().default('no-reply@threads.local'),
+
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('debug'),
   CORS_ORIGINS: z
     .string()
     .default('http://localhost:3000')
     .transform((s) => s.split(',').map((o) => o.trim()).filter(Boolean)),
 
-  RATE_LIMIT_POINTS: z.coerce.number().int().positive().default(100),
+  RATE_LIMIT_POINTS: z.coerce.number().int().positive().default(500),
   RATE_LIMIT_DURATION: z.coerce.number().int().positive().default(60),
+
+  /** When `true`, disables Better Auth built-in rate limiting (local Docker / debugging only). */
+  AUTH_RATE_LIMIT_DISABLED: z
+    .preprocess((val) => {
+      if (val === undefined || val === '') return false;
+      const s = String(val).toLowerCase();
+      return s === 'true' || s === '1' || s === 'yes';
+    }, z.boolean())
+    .default(false),
 });
 
 const parsed = envSchema.safeParse(process.env);

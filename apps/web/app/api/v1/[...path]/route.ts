@@ -1,4 +1,9 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+
+import { applyUpstreamProxyHeaders } from '@/lib/upstream-client-ip';
+import { HOP_BY_HOP_HEADERS, nextResponseFromUpstream } from '@/lib/proxy-to-upstream';
+
+export const runtime = 'nodejs';
 
 /**
  * BFF proxy: forwards `/api/v1/*` from the Next.js app to the upstream Express
@@ -9,19 +14,6 @@ import { type NextRequest, NextResponse } from 'next/server';
  */
 const UPSTREAM = process.env.UPSTREAM_API_URL ?? 'http://localhost:4000';
 
-const HOP_BY_HOP = new Set([
-  'connection',
-  'keep-alive',
-  'proxy-authenticate',
-  'proxy-authorization',
-  'te',
-  'trailer',
-  'transfer-encoding',
-  'upgrade',
-  'host',
-  'content-length',
-]);
-
 async function proxy(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params;
   const url = new URL(`/api/v1/${path.join('/')}`, UPSTREAM);
@@ -29,8 +21,9 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
 
   const headers = new Headers();
   req.headers.forEach((value, key) => {
-    if (!HOP_BY_HOP.has(key.toLowerCase())) headers.set(key, value);
+    if (!HOP_BY_HOP_HEADERS.has(key.toLowerCase())) headers.set(key, value);
   });
+  applyUpstreamProxyHeaders(req, headers);
 
   const init: RequestInit = {
     method: req.method,
@@ -43,10 +36,7 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
   };
 
   const upstream = await fetch(url, init);
-  const respHeaders = new Headers(upstream.headers);
-  HOP_BY_HOP.forEach((h) => respHeaders.delete(h));
-
-  return new NextResponse(upstream.body, { status: upstream.status, headers: respHeaders });
+  return nextResponseFromUpstream(upstream);
 }
 
 export const GET = proxy;

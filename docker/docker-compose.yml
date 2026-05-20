@@ -59,14 +59,20 @@ services:
       - "8025:8025" # Web UI
 
   # Production image (see docker/Dockerfile): Express API + Next.js bundle.
+  # API chạy migrate trước khi start (bảng chat + session…) — xem docker/api-entrypoint.sh
   api:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+      args:
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
+        NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL:-http://localhost:4000}
+        NEXT_PUBLIC_DEMO_USER_ID: ${NEXT_PUBLIC_DEMO_USER_ID:-seed_demo_user_001}
     image: threads-clone:local
     container_name: threads-api
     restart: unless-stopped
-    command: ["pnpm", "--filter", "@threads/server", "start"]
+    command: ["/usr/local/bin/api-entrypoint.sh"]
     ports:
       - "4000:4000"
     env_file:
@@ -81,6 +87,11 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+      args:
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
+        NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL:-http://localhost:4000}
+        NEXT_PUBLIC_DEMO_USER_ID: ${NEXT_PUBLIC_DEMO_USER_ID:-seed_demo_user_001}
     image: threads-clone:local
     container_name: threads-web
     restart: unless-stopped
