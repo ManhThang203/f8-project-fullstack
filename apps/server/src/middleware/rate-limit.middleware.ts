@@ -28,3 +28,27 @@ export function rateLimit(opts?: { points?: number; duration?: number; keyPrefix
     }
   };
 }
+
+/** Per authenticated user (falls back to IP when session missing). */
+export function rateLimitByUser(opts?: {
+  points?: number;
+  duration?: number;
+  keyPrefix?: string;
+}): RequestHandler {
+  const limiter = new RateLimiterRedis({
+    storeClient: redis,
+    keyPrefix: opts?.keyPrefix ?? 'rl:user',
+    points: opts?.points ?? env.RATE_LIMIT_POINTS,
+    duration: opts?.duration ?? env.RATE_LIMIT_DURATION,
+  });
+
+  return async (req, _res, next) => {
+    const key = req.auth?.userId ?? req.ip ?? 'unknown';
+    try {
+      await limiter.consume(key);
+      next();
+    } catch {
+      next(AppError.rateLimited('Bạn đăng bài quá nhanh, vui lòng chờ'));
+    }
+  };
+}

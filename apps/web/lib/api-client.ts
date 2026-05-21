@@ -3,7 +3,11 @@ import { ErrorCode } from '@threads/shared';
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? '/api';
 
-function parseJsonBody<TData>(text: string, status: number): ApiResponse<TData> {
+// Chuyển đổi text thành ApiResponse<TData, TMeta>
+function parseJsonBody<TData, TMeta = undefined>(
+  text: string,
+  status: number,
+): ApiResponse<TData, TMeta> {
   const trimmed = text.trim();
   if (!trimmed) {
     return {
@@ -19,7 +23,7 @@ function parseJsonBody<TData>(text: string, status: number): ApiResponse<TData> 
   }
 
   try {
-    return JSON.parse(trimmed) as ApiResponse<TData>;
+    return JSON.parse(trimmed) as ApiResponse<TData, TMeta>;
   } catch {
     return {
       success: false,
@@ -36,10 +40,10 @@ function parseJsonBody<TData>(text: string, status: number): ApiResponse<TData> 
  * Client-side fetch wrapper. Always hits the Next.js BFF (`/api/v1/*`),
  * which proxies to Express. Returns the parsed API envelope.
  */
-export async function apiFetch<TData>(
+export async function apiFetch<TData, TMeta = undefined>(
   path: string,
   init?: RequestInit,
-): Promise<ApiResponse<TData>> {
+): Promise<ApiResponse<TData, TMeta>> {
   let res: Response;
   try {
     res = await fetch(`${BASE}/v1${path}`, {

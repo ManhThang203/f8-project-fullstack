@@ -44,10 +44,13 @@ A production-ready, full-stack Threads-like social media app built with a module
 
 ```bash
 pnpm install
-cp .env.example .env
+cp .env.example .env          # for local `pnpm dev` outside Docker (optional if you only use containers)
+cp docker/.env.docker.example docker/.env.docker   # Docker stack: edit secrets in docker/.env.docker
 ```
 
 ### Run infrastructure (Postgres + Redis + MinIO)
+
+The Compose stack reads **`docker/.env.docker`**. Root **`pnpm docker:*`** scripts already pass `--env-file docker/.env.docker`, so you do **not** need a repo-root `.env` for Docker. See [`docker/README.md`](docker/README.md).
 
 ```bash
 pnpm docker:up

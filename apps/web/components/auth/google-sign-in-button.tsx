@@ -54,7 +54,7 @@ export function GoogleSignInButton({ callbackURL, label, className, disabled, on
       aria-label={`${label} — mở trang Google để xác nhận`}
       aria-busy={busy}
       className={cn(
-        'flex min-h-11 w-full items-center justify-center gap-3 rounded-full border border-border bg-card px-4 text-sm font-medium text-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-40',
+        'border-border bg-card text-foreground focus-visible:ring-ring focus-visible:ring-offset-background flex min-h-11 w-full items-center justify-center gap-3 rounded-full border px-4 text-sm font-medium transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-40',
         className,
       )}
       onClick={() => {

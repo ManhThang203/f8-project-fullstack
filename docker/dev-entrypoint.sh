@@ -1,8 +1,14 @@
 #!/bin/sh
+# =============================================================================
+# Dev container entrypoint (docker-compose.dev.yml → service `app`).
+# 1) pnpm install nếu volume node_modules trống
+# 2) prisma generate + migrate (fallback db push)
+# 3) exec CMD (mặc định: tini + pnpm dev)
+# =============================================================================
 set -e
 cd /app
 
-# Root is a named volume so host bind-mount does not overwrite pnpm's store layout.
+# Root node_modules là named volume — bind-mount repo không ghi đè store pnpm.
 if [ ! -f node_modules/.modules.yaml ]; then
   echo "dev-entrypoint: pnpm install (first run or empty node_modules volume)..."
   pnpm install --frozen-lockfile

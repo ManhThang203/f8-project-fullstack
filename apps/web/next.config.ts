@@ -24,13 +24,25 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@threads/shared'],
   typedRoutes: true,
+  experimental: {
+    proxyClientMaxBodySize: '20mb', // giới hạn body request tối đa 20MB
+    optimizePackageImports: ['lucide-react', '@tanstack/react-query'],
+  },
   /** TypeScript ESM uses `.js` in import paths while sources are `.ts` — map for webpack. */
-  webpack: (config) => {
+  webpack: (config, { dev }) => {
     config.resolve = config.resolve ?? {};
     config.resolve.extensionAlias = {
       '.js': ['.ts', '.tsx', '.js'],
       '.mjs': ['.mts', '.mjs'],
     };
+    // Dev on Windows / Docker bind mount: avoid stale chunks and slow watch.
+    if (dev) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        aggregateTimeout: 500,
+        ...(process.env.WATCHPACK_POLLING === 'true' ? { poll: 1000 } : {}),
+      };
+    }
     return config;
   },
 };

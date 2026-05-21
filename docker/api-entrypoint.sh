@@ -1,4 +1,8 @@
 #!/bin/sh
+# =============================================================================
+# Production API entrypoint (docker-compose.yml → service `api`).
+# Chạy migrate trước khi start Express — đảm bảo schema DB khớp trước khi nhận traffic.
+# =============================================================================
 set -e
 cd /app
 

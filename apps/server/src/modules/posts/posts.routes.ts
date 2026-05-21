@@ -1,16 +1,12 @@
-import {
-  createPostBodySchema,
-  cursorPageQuerySchema,
-  ok,
-  type CursorPageQuery,
-} from '@threads/shared';
+import { createPostBodySchema, cursorPageQuerySchema, ok, type CursorPageQuery } from '@threads/shared';
 import { Router } from 'express';
 
 import { requireAuth } from '../../middleware/auth.middleware.js';
-import { sanitizeBody } from '../../middleware/sanitize.middleware.js';
+import { uploadPostMedia } from '../../middleware/upload.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
 
 import * as postsService from './posts.service.js';
+
 const router = Router();
 
 /**
@@ -46,42 +42,38 @@ router.get('/', validate(cursorPageQuerySchema, 'query'), async (req, res, next)
  * @openapi
  * /posts:
  *   post:
- *     summary: Create a post or reply
+ *     summary: Create a post with optional media (multipart)
  *     tags: [Posts]
- *     security:
- *       - bearerAuth: []
  *     requestBody:
- *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
- *             required: [content]
  *             properties:
  *               content:
  *                 type: string
- *               parentId:
- *                 type: string
+ *               files:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
  *     responses:
- *       200:
+ *       201:
  *         description: Created post
- *       401:
- *         description: Unauthorized
  */
-router.post(
-  '/',
-  requireAuth,
-  sanitizeBody,
-  validate(createPostBodySchema),
-  async (req, res, next) => {
-    try {
-      const userId = req.auth!.userId;
-      const created = await postsService.createPost(userId, req.body);
-      res.status(201).json(ok(created));
-    } catch (e) {
-      next(e);
-    }
-  },
-);
+router.post('/', requireAuth, uploadPostMedia, async (req, res, next) => {
+  try {
+    const body = createPostBodySchema.parse(req.body);
+    const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+    const post = await postsService.createPost({
+      authorId: req.auth!.userId,
+      body,
+      files,
+    });
+    res.status(201).json(ok(post));
+  } catch (e) {
+    next(e);
+  }
+});
 
 export { router as postsRouter };
