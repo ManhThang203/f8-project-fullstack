@@ -6,6 +6,8 @@ import { motion } from 'motion/react';
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import { useRef, useState } from 'react';
 
+import { FeedVideo } from './feed-video';
+
 import { cn } from '@/lib/utils';
 
 export interface DraftMedia {
@@ -49,14 +51,14 @@ function MediaPreview({
   feedVideo?: boolean;
 }) {
   if (type === 'video') {
+    if (feedVideo) return <FeedVideo src={url} className={className} />;
     return (
       <video
         src={url}
         className={className}
-        controls={feedVideo}
         preload="metadata"
         playsInline
-        muted={!feedVideo}
+        muted
       />
     );
   }
