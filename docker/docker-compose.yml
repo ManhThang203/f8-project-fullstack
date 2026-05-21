@@ -1,6 +1,18 @@
+# =============================================================================
+# Production / local stack — infra + API + Web (image build từ docker/Dockerfile).
+#
+# Chạy từ root repo:
+#   docker compose -f docker/docker-compose.yml --env-file docker/.env.docker up --build
+# Hoặc: pnpm docker:up
+#
+# Chỉ infra (Postgres, Redis, MinIO): pnpm docker:infra:up
+# Sau khi đổi NEXT_PUBLIC_*: build lại image (pnpm docker:rebuild).
+# =============================================================================
+
 name: threads-clone
 
 services:
+  # ─── PostgreSQL + pgvector — Prisma, full-text / vector search ─────────────
   postgres:
     image: pgvector/pgvector:pg16
     container_name: threads-postgres
@@ -8,30 +20,32 @@ services:
     env_file:
       - .env.docker
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
       interval: 5s
       timeout: 5s
       retries: 10
 
+  # ─── Redis — BullMQ queue, cache, rate-limit store ─────────────────────────
   redis:
     image: redis:7-alpine
     container_name: threads-redis
     restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ['redis-server', '--appendonly', 'yes']
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
       timeout: 3s
       retries: 10
 
+  # ─── MinIO — S3-compatible object storage (media uploads) ────────────────────
   minio:
     image: minio/minio:latest
     container_name: threads-minio
@@ -40,26 +54,27 @@ services:
     env_file:
       - .env.docker
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - '9000:9000' # S3 API
+      - '9001:9001' # Web console
     volumes:
       - minio-data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # ─── Mailhog — SMTP dev catcher (UI http://localhost:8025) ─────────────────
   mailhog:
     image: mailhog/mailhog:latest
     container_name: threads-mailhog
     restart: unless-stopped
     ports:
-      - "1025:1025" # SMTP
-      - "8025:8025" # Web UI
+      - '1025:1025' # SMTP
+      - '8025:8025' # Web UI
 
-  # Production image (see docker/Dockerfile): Express API + Next.js bundle.
-  # API chạy migrate trước khi start (bảng chat + session…) — xem docker/api-entrypoint.sh
+  # ─── API — Express + BullMQ workers (cùng process, xem apps/server) ────────
+  # Entrypoint: migrate DB rồi start server (docker/api-entrypoint.sh).
   api:
     build:
       context: ..
@@ -72,9 +87,9 @@ services:
     image: threads-clone:local
     container_name: threads-api
     restart: unless-stopped
-    command: ["/usr/local/bin/api-entrypoint.sh"]
+    command: ['/usr/local/bin/api-entrypoint.sh']
     ports:
-      - "4000:4000"
+      - '4000:4000'
     env_file:
       - .env.docker
     depends_on:
@@ -83,6 +98,7 @@ services:
       redis:
         condition: service_healthy
 
+  # ─── Web — Next.js production server (cùng image, CMD khác api) ────────────
   web:
     build:
       context: ..
@@ -95,9 +111,9 @@ services:
     image: threads-clone:local
     container_name: threads-web
     restart: unless-stopped
-    command: ["pnpm", "--filter", "@threads/web", "start"]
+    command: ['pnpm', '--filter', '@threads/web', 'start']
     ports:
-      - "3000:3000"
+      - '3000:3000'
     env_file:
       - .env.docker
     depends_on:

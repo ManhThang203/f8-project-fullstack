@@ -11,6 +11,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:clean": "pnpm --filter @threads/web dev:clean",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
@@ -30,7 +31,9 @@
     "docker:migrate": "docker compose -f docker/docker-compose.yml --env-file docker/.env.docker exec api pnpm --filter @threads/db exec prisma migrate deploy",
     "docker:seed": "docker compose -f docker/docker-compose.yml --env-file docker/.env.docker exec api pnpm --filter @threads/db run seed",
     "docker:down": "docker compose -f docker/docker-compose.yml --env-file docker/.env.docker down",
-    "docker:build": "docker build -f docker/Dockerfile -t threads-clone ."
+    "docker:build": "docker build -f docker/Dockerfile -t threads-clone .",
+    "docker:infra:up": "docker compose -f docker/docker-compose.yml --env-file docker/.env.docker up -d postgres redis minio",
+    "docker:infra:stop": "docker compose -f docker/docker-compose.yml --env-file docker/.env.docker stop postgres redis minio"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

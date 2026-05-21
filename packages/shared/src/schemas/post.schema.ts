@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 export const createPostBodySchema = z.object({
-  content: z.string().trim().min(1).max(2000),
-  parentId: z.string().cuid().optional(),
+  content: z.string().trim().max(2000).default(''), // 2000 ký tự
+  parentId: z.string().cuid().optional(), // id của bài viết cha
 });
 
 export type CreatePostBody = z.infer<typeof createPostBodySchema>;

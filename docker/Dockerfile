@@ -1,10 +1,12 @@
-# ─────────────────────────────────────────────────────────────────────────────
-# Threads-clone production Dockerfile (multi-stage, single image).
+# =============================================================================
+# Production Dockerfile — multi-stage, một image cho web + API.
 #
-# Per spec, one image bundles Next.js (web), Express (server), and BullMQ
-# workers. The workers run in the same Node process as the server (see
-# apps/server/src/index.ts → startWorkers).
-# ─────────────────────────────────────────────────────────────────────────────
+# Next.js (web), Express (server) và BullMQ workers dùng chung image;
+# workers chạy trong process server (apps/server/src/index.ts → startWorkers).
+#
+# Build: docker compose -f docker/docker-compose.yml build
+#        hoặc pnpm docker:build
+# =============================================================================
 
 FROM node:22-alpine AS base
 ENV PNPM_HOME=/pnpm
@@ -53,11 +55,14 @@ ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
 WORKDIR /app
 
+# Workspace root manifests + lockfile (pnpm hoạt động ở runtime).
 COPY --from=builder /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
 
+# Server: dist + src (một số path runtime) + package.json.
 COPY --from=builder /app/apps/server/dist apps/server/dist
 COPY --from=builder /app/apps/server/src apps/server/src
 COPY --from=builder /app/apps/server/package.json apps/server/package.json
+# Web: build output Next + static assets.
 COPY --from=builder /app/apps/web/.next apps/web/.next
 COPY --from=builder /app/apps/web/public apps/web/public
 COPY --from=builder /app/apps/web/package.json apps/web/package.json
@@ -68,6 +73,7 @@ COPY --from=builder /app/node_modules node_modules
 COPY --from=builder /app/apps/server/node_modules apps/server/node_modules
 COPY --from=builder /app/apps/web/node_modules apps/web/node_modules
 
+# 3000 = Next (service web), 4000 = Express + Socket.io (service api).
 EXPOSE 3000 4000
 
 COPY docker/api-entrypoint.sh /usr/local/bin/api-entrypoint.sh

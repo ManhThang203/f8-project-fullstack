@@ -6,6 +6,19 @@ export interface PostAuthorDto {
   image: string | null;
 }
 
+export type PostMediaType = 'image' | 'video';
+
+/** Single media item attached to a post. */
+export interface PostMediaDto {
+  id: string;
+  type: PostMediaType;
+  url: string;
+  width: number | null;
+  height: number | null;
+  durationMs: number | null;
+  position: number;
+}
+
 /** Single item in the home feed. */
 export interface PostFeedItemDto {
   id: string;
@@ -13,6 +26,7 @@ export interface PostFeedItemDto {
   createdAt: string;
   author: PostAuthorDto;
   replyCount: number;
+  media: PostMediaDto[];
 }
 
 export interface PostFeedMeta {

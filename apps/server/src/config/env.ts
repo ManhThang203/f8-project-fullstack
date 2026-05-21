@@ -22,7 +22,14 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
 
   REDIS_URL: z.string().min(1).default('redis://localhost:6379'),
-  REDIS_TLS: z.coerce.boolean().default(false),
+  /** `z.coerce.boolean()` treats the string `"false"` as true — parse env explicitly. */
+  REDIS_TLS: z
+    .preprocess((val) => {
+      if (val === undefined || val === '') return false;
+      const s = String(val).toLowerCase();
+      return s === 'true' || s === '1' || s === 'yes';
+    }, z.boolean())
+    .default(false),
 
   BETTER_AUTH_SECRET: z.string().min(1).default('change_me_in_production'),
   BETTER_AUTH_URL: z.string().url().default('http://localhost:3000'),
@@ -44,6 +51,16 @@ const envSchema = z.object({
 
   RATE_LIMIT_POINTS: z.coerce.number().int().positive().default(500),
   RATE_LIMIT_DURATION: z.coerce.number().int().positive().default(60),
+
+  CLOUDINARY_CLOUD_NAME: z
+    .preprocess((val) => (val == null || val === '' ? '' : String(val).trim()), z.string())
+    .default(''),
+  CLOUDINARY_API_KEY: z
+    .preprocess((val) => (val == null || val === '' ? '' : String(val).trim()), z.string())
+    .default(''),
+  CLOUDINARY_API_SECRET: z
+    .preprocess((val) => (val == null || val === '' ? '' : String(val).trim()), z.string())
+    .default(''),
 
   /** When `true`, disables Better Auth built-in rate limiting (local Docker / debugging only). */
   AUTH_RATE_LIMIT_DISABLED: z

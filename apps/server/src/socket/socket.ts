@@ -15,6 +15,7 @@ export function initSocket(httpServer: HttpServer): SocketIOServer {
   });
 
   for (const ns of ['/notifications', '/feed'] as const) {
+    // Tạo ra nhiểu kênh mới cho từng namespace khác nhau
     io.of(ns).on('connection', (socket) => {
       logger.debug({ ns, socketId: socket.id }, 'socket connected');
       socket.on('disconnect', () => logger.debug({ ns, socketId: socket.id }, 'socket disconnect'));
