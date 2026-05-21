@@ -4,6 +4,7 @@ import type { PostFeedItemDto, PostFeedMeta } from '@threads/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CreatePostModal } from './create-post-modal';
 import { CreatePostTrigger } from './create-post-trigger';
+import { FeedSkeletonList } from './feed-skeleton-list';
 import { PostCard } from './post-card';
 import { apiFetch } from '@/lib/api-client';
 import { authClient } from '@/lib/auth-client';
@@ -195,7 +196,7 @@ export function HomeFeed({ initialUser }: Props) {
 
       <section aria-busy={loading}>
         {loading ? (
-          <p className="text-muted-foreground text-sm">Đang tải feed…</p>
+          <FeedSkeletonList />
         ) : visiblePosts.length === 0 ? (
           <p className="text-muted-foreground text-sm">
             {posts.length > 0
