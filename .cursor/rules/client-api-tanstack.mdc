@@ -1,0 +1,72 @@
+---
+description: Client-side API calls via TanStack Query — Component → hook → apiQuery → apiFetch
+alwaysApply: false
+---
+
+# Client API (TanStack Query)
+
+Follow this stack for **all HTTP data** in client components. Do not bypass layers.
+
+```
+Component  →  useQuery | useInfiniteQuery | useMutation  (hooks/queries/*)
+                    ↓ queryFn / mutationFn
+              apiQuery | apiQueryData  (lib/api-query.ts)
+                    ↓
+              apiFetch  (lib/api-client.ts)   ← keep; do not delete
+                    ↓
+              /api/v1/*  (Next BFF → Express)
+```
+
+## Layer rules
+
+| Layer       | Location                 | Responsibility                                                                     |
+| ----------- | ------------------------ | ---------------------------------------------------------------------------------- |
+| Component   | `components/**`          | Destructure hook result; render UI only                                            |
+| Query hook  | `hooks/queries/use-*.ts` | `useInfiniteQuery` / `useQuery` / `useMutation` + `queryKey`                       |
+| Query keys  | `lib/query-keys.ts`      | Stable `queryKey` factories — add new keys here                                    |
+| API wrapper | `lib/api-query.ts`       | `apiQuery` (envelope + meta) or `apiQueryData` (data only); throws `ApiQueryError` |
+| Transport   | `lib/api-client.ts`      | `apiFetch` only — credentials, base URL, JSON envelope                             |
+
+## Pick the right hook
+
+| Need                                         | Hook               | Hook returns (use in UI)                                                                  |
+| -------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------- |
+| Read once (profile, user search)             | `useQuery`         | `data`, `isLoading`, `isError`, `error`, `refetch`                                        |
+| Cursor / infinite scroll (feed, reels, grid) | `useInfiniteQuery` | above + `fetchNextPage`, `hasNextPage`, `isFetchingNextPage`; flatten `data.pages`        |
+| POST / PUT / DELETE (follow, create group)   | `useMutation`      | `mutate` / `mutateAsync`, `isPending`, `isError`, `error`; `invalidateQueries` on success |
+
+## Component DO / DON'T
+
+```tsx
+// ✅ GOOD — component calls domain hook only
+const { data, isLoading, isError, error, fetchNextPage, hasNextPage } = usePostsFeed();
+
+// ❌ BAD — no apiFetch / apiQuery in components
+const [loading, setLoading] = useState(true);
+useEffect(() => { void apiFetch('/posts').then(...) }, []);
+
+// ❌ BAD — no manual loading/error state for server data when a query hook exists
+```
+
+## New endpoint checklist
+
+1. Add `queryKeys.*` entry in `lib/query-keys.ts`
+2. Create or extend `hooks/queries/use-<domain>.ts` with `'use client'`
+3. In `queryFn` / `mutationFn`: use `apiQuery` (needs `meta`, e.g. `nextCursor`) or `apiQueryData`
+4. Component imports the hook — never `apiFetch` directly
+5. After mutation: `queryClient.invalidateQueries({ queryKey: ... })` or `setQueryData` for optimistic UI
+6. For `data ?? fallback`: use exported constants (`EMPTY_USER_SEARCH`, `EMPTY_CONVERSATIONS`) — never inline `= []`
+
+## NOT this stack (exceptions)
+
+| Case                      | Use instead                                                                  |
+| ------------------------- | ---------------------------------------------------------------------------- |
+| Auth session              | `authClient.useSession()`                                                    |
+| Server Components / SSR   | `getServerSession()` in `app/**` pages                                       |
+| Realtime chat             | Socket.io (`lib/chat-socket.ts`); may still `apiFetch` token only inside lib |
+| Imperative one-off in lib | `apiFetch` in `lib/` only, not in components                                 |
+
+## Errors
+
+- `apiQuery` throws `ApiQueryError` with `.code` (e.g. `NOT_FOUND`) — use `isApiQueryError(error)` in UI
+- Do not check `res.success` in components; that belongs in `api-query.ts`

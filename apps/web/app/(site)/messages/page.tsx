@@ -6,7 +6,7 @@ import { MessagesView } from '@/components/messages/messages-view';
 import { ClientOnly } from '@/components/shared/client-only';
 
 export const metadata: Metadata = {
-  title: 'Tin nhắn | Threads Clone',
+  title: 'Tin nhắn',
   description: 'Tin nhắn trực tiếp và nhóm',
 };
 

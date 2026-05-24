@@ -25,11 +25,14 @@ export function getChatSocket(): Promise<Socket> {
       connectPromise = null;
       throw new Error(res.error.message);
     }
+    // nhận token từ server
+    const token = res.data.token;
+    // kết nối với socket
     const s = io(`${baseUrl}/chat`, {
-      withCredentials: true,
-      auth: { token: res.data.token },
-      transports: ['websocket', 'polling'],
-      autoConnect: true,
+      withCredentials: true, // cho phép gửi cookie session khi handshake
+      auth: { token },
+      transports: ['websocket', 'polling'], // cho phép gửi tin nhắn qua WebSocket hoặc Polling
+      autoConnect: true, // tự động kết nối khi component mount
     });
     socket = s;
     try {

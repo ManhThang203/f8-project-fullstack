@@ -51,7 +51,11 @@ export function PostCard({ post, onDismiss }: Props) {
             </div>
 
             <div className="flex shrink-0 items-center">
-              <PostOptionsMenu postId={post.id} onHidePost={() => onDismiss(post.id)} />
+              <PostOptionsMenu
+                postId={post.id}
+                hasVideo={post.media.some((m) => m.type === 'video')}
+                onHidePost={() => onDismiss(post.id)}
+              />
               <button
                 type="button"
                 aria-label="Đóng / ẩn bài viết"
@@ -73,7 +77,9 @@ export function PostCard({ post, onDismiss }: Props) {
             </p>
           )}
 
-          {post.media.length > 0 && <PostMediaCarousel mode="feed" items={post.media} />}
+          {post.media.length > 0 && (
+            <PostMediaCarousel mode="feed" postId={post.id} items={post.media} />
+          )}
 
           <PostActionBar replyCount={post.replyCount} />
         </div>

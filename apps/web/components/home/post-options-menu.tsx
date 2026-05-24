@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 
 type Props = {
   postId: string;
+  hasVideo?: boolean;
   onHidePost?: () => void;
 };
 
@@ -17,7 +18,7 @@ const MENU_ITEMS = [
   { id: 'hide', label: 'Ẩn bài viết' },
 ] as const;
 
-export function PostOptionsMenu({ postId, onHidePost }: Props) {
+export function PostOptionsMenu({ postId, hasVideo = false, onHidePost }: Props) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
@@ -47,7 +48,8 @@ export function PostOptionsMenu({ postId, onHidePost }: Props) {
     setOpen(false);
     switch (id) {
       case 'copy': {
-        const url = `${window.location.origin}/?post=${postId}`;
+        const path = hasVideo ? `/reel/${postId}` : `/?post=${postId}`;
+        const url = `${window.location.origin}${path}`;
         void navigator.clipboard.writeText(url).then(
           () => toast.success('Đã sao chép liên kết'),
           () => toast.error('Không thể sao chép liên kết'),

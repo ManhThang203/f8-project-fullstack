@@ -1,16 +1,17 @@
 'use client';
 
-import type { PostFeedItemDto, PostFeedMeta } from '@threads/shared';
+import type { PostFeedItemDto } from '@threads/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
 import { CreatePostModal } from './create-post-modal';
 import { CreatePostTrigger } from './create-post-trigger';
 import { FeedSkeletonList } from './feed-skeleton-list';
 import { PostCard } from './post-card';
-import { apiFetch } from '@/lib/api-client';
+import { flattenPostsFeedPages, usePostsFeed } from '@/hooks/queries/use-posts-feed';
 import { authClient } from '@/lib/auth-client';
 import type { ServerAuthUser } from '@/lib/auth-user.types';
-
-import { cn } from '@/lib/utils';
+import { queryKeys } from '@/lib/query-keys';
 
 type FeedUser = {
   id: string;
@@ -34,7 +35,11 @@ type Props = {
 };
 
 export function HomeFeed({ initialUser }: Props) {
+  const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
+
+  const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    usePostsFeed();
 
   const me = useMemo<FeedUser | null>(() => {
     const fromClient = session?.user
@@ -50,27 +55,15 @@ export function HomeFeed({ initialUser }: Props) {
     return fromClient ?? fromServer ?? null;
   }, [session?.user, initialUser]);
 
-  const [posts, setPosts] = useState<PostFeedItemDto[]>([]);
-
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-
-  const [loading, setLoading] = useState(true);
-
-  const [loadingMore, setLoadingMore] = useState(false);
-
-  const [error, setError] = useState<string | null>(null);
+  const posts = useMemo(() => flattenPostsFeedPages(data?.pages), [data?.pages]);
 
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => new Set());
-
   const loadMoreRef = useRef<HTMLDivElement>(null);
-
   const [modalOpen, setModalOpen] = useState(false);
-
   const [autoOpenFilePicker, setAutoOpenFilePicker] = useState(false);
 
   const visiblePosts = useMemo(
     () => posts.filter((p) => !dismissedIds.has(p.id)),
-
     [posts, dismissedIds],
   );
 
@@ -78,93 +71,39 @@ export function HomeFeed({ initialUser }: Props) {
     setDismissedIds((prev) => new Set(prev).add(postId));
   }, []);
 
-  const fetchPage = useCallback(async (cursor?: string) => {
-    const qs = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
-
-    return apiFetch<PostFeedItemDto[], PostFeedMeta>(`/posts${qs}`);
-  }, []);
-
-  const loadInitial = useCallback(async () => {
-    setError(null);
-
-    const res = await fetchPage();
-
-    if (!res.success) {
-      setError(res.error.message);
-
-      setPosts([]);
-
-      setNextCursor(null);
-
-      return;
-    }
-
-    setPosts(res.data);
-
-    setNextCursor(res.meta?.nextCursor ?? null);
-  }, [fetchPage]);
-
-  const loadMore = useCallback(async () => {
-    if (!nextCursor || loadingMore || loading) return;
-
-    setLoadingMore(true);
-
-    setError(null);
-
-    const res = await fetchPage(nextCursor);
-
-    setLoadingMore(false);
-
-    if (!res.success) {
-      setError(res.error.message);
-
-      return;
-    }
-
-    setPosts((prev) => [...prev, ...res.data]);
-
-    setNextCursor(res.meta?.nextCursor ?? null);
-  }, [fetchPage, nextCursor, loadingMore, loading]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      setLoading(true);
-
-      await loadInitial();
-
-      if (!cancelled) setLoading(false);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [loadInitial]);
-
   useEffect(() => {
     const el = loadMoreRef.current;
-
-    if (!el || !nextCursor) return;
+    if (!el || !hasNextPage || isFetchingNextPage) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting) void loadMore();
+        if (entries[0]?.isIntersecting) void fetchNextPage();
       },
-
       { rootMargin: '200px' },
     );
 
     observer.observe(el);
-
     return () => observer.disconnect();
-  }, [loadMore, nextCursor]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   function openModal(openFilePicker = false) {
     setAutoOpenFilePicker(openFilePicker);
-
     setModalOpen(true);
   }
+
+  function handlePosted(post: PostFeedItemDto) {
+    queryClient.setQueryData(queryKeys.posts.feed, (old: typeof data) => {
+      if (!old) return old;
+      return {
+        ...old,
+        pages: old.pages.map((page, i) =>
+          i === 0 ? { ...page, data: [post, ...page.data] } : page,
+        ),
+      };
+    });
+  }
+
+  const errorMessage = isError ? error.message : null;
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col px-4 py-4">
@@ -183,19 +122,17 @@ export function HomeFeed({ initialUser }: Props) {
         username={me?.username ?? undefined}
         name={me?.name ?? undefined}
         avatarUrl={me?.image ?? undefined}
-        onPosted={(post) => {
-          setPosts((prev) => [post, ...prev]);
-        }}
+        onPosted={handlePosted}
       />
 
-      {error ? (
+      {errorMessage ? (
         <p className="mb-4 text-sm text-red-600 dark:text-red-400" role="alert">
-          {error}
+          {errorMessage}
         </p>
       ) : null}
 
-      <section aria-busy={loading}>
-        {loading ? (
+      <section aria-busy={isLoading}>
+        {isLoading ? (
           <FeedSkeletonList />
         ) : visiblePosts.length === 0 ? (
           <p className="text-muted-foreground text-sm">
@@ -212,22 +149,10 @@ export function HomeFeed({ initialUser }: Props) {
             </ul>
 
             <div ref={loadMoreRef} className="flex min-h-11 items-center justify-center py-4">
-              {loadingMore ? (
+              {isFetchingNextPage ? (
                 <p className="text-muted-foreground text-sm" aria-live="polite">
                   Đang tải thêm…
                 </p>
-              ) : nextCursor ? (
-                <button
-                  type="button"
-                  onClick={() => void loadMore()}
-                  className={cn(
-                    'text-primary min-h-11 px-4 text-sm font-medium',
-
-                    'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
-                  )}
-                >
-                  Tải thêm bài viết
-                </button>
               ) : (
                 <p className="text-muted-foreground text-xs">Đã hiển thị tất cả bài trong feed.</p>
               )}

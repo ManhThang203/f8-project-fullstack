@@ -7,6 +7,10 @@ import { type ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 import { useChatDockOptional } from '@/components/chat/chat-dock-context';
+import { Avatar } from '@/components/shared/avatar';
+import { CotsyLogo } from '@/components/shared/cotsy-logo';
+import { iconButtonClass } from '@/components/shared/icon-button';
+import { NotificationBadge } from '@/components/shared/notification-badge';
 import { authClient } from '@/lib/auth-client';
 import type { ServerAuthUser } from '@/lib/auth-user.types';
 import { resetChatSocket } from '@/lib/chat-socket';
@@ -64,6 +68,43 @@ function NavTab({
   );
 }
 
+/** Nút/Link tin nhắn — dùng button khi có ChatDock, dùng Link khi không. */
+function ChatTrigger({
+  unreadCount,
+  chatDock,
+}: {
+  unreadCount: number;
+  chatDock: { toggleHub: () => void } | null;
+}) {
+  const label = unreadCount > 0 ? `Tin nhắn, ${unreadCount} chưa đọc` : 'Tin nhắn';
+  const sharedClass = cn(
+    'relative',
+    iconButtonClass({ shape: 'circle' }),
+  );
+
+  if (chatDock) {
+    return (
+      <button
+        type="button"
+        onClick={() => chatDock.toggleHub()}
+        aria-label={label}
+        title="Tin nhắn"
+        className={sharedClass}
+      >
+        <MessageCircle className="h-6 w-6" strokeWidth={2} aria-hidden />
+        <NotificationBadge count={unreadCount} />
+      </button>
+    );
+  }
+
+  return (
+    <Link href="/messages" aria-label={label} title="Tin nhắn" className={sharedClass}>
+      <MessageCircle className="h-6 w-6" strokeWidth={2} aria-hidden />
+      <NotificationBadge count={unreadCount} />
+    </Link>
+  );
+}
+
 export function SiteHeader({ initialUser }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -94,7 +135,6 @@ export function SiteHeader({ initialUser }: Props) {
   }, [forceGuestNav, session?.user, initialUser]);
 
   const avatarLabel = me?.username || me?.name || (me ? me.id.slice(0, 8) : '');
-  const avatarInitial = (me?.name?.[0] || me?.username?.[0] || '?').toUpperCase();
 
   async function onLogout() {
     setLogoutError(null);
@@ -132,9 +172,11 @@ export function SiteHeader({ initialUser }: Props) {
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <Link
             href="/"
-            className="flex shrink-0 min-h-11 items-center rounded-lg px-1 text-base font-semibold tracking-tight text-foreground transition-colors hover:text-foreground/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            aria-label="Cotsy — Trang chủ"
+            className="flex shrink-0 min-h-11 items-center gap-2 rounded-lg px-1 text-base font-semibold tracking-tight text-foreground transition-colors hover:text-foreground/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            Threads
+            <CotsyLogo className="h-8 w-8" priority />
+            Cotsy
           </Link>
           <div className="relative min-h-10 min-w-0 flex-1 max-w-xs">
             <label htmlFor="site-header-search" className="sr-only">
@@ -162,10 +204,10 @@ export function SiteHeader({ initialUser }: Props) {
           <NavTab href="/" label="Trang chủ" isActive={pathname === '/'}>
             <Home className="h-6 w-6" strokeWidth={pathname === '/' ? 2.25 : 2} aria-hidden />
           </NavTab>
-          <NavTab href="/reels" label="Reels" isActive={pathname.startsWith('/reels')}>
+          <NavTab href="/reels" label="Reels" isActive={pathname.startsWith('/reel')}>
             <Clapperboard
               className="h-6 w-6"
-              strokeWidth={pathname.startsWith('/reels') ? 2.25 : 2}
+              strokeWidth={pathname.startsWith('/reel') ? 2.25 : 2}
               aria-hidden
             />
           </NavTab>
@@ -184,7 +226,10 @@ export function SiteHeader({ initialUser }: Props) {
             <>
               <details className="relative">
                 <summary
-                  className="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted marker:hidden [&::-webkit-details-marker]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className={cn(
+                    'cursor-pointer list-none marker:hidden [&::-webkit-details-marker]:hidden',
+                    iconButtonClass({ shape: 'circle' }),
+                  )}
                   aria-label="Menu lối tắt"
                 >
                   <Menu className="h-6 w-6" strokeWidth={2} aria-hidden />
@@ -210,58 +255,24 @@ export function SiteHeader({ initialUser }: Props) {
                 href="/notifications"
                 aria-label="Thông báo"
                 title="Thông báo"
-                className="relative flex min-h-11 min-w-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className={iconButtonClass({ shape: 'circle' })}
               >
                 <Bell className="h-6 w-6" strokeWidth={2} aria-hidden />
               </Link>
 
-              {chatDock ? (
-                <button
-                  type="button"
-                  onClick={() => chatDock.toggleHub()}
-                  aria-label={
-                    chatUnreadTotal > 0
-                      ? `Tin nhắn, ${chatUnreadTotal} chưa đọc`
-                      : 'Tin nhắn'
-                  }
-                  title="Tin nhắn"
-                  className="relative flex min-h-11 min-w-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                >
-                  <MessageCircle className="h-6 w-6" strokeWidth={2} aria-hidden />
-                  {chatUnreadTotal > 0 ? (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground">
-                      {chatUnreadTotal > 99 ? '99+' : chatUnreadTotal}
-                    </span>
-                  ) : null}
-                </button>
-              ) : (
-                <Link
-                  href="/messages"
-                  aria-label={
-                    chatUnreadTotal > 0
-                      ? `Tin nhắn, ${chatUnreadTotal} chưa đọc`
-                      : 'Tin nhắn'
-                  }
-                  title="Tin nhắn"
-                  className="relative flex min-h-11 min-w-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                >
-                  <MessageCircle className="h-6 w-6" strokeWidth={2} aria-hidden />
-                  {chatUnreadTotal > 0 ? (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground">
-                      {chatUnreadTotal > 99 ? '99+' : chatUnreadTotal}
-                    </span>
-                  ) : null}
-                </Link>
-              )}
+              {pathname === '/' ? (
+                <ChatTrigger unreadCount={chatUnreadTotal} chatDock={chatDock ?? null} />
+              ) : null}
 
               <details className="relative">
                 <summary
-                  className="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted marker:hidden [&::-webkit-details-marker]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className={cn(
+                    'cursor-pointer list-none marker:hidden [&::-webkit-details-marker]:hidden',
+                    iconButtonClass({ shape: 'circle' }),
+                  )}
                   aria-label={`Tài khoản: ${avatarLabel}`}
                 >
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-semibold text-foreground">
-                    {avatarInitial}
-                  </span>
+                  <Avatar as="span" size="md" name={me.name} username={me.username} />
                 </summary>
                 <div
                   className="absolute right-0 top-full z-[60] mt-2 w-56 rounded-xl border border-border bg-card py-2 text-sm shadow-md"

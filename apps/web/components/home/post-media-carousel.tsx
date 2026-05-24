@@ -1,12 +1,11 @@
 'use client';
 
 import type { PostMediaDto } from '@threads/shared';
-import { X } from 'lucide-react';
+import { Play, X } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useRouter } from 'next/navigation';
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import { useRef, useState } from 'react';
-
-import { FeedVideo } from './feed-video';
 
 import { cn } from '@/lib/utils';
 
@@ -27,6 +26,7 @@ type Props =
   | {
       /** Feed mode: show committed media from a post */
       mode: 'feed';
+      postId: string;
       items: PostMediaDto[];
     }
   | {
@@ -38,20 +38,64 @@ type Props =
 
 type DragScrollSession = { startX: number; scrollLeft: number; pointerId: number };
 
+/**
+ * In feed mode, videos are shown as a static poster thumbnail with a Play overlay.
+ * Clicking navigates to /reel/{postId} — video plays inside the full Reels experience.
+ */
+function FeedVideoThumbnail({
+  postId,
+  url,
+  className,
+}: {
+  postId: string;
+  url: string;
+  className?: string;
+}) {
+  const router = useRouter();
+  return (
+    <button
+      type="button"
+      aria-label="Xem Reels"
+      className="relative block cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      onClick={(e) => {
+        e.stopPropagation();
+        router.push(`/reel/${postId}`);
+      }}
+    >
+      <video
+        src={url}
+        className={className}
+        preload="metadata"
+        playsInline
+        muted
+      />
+      <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm">
+          <Play className="h-7 w-7 fill-white" aria-hidden />
+        </span>
+      </span>
+    </button>
+  );
+}
+
 function MediaPreview({
   type,
   url,
   className,
   feedVideo,
+  postId,
 }: {
   type: 'image' | 'video';
   url: string;
   className?: string;
-  /** When true, video shows native controls (feed view). */
+  /** When true, video renders as thumbnail navigating to /reel/{postId}. */
   feedVideo?: boolean;
+  postId?: string;
 }) {
   if (type === 'video') {
-    if (feedVideo) return <FeedVideo src={url} className={className} />;
+    if (feedVideo && postId) {
+      return <FeedVideoThumbnail postId={postId} url={url} className={className} />;
+    }
     return (
       <video
         src={url}
@@ -151,6 +195,7 @@ export function PostMediaCarousel(props: Props) {
         <MediaPreview
           type={mediaType}
           url={url}
+          postId={props.mode === 'feed' ? props.postId : undefined}
           feedVideo={props.mode === 'feed' && mediaType === 'video'}
           className={cn(
             'rounded-xl',
@@ -203,6 +248,7 @@ export function PostMediaCarousel(props: Props) {
         <MediaPreview
           type={mediaType}
           url={url}
+          postId={props.mode === 'feed' ? props.postId : undefined}
           feedVideo={props.mode === 'feed' && mediaType === 'video'}
           className="h-[420px] w-auto select-none object-contain"
         />
