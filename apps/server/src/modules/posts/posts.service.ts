@@ -1,5 +1,5 @@
 import { MediaKind, MediaStatus, prisma } from '@threads/db';
-import type { CreatePostBody, CursorPageQuery, PostFeedItemDto } from '@threads/shared';
+import type { CreatePostBody, CursorPageQuery, PostFeedItemDto, ReelsFeedItemDto, ReelsFeedQuery } from '@threads/shared';
 
 import {
   destroyMany,
@@ -10,7 +10,7 @@ import {
 import { AppError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
 
-import { mapPostToFeedItemDto, postFeedInclude } from './posts.mapper.js';
+import { mapPostToFeedItemDto, mapPostToReelsFeedItemDto, postFeedInclude, postReelInclude } from './posts.mapper.js';
 
 const IMAGE_MAX_BYTES = 10 * 1024 * 1024; // 10MB
 const VIDEO_MAX_BYTES = 500 * 1024 * 1024; // 500MB
@@ -132,6 +132,101 @@ export async function listFeed(query: CursorPageQuery): Promise<{
 
   const items = page.map((p) => mapPostToFeedItemDto(p));
 
+  const tail = page[page.length - 1];
+  const nextCursor = hasMore && tail ? encodeCursor(tail.createdAt, tail.id) : null;
+
+  return { items, nextCursor };
+}
+
+/** Fisher-Yates shuffle (in-place). */
+function shuffle<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j]!, arr[i]!];
+  }
+  return arr;
+}
+
+// Lấy feed reels ngẫu nhiên
+export async function listReelsFeed(
+  query: ReelsFeedQuery,
+  viewerId: string | null,
+): Promise<{ items: ReelsFeedItemDto[]; nextCursor: string | null }> {
+  const limit = query.limit;
+  // Fetch a larger pool to shuffle from; use offset cursor to page through pool
+  const POOL = Math.min(limit * 5, 100);
+
+  const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
+  const startPostId = !cursorData ? query.startPostId : undefined;
+
+  const where = cursorData
+    ? {
+        deletedAt: null,
+        parentId: null,
+        media: { some: { kind: MediaKind.VIDEO, status: MediaStatus.READY } },
+        OR: [
+          { createdAt: { lt: cursorData.createdAt } },
+          { AND: [{ createdAt: { equals: cursorData.createdAt } }, { id: { lt: cursorData.id } }] },
+        ],
+      }
+    : {
+        deletedAt: null,
+        parentId: null,
+        media: { some: { kind: MediaKind.VIDEO, status: MediaStatus.READY } },
+      };
+
+  const rows = await prisma.post.findMany({
+    where,
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    take: POOL,
+    include: postReelInclude,
+  });
+
+  const hasMore = rows.length === POOL;
+  const pool = hasMore ? rows.slice(0, POOL) : rows;
+
+  shuffle(pool);
+  let page = pool.slice(0, limit);
+
+  let pinnedRow: (typeof rows)[number] | null = null;
+  if (startPostId) {
+    pinnedRow = await prisma.post.findFirst({
+      where: {
+        id: startPostId,
+        deletedAt: null,
+        parentId: null,
+        media: { some: { kind: MediaKind.VIDEO, status: MediaStatus.READY } },
+      },
+      include: postReelInclude,
+    });
+
+    if (!pinnedRow || !mapPostToReelsFeedItemDto(pinnedRow, false)) {
+      throw AppError.notFound('Reel not found');
+    }
+
+    page = page.filter((p) => p.id !== startPostId);
+    page = [pinnedRow, ...page].slice(0, limit);
+  }
+
+  // Batch-check isFollowing for all unique authors
+  const authorIds = [...new Set(page.map((p) => p.author.id))];
+  let followingSet = new Set<string>();
+  if (viewerId && authorIds.length > 0) {
+    const follows = await prisma.follow.findMany({
+      where: { followerId: viewerId, followingId: { in: authorIds } },
+      select: { followingId: true },
+    });
+    followingSet = new Set(follows.map((f) => f.followingId));
+  }
+
+  const items: ReelsFeedItemDto[] = [];
+  for (const p of page) {
+    const dto = mapPostToReelsFeedItemDto(p, followingSet.has(p.author.id));
+    if (dto) items.push(dto);
+  }
+
+  // Cursor points to the last item in the deterministic order (before shuffle)
+  // so next page fetches older posts
   const tail = page[page.length - 1];
   const nextCursor = hasMore && tail ? encodeCursor(tail.createdAt, tail.id) : null;
 

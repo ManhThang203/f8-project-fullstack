@@ -1,0 +1,79 @@
+---
+description: Quy tắc chia thư mục con khi tạo nhiều React component trong apps/web/components
+globs: apps/web/components/**/*
+alwaysApply: false
+---
+
+# Cấu trúc thư mục component
+
+Áp dụng khi thêm hoặc tách component trong `apps/web/components/`.
+
+## Nguyên tắc
+
+1. **Chia theo feature con** (màn hình / cụm UI), không chia theo loại file (`ui/`, `hooks/` trong cùng feature).
+2. **Tối đa 2 cấp** dưới domain (`home/post/`, không `home/post/media/video/controls/`).
+3. **≥ 3 file** cùng phục vụ một orchestrator → tạo subfolder.
+4. **Hook dùng ≥ 2 domain** → `apps/web/hooks/`, không để trong `components/`.
+5. **Types/utils chỉ 1 domain** → colocate (`profile-utils.ts`, `chat-dock.types.ts`).
+
+## Cấu trúc mẫu (đã áp dụng trong repo)
+
+```
+components/
+├── home/
+│   ├── feed/              # Luồng feed trang chủ
+│   ├── compose/           # Tạo bài viết
+│   ├── post/              # Post card + actions
+│   └── post-media/        # Carousel media
+│       └── feed-video/    # Player video inline
+├── reels/
+│   ├── reels-feed.tsx     # Entry (public)
+│   ├── player/
+│   ├── controls/
+│   └── meta/
+├── chat/
+│   ├── dock/              # State, hooks, shell
+│   ├── panels/
+│   └── modals/
+├── profile/
+│   ├── profile-view.tsx   # Entry
+│   ├── header/
+│   ├── grid/
+│   ├── tabs/
+│   └── follow/
+├── shared/                # Primitives tái sử dụng — giữ flat nếu < 15 file
+└── messages/              # Domain nhỏ — flat OK
+```
+
+## Quy tắc đặt tên
+
+| Vai trò | Pattern | Ví dụ |
+|--------|---------|--------|
+| Entry / orchestrator | `{feature}.tsx` ở root domain hoặc subfolder | `feed/feed.tsx`, `profile-view.tsx` |
+| Sub-UI | `{feature}-{part}.tsx` | `post-card.tsx` |
+| Trong subfolder | **Bỏ prefix lặp** nếu rõ ngữ cảnh | `controls/volume-control.tsx` (tuỳ chọn) |
+
+## Import
+
+- **Bên ngoài domain** dùng alias đầy đủ: `@/components/home/post/post-card`.
+- **Nội bộ subfolder** dùng relative: `../compose/create-post-modal`.
+- Không tạo barrel `index.ts` trừ khi re-export legacy (`feed-video.tsx`).
+
+## Khi nào tạo subfolder mới?
+
+```
+✅ Tạo subfolder khi:
+- 3+ file chỉ dùng bởi 1 component cha
+- Cụm UI có thể mô tả bằng 1 câu ("bottom bar video feed")
+
+❌ Không tạo subfolder khi:
+- Chỉ 1–2 file
+- File dùng chung ≥ 2 domain → đưa vào shared/ hoặc lib/
+```
+
+## Checklist trước khi hoàn thành task nhiều file
+
+1. Domain folder còn flat quá 12–15 file không? → nhóm theo feature con.
+2. File mới có prefix trùng 100% tên folder cha không? → cân nhắc bỏ prefix.
+3. Import path từ `app/` trỏ tới entry rõ ràng?
+4. Chạy `npx tsc --noEmit` trong `apps/web` sau khi move file.

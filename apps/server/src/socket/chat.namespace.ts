@@ -1,16 +1,26 @@
+/**
+ * Namespace `/chat` — xác thực, phòng (rooms) và các event realtime.
+ *
+ * Phòng dùng trong file này:
+ * - `user:{userId}`   → nhận tin nhắn 1-1
+ * - `group:{groupId}` → broadcast tin nhóm
+ */
+
 import type { IncomingHttpHeaders } from 'node:http';
 
+import { prisma } from '@threads/db';
 import { fromNodeHeaders } from 'better-auth/node';
 import type { Namespace, Socket } from 'socket.io';
-
-import { prisma } from '@threads/db';
 
 import { auth } from '../lib/auth.js';
 import { logger } from '../lib/logger.js';
 import { verifySocketToken } from '../lib/socket-token.js';
 import * as chatService from '../modules/chat/chat.service.js';
 
-// Đăng nhập vào namespace `/chat` bằng token Socket.io.
+/**
+ * Middleware xác thực namespace `/chat`.
+ * Ưu tiên token HMAC (handshake.auth.token), fallback về cookie session Better Auth.
+ */
 function registerChatAuth(chatNs: Namespace) {
   chatNs.use((socket, next) => {
     const raw =
@@ -25,7 +35,6 @@ function registerChatAuth(chatNs: Namespace) {
         return;
       }
     }
-
     void auth.api
       .getSession({
         headers: fromNodeHeaders(socket.handshake.headers as IncomingHttpHeaders),
@@ -42,7 +51,7 @@ function registerChatAuth(chatNs: Namespace) {
   });
 }
 
-// Tham gia các phòng nhóm cho user.
+/** Join sẵn tất cả phòng nhóm user đang thuộc về (query DB một lần lúc connect). */
 async function joinGroupRooms(socket: Socket, userId: string) {
   const memberships = await prisma.chatGroupMember.findMany({
     where: { userId },
@@ -52,17 +61,22 @@ async function joinGroupRooms(socket: Socket, userId: string) {
     socket.join(`group:${m.groupId}`);
   }
 }
-// Đăng nhập vào namespace `/chat` bằng token Socket.io.
+
+/** Đăng ký auth + toàn bộ event handler cho namespace `/chat`. */
 export function registerChatNamespace(chatNs: Namespace) {
   registerChatAuth(chatNs);
 
   chatNs.on('connection', (socket) => {
     const userId = socket.data.userId as string;
+
     socket.join(`user:${userId}`);
     void joinGroupRooms(socket, userId).catch((err: unknown) => {
       logger.warn({ err, userId }, 'chat socket: failed to join group rooms');
     });
 
+    // ── Chat 1-1 ──────────────────────────────────────────────────────────
+
+    /** Lưu DB → push tới peer qua room `user:{peerUserId}` → ack cho sender. */
     socket.on('chat:send', async (payload: unknown, ack: (r: unknown) => void) => {
       try {
         const p = payload as { peerUserId?: unknown; text?: unknown };
@@ -72,24 +86,19 @@ export function registerChatNamespace(chatNs: Namespace) {
           ack?.({ ok: false, error: 'peerUserId không hợp lệ' });
           return;
         }
-
         const saved = await chatService.createChatMessage({
           senderId: userId,
           recipientId: peerUserId,
           body: text,
         });
-
-        const messagePayload = {
+        chatNs.to(`user:${peerUserId}`).emit('chat:message', {
           kind: 'direct' as const,
           id: saved.id,
           body: saved.body,
           createdAt: saved.createdAt.toISOString(),
           senderId: userId,
           recipientId: peerUserId,
-        };
-
-        chatNs.to(`user:${peerUserId}`).emit('chat:message', messagePayload);
-
+        });
         ack?.({
           ok: true,
           message: {
@@ -102,13 +111,11 @@ export function registerChatNamespace(chatNs: Namespace) {
         });
       } catch (err) {
         logger.warn({ err, userId }, 'chat:send failed');
-        ack?.({
-          ok: false,
-          error: err instanceof Error ? err.message : 'send failed',
-        });
+        ack?.({ ok: false, error: err instanceof Error ? err.message : 'send failed' });
       }
     });
 
+    /** Chuyển tiếp trạng thái "đang gõ" tới peer (không lưu DB). */
     socket.on('chat:typing', (payload: unknown) => {
       const p = payload as { peerUserId?: unknown };
       const peerUserId = String(p?.peerUserId ?? '');
@@ -116,6 +123,9 @@ export function registerChatNamespace(chatNs: Namespace) {
       socket.to(`user:${peerUserId}`).emit('chat:typing', { fromUserId: userId });
     });
 
+    // ── Chat nhóm ─────────────────────────────────────────────────────────
+
+    /** Chuyển tiếp "đang gõ" trong nhóm — chỉ forward nếu user là thành viên. */
     socket.on('group:typing', async (payload: unknown) => {
       const p = payload as { groupId?: unknown };
       const groupId = Number(p?.groupId);
@@ -132,6 +142,7 @@ export function registerChatNamespace(chatNs: Namespace) {
       }
     });
 
+    /** Join phòng nhóm thủ công — dùng khi user vừa được thêm vào nhóm sau khi đã connect. */
     socket.on('group:subscribe', async (payload: unknown, ack: (r: unknown) => void) => {
       try {
         const p = payload as { groupId?: unknown };
@@ -152,13 +163,11 @@ export function registerChatNamespace(chatNs: Namespace) {
         ack?.({ ok: true });
       } catch (err) {
         logger.warn({ err, userId }, 'group:subscribe failed');
-        ack?.({
-          ok: false,
-          error: err instanceof Error ? err.message : 'subscribe failed',
-        });
+        ack?.({ ok: false, error: err instanceof Error ? err.message : 'subscribe failed' });
       }
     });
 
+    /** Lưu DB → broadcast tới room nhóm (trừ sender) → ack cho sender. */
     socket.on('group:send', async (payload: unknown, ack: (r: unknown) => void) => {
       try {
         const p = payload as { groupId?: unknown; text?: unknown };
@@ -168,24 +177,19 @@ export function registerChatNamespace(chatNs: Namespace) {
           ack?.({ ok: false, error: 'groupId không hợp lệ' });
           return;
         }
-
         const saved = await chatService.createGroupMessage({
           senderId: userId,
           groupId,
           body: text,
         });
-
-        const out = {
+        socket.to(`group:${groupId}`).emit('chat:group:message', {
           kind: 'group' as const,
           id: saved.id,
           groupId: saved.groupId,
           senderId: saved.senderId,
           body: saved.body,
           createdAt: saved.createdAt.toISOString(),
-        };
-
-        socket.to(`group:${groupId}`).emit('chat:group:message', out);
-
+        });
         ack?.({
           ok: true,
           message: {
@@ -198,10 +202,7 @@ export function registerChatNamespace(chatNs: Namespace) {
         });
       } catch (err) {
         logger.warn({ err, userId }, 'group:send failed');
-        ack?.({
-          ok: false,
-          error: err instanceof Error ? err.message : 'send failed',
-        });
+        ack?.({ ok: false, error: err instanceof Error ? err.message : 'send failed' });
       }
     });
 

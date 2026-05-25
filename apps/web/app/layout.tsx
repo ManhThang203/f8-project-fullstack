@@ -6,8 +6,15 @@ import { ProvidersShell } from '@/components/shared/providers-shell';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Threads Clone',
-  description: 'A production-ready Threads-like social media app.',
+  title: {
+    default: 'Cotsy',
+    template: 'Cotsy | %s',
+  },
+  description: 'Cotsy is a social media app.',
+  icons: {
+    icon: '/icon/Logo-app-2.webp',
+    apple: '/icon/Logo-app-2.webp',
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

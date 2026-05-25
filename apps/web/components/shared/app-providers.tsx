@@ -2,8 +2,8 @@
 
 import type { ReactNode } from 'react';
 
-import { ChatDockProvider } from '@/components/chat/chat-dock-context';
-import { MessengerChatDock } from '@/components/chat/messenger-chat-dock';
+import { ChatDockProvider } from '@/components/chat/dock/chat-dock-context';
+import { MessengerChatDock } from '@/components/chat/dock/messenger-chat-dock';
 import { AppToaster } from '@/components/shared/app-toaster';
 import { ClientOnly } from '@/components/shared/client-only';
 import { QueryProvider } from '@/components/shared/query-provider';

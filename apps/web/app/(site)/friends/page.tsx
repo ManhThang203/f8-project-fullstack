@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Bạn bè | Threads Clone',
+  title: 'Bạn bè',
   description: 'Bạn bè',
 };
 

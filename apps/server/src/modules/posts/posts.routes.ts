@@ -1,4 +1,11 @@
-import { createPostBodySchema, cursorPageQuerySchema, ok, type CursorPageQuery } from '@threads/shared';
+import {
+  createPostBodySchema,
+  cursorPageQuerySchema,
+  ok,
+  reelsFeedQuerySchema,
+  type CursorPageQuery,
+  type ReelsFeedQuery,
+} from '@threads/shared';
 import { Router } from 'express';
 
 import { requireAuth } from '../../middleware/auth.middleware.js';
@@ -8,6 +15,39 @@ import { validate } from '../../middleware/validate.middleware.js';
 import * as postsService from './posts.service.js';
 
 const router = Router();
+
+/**
+ * @openapi
+ * /posts/reels:
+ *   get:
+ *     summary: Random reels feed (video posts)
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: query
+ *         name: cursor
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Shuffled reels feed
+ */
+router.get('/reels', validate(reelsFeedQuerySchema, 'query'), async (req, res, next) => {
+  try {
+    const viewerId = req.auth?.userId ?? null;
+    const { items, nextCursor } = await postsService.listReelsFeed(
+      req.query as unknown as ReelsFeedQuery,
+      viewerId,
+    );
+    res.json(ok(items, { nextCursor }));
+  } catch (e) {
+    next(e);
+  }
+});
 
 /**
  * @openapi
