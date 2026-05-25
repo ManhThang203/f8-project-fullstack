@@ -32,3 +32,19 @@ export interface PostFeedItemDto {
 export interface PostFeedMeta {
   nextCursor: string | null;
 }
+
+/** Single item in the reels feed. */
+export interface ReelsFeedItemDto {
+  id: string;
+  content: string;
+  createdAt: string;
+  author: PostAuthorDto;
+  replyCount: number;
+  likeCount: number;
+  isFollowing: boolean;
+  video: PostMediaDto;
+}
+
+export interface ReelsFeedMeta {
+  nextCursor: string | null;
+}

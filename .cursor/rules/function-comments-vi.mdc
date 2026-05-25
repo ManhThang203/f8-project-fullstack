@@ -1,0 +1,64 @@
+---
+description: Comment tiếng Việt ngắn gọn cho các hàm xử lý (service, handler, util)
+alwaysApply: true
+---
+
+# Comment hàm xử lý (tiếng Việt)
+
+Mọi **hàm xử lý** (business logic, transform dữ liệu, side-effect) phải có comment **tiếng Việt** ngay trên khai báo hàm. Comment ngắn, dễ đọc — giải thích *hàm làm gì*, không mô tả từng dòng code.
+
+## Áp dụng cho
+
+| Loại | Ví dụ đường dẫn |
+|---|---|
+| Service / business logic | `*.service.ts`, `modules/**` |
+| Route / controller handler | `*.routes.ts`, `*.controller.ts` |
+| Mapper, util, helper xử lý dữ liệu | `*.mapper.ts`, `*.utils.ts`, `lib/**` |
+| Custom hook có logic phức tạp | `hooks/use-*.ts` |
+| Event handler có logic nghiệp vụ | handler trong component (không phải `onClick={() => setOpen(true)}`) |
+
+## Không bắt buộc
+
+- Component React thuần UI (chỉ render JSX)
+- Getter/setter, wrapper một dòng rõ nghĩa
+- Callback trivial: `onClick={() => setOpen(true)}`, `map((item) => item.id)`
+- Type / interface / enum
+- Test (`*.test.ts`, `*.spec.ts`)
+
+## Quy tắc viết comment
+
+1. **Ngôn ngữ:** tiếng Việt; thuật ngữ kỹ thuật giữ nguyên nếu phổ biến (API, cache, token, cursor…).
+2. **Độ dài:** 1 dòng cho hàm đơn giản; tối đa 3 dòng nếu cần nêu điều kiện / side-effect quan trọng.
+3. **Nội dung:** mô tả mục đích và kết quả chính — không lặp lại tên hàm, không comment hiển nhiên.
+4. **Format:** JSDoc `/** ... */` cho export hoặc hàm public; `//` một dòng cho helper nội bộ ngắn.
+
+## Ví dụ
+
+```typescript
+/** Lấy danh sách bài viết dạng reel, phân trang theo cursor. */
+export async function getReelsFeed(cursor?: string) { ... }
+
+/** Map bản ghi DB sang DTO trả về client, ẩn email và passwordHash. */
+export function toPublicUser(row: UserRow): PublicUser { ... }
+
+/** Xử lý follow: tạo quan hệ, cập nhật counter, invalidate cache Redis. */
+export async function followUser(followerId: string, targetId: string) { ... }
+```
+
+```typescript
+// ❌ Thừa / hiển nhiên
+/** Hàm follow user */
+function followUser() {}
+
+// ❌ Tiếng Anh (trừ khi comment giải thích thư viện bên thứ ba)
+/** Fetch posts from database */
+
+// ❌ Quá dài, mô tả implementation
+/** Hàm này dùng prisma để query bảng posts, sau đó loop qua từng item... */
+```
+
+## Checklist trước khi hoàn thành
+
+1. Hàm xử lý mới hoặc sửa đổi đã có comment tiếng Việt?
+2. Comment ≤ 3 dòng và không trùng nghĩa với tên hàm?
+3. Hàm export / public dùng `/** ... */`?

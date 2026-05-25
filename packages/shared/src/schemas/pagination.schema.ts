@@ -6,6 +6,11 @@ export const cursorPageQuerySchema = z.object({
 });
 export type CursorPageQuery = z.infer<typeof cursorPageQuerySchema>;
 
+export const reelsFeedQuerySchema = cursorPageQuerySchema.extend({
+  startPostId: z.string().min(1).optional(),
+});
+export type ReelsFeedQuery = z.infer<typeof reelsFeedQuerySchema>;
+
 export const offsetPageQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),

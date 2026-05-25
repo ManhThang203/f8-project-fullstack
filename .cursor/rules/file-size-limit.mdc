@@ -1,0 +1,57 @@
+---
+description: Giới hạn 500 dòng/file — tách component, hook, util khi vượt ngưỡng
+alwaysApply: true
+---
+
+# Giới hạn độ dài file (500 dòng)
+
+Mọi file source (`.ts`, `.tsx`, `.js`, `.jsx`) **không được vượt 500 dòng** tính cả import và export.
+
+## Khi tạo file mới
+
+- Ước lượng trước khi viết: nếu dự kiến > 500 dòng → **lên cấu trúc thư mục trước**, không viết monolith rồi tách sau.
+- Một file = một trách nhiệm rõ (một screen, một service module, một hook domain).
+
+## Khi sửa file đã có
+
+- File **≥ 450 dòng** và thay đổi của bạn sẽ đẩy qua 500 → **bắt buộc tách** trong cùng task (hoặc tách trước rồi mới thêm feature).
+- Không thêm feature mới vào file đã > 500 dòng mà không refactor.
+
+## Cách tách (theo thứ tự ưu tiên)
+
+| Phần tách | Đặt ở đâu | Khi nào |
+|---|---|---|
+| UI con, section, modal | `components/<feature>/` | JSX lặp, block UI độc lập |
+| Logic state / side-effect | `hooks/use-<feature>.ts` | `useEffect`, fetch, subscription, form state |
+| Pure helpers, mapper | `<feature>.utils.ts` hoặc `lib/` | Không phụ thuộc React |
+| Types dùng chung | `<feature>.types.ts` | Nhiều file cùng import |
+| Server / API layer | `modules/<name>/` hoặc `*.service.ts` | Business logic tách khỏi route |
+
+## Quy tắc đặt tên & import
+
+- Colocate: file con nằm cùng thư mục feature (`components/reels/reels-feed.tsx` → `reels-nav-controls.tsx`).
+- Hook tái sử dụng đặt `apps/web/hooks/` hoặc `apps/server/src/...` theo app hiện tại.
+- File cha chỉ orchestrate: import, layout, wiring — **không** giữ implementation dài.
+
+## Ví dụ
+
+```
+❌ messenger-chat-dock.tsx (700 dòng — hub + picker + window + FAB)
+
+✅ messenger-chat-dock.tsx        (~120 dòng — shell + layout)
+   chat-hub-panel.tsx
+   chat-user-picker-modal.tsx
+   chat-window-frame.tsx
+   use-chat-dock-layout.ts
+```
+
+## Ngoại lệ (hiếm, cần lý do trong PR/commit)
+
+- File generate/auto (Prisma client, lockfile) — không áp dụng.
+- Config tập trung một chỗ (`*.config.ts`) — tối đa **600 dòng** nếu tách gây khó đọc hơn.
+
+## Checklist trước khi hoàn thành task
+
+1. File đã sửa/tạo **≤ 500 dòng**?
+2. Logic tái sử dụng đã vào hook/util, không copy-paste?
+3. Import/export rõ ràng, không circular dependency?

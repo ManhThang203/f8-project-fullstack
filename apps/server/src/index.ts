@@ -1,3 +1,7 @@
+/**
+ * Entry point — khởi động HTTP server, Socket.IO và BullMQ workers trên cùng process.
+ */
+
 import { createServer } from 'node:http';
 
 import { buildApp } from './app.js';
@@ -8,9 +12,11 @@ import { startWorkers } from './workers/index.js';
 
 async function main(): Promise<void> {
   const app = buildApp();
-  const httpServer = createServer(app);
 
+  // Socket.IO gắn vào cùng httpServer để REST và WS dùng chung port.
+  const httpServer = createServer(app);
   initSocket(httpServer);
+
   const workers = startWorkers();
 
   httpServer.listen(env.SERVER_PORT, env.SERVER_HOST, () => {
@@ -20,7 +26,7 @@ async function main(): Promise<void> {
     );
   });
 
-  // Graceful shutdown
+  /** Đóng workers trước, rồi ngừng nhận kết nối mới; force exit nếu treo quá 10s. */
   const shutdown = async (signal: string) => {
     logger.info({ signal }, 'shutting down');
     await Promise.allSettled(workers.map((w) => w.close()));
