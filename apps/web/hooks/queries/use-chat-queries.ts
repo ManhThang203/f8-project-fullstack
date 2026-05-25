@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { ChatPeerDto, Conversation } from '@/components/chat/chat-dock.types';
+import type { ChatPeerDto, Conversation } from '@/components/chat/dock/chat-dock.types';
 import { apiQuery, apiQueryData } from '@/lib/api-query';
 import { queryKeys } from '@/lib/query-keys';
 

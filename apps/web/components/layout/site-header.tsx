@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
-import { useChatDockOptional } from '@/components/chat/chat-dock-context';
+import { useChatDockOptional } from '@/components/chat/dock/chat-dock-context';
 import { Avatar } from '@/components/shared/avatar';
 import { CotsyLogo } from '@/components/shared/cotsy-logo';
 import { iconButtonClass } from '@/components/shared/icon-button';

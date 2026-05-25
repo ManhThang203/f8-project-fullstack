@@ -7,6 +7,7 @@
  */
 
 let current: HTMLVideoElement | null = null;
+let controllerPausePending = false;
 
 export const feedVideoController = {
   /**
@@ -16,12 +17,20 @@ export const feedVideoController = {
   setCurrent(video: HTMLVideoElement) {
     if (current && current !== video) {
       try {
+        controllerPausePending = true;
         current.pause();
       } catch {
-        // Video cũ có thể đã unmount; bỏ qua.
+        controllerPausePending = false;
       }
     }
     current = video;
+  },
+
+  /** Pause do controller (video khác play) — hook dùng để không coi là user pause. */
+  consumeControllerPause() {
+    if (!controllerPausePending) return false;
+    controllerPausePending = false;
+    return true;
   },
 
   /**

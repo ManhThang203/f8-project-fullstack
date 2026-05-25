@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import { FacebookReelsPlayer } from './facebook-reels-player';
+import { FacebookReelsPlayer } from './player/facebook-reels-player';
 import type { ReelsFeedItemDto } from './reels-types';
 
 type Props = {

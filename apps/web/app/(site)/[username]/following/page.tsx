@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import { FollowListView } from '@/components/profile/follow-list-view';
+import { FollowListView } from '@/components/profile/follow/follow-list-view';
 import { ClientOnly } from '@/components/shared/client-only';
 
 type Props = {

@@ -68,18 +68,29 @@ html.reels-scroll-lock body {
 }
 
 @media (hover: hover) {
-  .reels-stage-controls {
+  .group\/stage:not(.reels-stage-immersive) .reels-stage-controls {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
     transition: opacity 150ms, visibility 150ms;
   }
 
-  .group\/stage:hover .reels-stage-controls,
-  .group\/stage:has(.reels-stage-controls:focus-visible) .reels-stage-controls {
+  .group\/stage:not(.reels-stage-immersive):hover .reels-stage-controls,
+  .group\/stage:not(.reels-stage-immersive):has(.reels-stage-controls:focus-visible)
+    .reels-stage-controls {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .reels-stage-immersive .reels-immersive-meta {
+    bottom: 1.5rem;
+  }
+
+  .reels-stage-immersive .reels-immersive-rail {
+    bottom: 2rem;
   }
 }
 
@@ -148,10 +159,70 @@ html.reels-scroll-lock body {
 }
 
 @media (hover: none) {
-  .reels-volume-slider-wrap {
+  .reels-volume-slider-wrap--open {
     width: 8.5rem;
     padding-left: 0.25rem;
     padding-right: 0.75rem;
     opacity: 1;
   }
+}
+
+/* Feed volume slider — vertical popover (rotate horizontal track) */
+.feed-volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  width: 5rem;
+  height: 1.25rem;
+  padding-inline: 6px;
+  background: transparent;
+  transform: rotate(-90deg);
+  cursor: pointer;
+}
+
+.feed-volume-slider:focus-visible {
+  outline: none;
+}
+
+.feed-volume-slider::-webkit-slider-runnable-track {
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    rgb(255 255 255) 0%,
+    rgb(255 255 255) var(--feed-volume-pct, 100%),
+    rgb(255 255 255 / 0.3) var(--feed-volume-pct, 100%),
+    rgb(255 255 255 / 0.3) 100%
+  );
+}
+
+.feed-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -5px;
+  border-radius: 9999px;
+  background: rgb(255 255 255);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.15);
+}
+
+.feed-volume-slider::-moz-range-track {
+  height: 2px;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.3);
+}
+
+.feed-volume-slider::-moz-range-progress {
+  height: 2px;
+  border-radius: 9999px;
+  background: rgb(255 255 255);
+}
+
+.feed-volume-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 9999px;
+  background: rgb(255 255 255);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.15);
 }
