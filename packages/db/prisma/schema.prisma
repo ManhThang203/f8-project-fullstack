@@ -147,6 +147,8 @@ model Follow {
 
 // ───────────────────────────── Posts ─────────────────────────────
 
+/// DB-only (migration 20260526120000): search_vector tsvector GENERATED ALWAYS
+/// AS (to_tsvector('simple', content)) STORED + GIN index. Query FTS chỉ qua raw SQL.
 model Post {
   id       String  @id @default(cuid())
   authorId String

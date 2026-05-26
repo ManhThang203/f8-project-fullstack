@@ -33,7 +33,8 @@
     "docker:down": "docker compose -f docker/docker-compose.yml --env-file docker/.env.docker down",
     "docker:build": "docker build -f docker/Dockerfile -t threads-clone .",
     "docker:infra:up": "docker compose -f docker/docker-compose.yml --env-file docker/.env.docker up -d postgres redis minio",
-    "docker:infra:stop": "docker compose -f docker/docker-compose.yml --env-file docker/.env.docker stop postgres redis minio"
+    "docker:infra:stop": "docker compose -f docker/docker-compose.yml --env-file docker/.env.docker stop postgres redis minio",
+    "search:backfill-embeddings": "pnpm --filter @threads/server backfill-embeddings"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

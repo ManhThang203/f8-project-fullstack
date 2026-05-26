@@ -16,9 +16,11 @@ export const QueueName = {
   Media: 'media-processing',
   Email: 'email-sending',
   Notification: 'push-notification',
+  Embedding: 'embedding-index',
 } as const;
 export type QueueName = (typeof QueueName)[keyof typeof QueueName];
 
 export const mediaQueue = new Queue(QueueName.Media, defaults);
 export const emailQueue = new Queue(QueueName.Email, defaults);
 export const notificationQueue = new Queue(QueueName.Notification, defaults);
+export const embeddingQueue = new Queue(QueueName.Embedding, defaults);

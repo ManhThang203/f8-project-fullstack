@@ -1,14 +1,14 @@
 import { MediaKind, MediaStatus, prisma } from '@threads/db';
 import type { CreatePostBody, CursorPageQuery, PostFeedItemDto, ReelsFeedItemDto, ReelsFeedQuery } from '@threads/shared';
 
-import {
-  destroyMany,
+import { destroyMany,
   isCloudinaryConfigured,
   uploadBuffer,
   type CloudinaryUploadResult,
 } from '../../lib/cloudinary.js';
 import { AppError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
+import { embeddingQueue } from '../../queues/index.js';
 
 import { mapPostToFeedItemDto, mapPostToReelsFeedItemDto, postFeedInclude, postReelInclude } from './posts.mapper.js';
 
@@ -307,6 +307,12 @@ export async function createPost(opts: {
       where: { id: postId },
       include: postFeedInclude,
     });
+
+    if (!opts.body.parentId && content) {
+      await embeddingQueue
+        .add('index', { postId, content }, { jobId: postId })
+        .catch((err) => logger.error({ err, postId }, 'failed to enqueue embedding job'));
+    }
 
     return mapPostToFeedItemDto(row);
   } catch (error) {
