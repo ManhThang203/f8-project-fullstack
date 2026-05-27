@@ -12,6 +12,7 @@
     "clean": "rimraf .next .turbo"
   },
   "dependencies": {
+    "@aejkatappaja/phantom-ui": "^0.10.1",
     "@hookform/resolvers": "^3.9.1",
     "@tanstack/react-query": "^5.62.0",
     "@threads/shared": "workspace:*",
@@ -19,8 +20,10 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^16.4.5",
+    "emoji-picker-react": "^4.19.1",
     "i18next": "^24.0.5",
     "i18next-resources-to-backend": "^1.2.1",
+    "idb-keyval": "^6.2.4",
     "isomorphic-dompurify": "^2.18.0",
     "lucide-react": "^0.462.0",
     "motion": "^12.39.0",
@@ -29,7 +32,7 @@
     "react-dom": "19.2.6",
     "react-hook-form": "^7.53.2",
     "react-i18next": "^15.1.2",
-    "react-loading-skeleton": "^3.5.0",
+    "react-virtuoso": "^4.18.7",
     "socket.io-client": "^4.8.1",
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.5.5",

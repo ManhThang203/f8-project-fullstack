@@ -27,6 +27,7 @@ type Props = {
   username?: string | null;
   name?: string | null;
   avatarUrl?: string | null;
+  parentPost?: PostFeedItemDto;
   onPosted: (post: PostFeedItemDto) => void;
 };
 
@@ -46,6 +47,7 @@ export function CreatePostModal({
   username,
   name,
   avatarUrl,
+  parentPost,
   onPosted,
 }: Props) {
   const [content, setContent] = useState('');
@@ -58,7 +60,7 @@ export function CreatePostModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const displayName = name ?? username ?? 'Bạn';
-  const placeholder = `${displayName} ơi, bạn đang nghĩ gì thế?`;
+  const placeholder = parentPost ? `Trả lời ${parentPost.author.name ?? parentPost.author.username}...` : `${displayName} ơi, bạn đang nghĩ gì thế?`;
 
   const imageCount = drafts.filter((d) => isImageMime(d.file.type)).length;
   const videoCount = drafts.filter((d) => isVideoMime(d.file.type)).length;
@@ -127,6 +129,7 @@ export function CreatePostModal({
     const result = await createPostWithMedia({
       content: text,
       files,
+      parentId: parentPost?.id,
       onUploadProgress: (fileIndex, percent, fileName) => {
         setUploadLabel(fileName);
         setDrafts((prev) =>
@@ -177,9 +180,22 @@ export function CreatePostModal({
           'flex min-h-0 flex-col',
         )}
       >
-        <Modal.Header title="Tạo bài viết" closeDisabled={busy} />
+        <Modal.Header title={parentPost ? "Trả lời bình luận" : "Tạo bài viết"} closeDisabled={busy} />
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+          {parentPost && (
+            <div className="mb-4 relative border-l-2 border-border ml-5 pl-4">
+              <div className="absolute -left-[21px] top-0 bg-background">
+                <Avatar src={parentPost.author.image || null} name={parentPost.author.name} username={parentPost.author.username} size="sm" />
+              </div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-semibold text-sm">{parentPost.author.name ?? parentPost.author.username}</span>
+                <span className="text-muted-foreground text-sm">@{parentPost.author.username}</span>
+              </div>
+              <p className="text-sm text-foreground line-clamp-3 whitespace-pre-wrap">{parentPost.content}</p>
+            </div>
+          )}
+
           <div className="mb-4 flex items-center gap-3">
             <Avatar as="span" src={avatarUrl} name={name} username={username} size="md" />
             <div className="flex flex-col">

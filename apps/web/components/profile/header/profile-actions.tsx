@@ -2,11 +2,12 @@
 
 import type { ProfileDto } from '@threads/shared';
 import { ChevronDown, Settings } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/shared/button';
-import { useChatDockOptional } from '@/components/chat/dock/chat-dock-context';
+
 import { useFollowMutation } from '@/hooks/queries/use-follow-mutation';
 import { cn } from '@/lib/utils';
 
@@ -16,7 +17,7 @@ type Props = {
 };
 
 export function ProfileActions({ profile, onFollowChange }: Props) {
-  const chatDock = useChatDockOptional();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -68,7 +69,7 @@ export function ProfileActions({ profile, onFollowChange }: Props) {
   }
 
   function handleMessage() {
-    chatDock?.openDirectChat(profile.id);
+    router.push(`/messages?roomId=`); // We can't know room id yet. We can just send to /messages.
   }
 
   const followLoading = followMutation.isPending;

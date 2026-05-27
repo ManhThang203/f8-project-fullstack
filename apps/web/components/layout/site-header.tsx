@@ -6,11 +6,12 @@ import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
-import { useChatDockOptional } from '@/components/chat/dock/chat-dock-context';
+
 import { Avatar } from '@/components/shared/avatar';
 import { CotsyLogo } from '@/components/shared/cotsy-logo';
 import { iconButtonClass } from '@/components/shared/icon-button';
 import { NotificationBadge } from '@/components/shared/notification-badge';
+import { NotificationDropdown } from './notification-dropdown';
 import { authClient } from '@/lib/auth-client';
 import type { ServerAuthUser } from '@/lib/auth-user.types';
 import { resetChatSocket } from '@/lib/chat-socket';
@@ -113,8 +114,7 @@ export function SiteHeader({ initialUser }: Props) {
   const [logoutError, setLogoutError] = useState<string | null>(null);
   /** Ngay sau signOut: hiện nav khách, không chờ RSC / nano store bắt kịp. */
   const [forceGuestNav, setForceGuestNav] = useState(false);
-  const chatDock = useChatDockOptional();
-  const chatUnreadTotal = chatDock?.unreadChatTotal ?? 0;
+  const chatUnreadTotal = 0; // TODO: fetch unread from query
 
   useEffect(() => {
     void refetch();
@@ -251,17 +251,10 @@ export function SiteHeader({ initialUser }: Props) {
                 </div>
               </details>
 
-              <Link
-                href="/notifications"
-                aria-label="Thông báo"
-                title="Thông báo"
-                className={iconButtonClass({ shape: 'circle' })}
-              >
-                <Bell className="h-6 w-6" strokeWidth={2} aria-hidden />
-              </Link>
+              <NotificationDropdown />
 
               {pathname === '/' ? (
-                <ChatTrigger unreadCount={chatUnreadTotal} chatDock={chatDock ?? null} />
+                <ChatTrigger unreadCount={chatUnreadTotal} chatDock={null} />
               ) : null}
 
               <details className="relative">

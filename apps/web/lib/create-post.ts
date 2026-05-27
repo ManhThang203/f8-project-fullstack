@@ -20,10 +20,14 @@ function parseResponse(text: string): ApiResponse<PostFeedItemDto> | null {
 export async function createPostWithMedia(opts: {
   content: string;
   files: File[];
+  parentId?: string;
   onUploadProgress?: (fileIndex: number, percent: number, fileName: string) => void;
 }): Promise<CreatePostWithMediaResult> {
   const formData = new FormData();
   formData.append('content', opts.content.trim());
+  if (opts.parentId) {
+    formData.append('parentId', opts.parentId);
+  }
   for (const file of opts.files) {
     formData.append('files', file);
   }

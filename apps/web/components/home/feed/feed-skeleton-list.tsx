@@ -1,25 +1,44 @@
 'use client';
 
-import { FeedPostSkeleton, FeedSkeletonTheme } from './feed-post-skeleton';
+import { PostCard } from '../post/post-card';
+import type { PostFeedItemDto } from '@threads/shared';
+import '@aejkatappaja/phantom-ui';
 
-const SKELETON_ITEMS: Array<{ variant: 'full' | 'noMedia' | 'short' }> = [
-  { variant: 'full' },
-  { variant: 'noMedia' },
-  { variant: 'short' },
-  { variant: 'full' },
+const fakePostNoMedia: PostFeedItemDto = {
+  id: 'fake-no-media',
+  author: { id: 'u1', username: 'username', name: 'Tên người dùng', image: null },
+  content: 'Đây là một đoạn nội dung bài đăng mẫu dùng để tạo bộ khung loading. Nó chiếm khoảng hai đến ba dòng để giao diện trông tự nhiên hơn.',
+  createdAt: new Date().toISOString(),
+  replyCount: 0,
+  likeCount: 0,
+  myReaction: null,
+  media: [],
+};
+
+const fakePostShort: PostFeedItemDto = {
+  ...fakePostNoMedia,
+  id: 'fake-short',
+  content: 'Nội dung ngắn để khung xương (skeleton) có độ dài đa dạng.',
+};
+
+const SKELETON_ITEMS = [
+  fakePostNoMedia,
+  fakePostNoMedia,
+  fakePostShort,
+  fakePostNoMedia,
 ];
 
 export function FeedSkeletonList() {
   return (
     <>
       <span className="sr-only">Đang tải feed…</span>
-      <FeedSkeletonTheme>
+      <phantom-ui loading>
         <ul className="flex flex-col">
           {SKELETON_ITEMS.map((item, index) => (
-            <FeedPostSkeleton key={index} variant={item.variant} />
+            <PostCard key={index} post={{ ...item, id: `fake-${index}` }} onDismiss={() => {}} />
           ))}
         </ul>
-      </FeedSkeletonTheme>
+      </phantom-ui>
     </>
   );
 }

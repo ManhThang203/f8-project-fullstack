@@ -7,6 +7,7 @@ import { createServer } from 'node:http';
 import { buildApp } from './app.js';
 import { env } from './config/env.js';
 import { logger } from './lib/logger.js';
+import { setRealtimeIo } from './lib/realtime.js';
 import { initSocket } from './socket/socket.js';
 import { startWorkers } from './workers/index.js';
 
@@ -15,9 +16,20 @@ async function main(): Promise<void> {
 
   // Socket.IO gắn vào cùng httpServer để REST và WS dùng chung port.
   const httpServer = createServer(app);
-  initSocket(httpServer);
+  const io = initSocket(httpServer);
+  setRealtimeIo(io);
 
   const workers = startWorkers();
+
+  const { mediaCleanupQueue } = await import('./queues/index.js');
+  await mediaCleanupQueue.add(
+    'hourly-cleanup',
+    {},
+    {
+      repeat: { pattern: '0 * * * *' }, // Chạy mỗi giờ một lần
+      jobId: 'e2ee-media-cleanup', // Tránh trùng lặp job
+    },
+  );
 
   httpServer.listen(env.SERVER_PORT, env.SERVER_HOST, () => {
     logger.info(

@@ -27,6 +27,40 @@ export function startWorkers(): Worker[] {
       async (job) => logger.info({ jobId: job.id, name: job.name }, 'notification job (noop)'),
       baseOpts,
     ),
+    new Worker(
+      QueueName.MediaCleanup,
+      async (job) => {
+        const { prisma } = await import('@threads/db');
+        const fs = await import('fs');
+        const path = await import('path');
+
+        logger.info({ jobId: job.id }, 'Bắt đầu dọn dẹp media E2EE hết hạn');
+        
+        // Lấy tất cả media đã hết hạn (expiresAt < now)
+        const expiredMedia = await prisma.media.findMany({
+          where: {
+            expiresAt: { lt: new Date() },
+          },
+        });
+
+        if (expiredMedia.length === 0) return;
+
+        let deletedCount = 0;
+        for (const media of expiredMedia) {
+          if (media.storagePath) {
+            const filePath = path.resolve(process.cwd(), 'uploads', media.storagePath);
+            if (fs.existsSync(filePath)) {
+              fs.unlinkSync(filePath);
+            }
+          }
+          await prisma.media.delete({ where: { id: media.id } });
+          deletedCount++;
+        }
+
+        logger.info({ jobId: job.id, deletedCount }, 'Hoàn thành dọn dẹp media');
+      },
+      baseOpts,
+    ),
   ];
 
   for (const w of workers) {

@@ -10,6 +10,7 @@ import { PostCard } from '../post/post-card';
 import { FeedSkeletonList } from './feed-skeleton-list';
 import { flattenPostsFeedPages, usePostsFeed } from '@/hooks/queries/use-posts-feed';
 import { authClient } from '@/lib/auth-client';
+import { getSocket } from '@/lib/socket';
 import type { ServerAuthUser } from '@/lib/auth-user.types';
 import { queryKeys } from '@/lib/query-keys';
 
@@ -102,6 +103,30 @@ export function HomeFeed({ initialUser }: Props) {
       };
     });
   }
+
+  useEffect(() => {
+    const socket = getSocket('/feed');
+
+    function onPostReacted(payload: { postId: string; likeCount: number }) {
+      queryClient.setQueryData(queryKeys.posts.feed, (old: typeof data) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            data: page.data.map((p) =>
+              p.id === payload.postId ? { ...p, likeCount: payload.likeCount } : p
+            ),
+          })),
+        };
+      });
+    }
+
+    socket.on('post:reacted', onPostReacted);
+    return () => {
+      socket.off('post:reacted', onPostReacted);
+    };
+  }, [queryClient]);
 
   const errorMessage = isError ? error.message : null;
 
