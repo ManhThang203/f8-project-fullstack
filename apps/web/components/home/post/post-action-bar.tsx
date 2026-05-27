@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 
 import { PostFooter } from './post-footer';
 import { ReactionFace, type PostReactionId } from './reaction-face';
+import { useReactPost } from '@/hooks/use-react-post';
 
 import { cn } from '@/lib/utils';
 
@@ -24,24 +25,28 @@ const PICKER_HIDE_MS = 200;
 const LONG_PRESS_MS = 400;
 
 type Props = {
+  postId: string;
   replyCount: number;
+  initialLikeCount: number;
+  initialReaction: PostReactionId | null;
+  onCommentClick?: () => void;
 };
 
 function reactionSummaryStack(
-  reaction: PostReactionId | null,
+  reaction: PostReactionId | null | undefined,
   likeCount: number,
 ): PostReactionId[] {
   if (likeCount <= 0) return [];
-  const primary = reaction ?? 'like';
+  const primary = reaction || 'like';
   const secondary = primary === 'like' ? 'haha' : 'like';
   return [primary, secondary];
 }
 
-export function PostActionBar({ replyCount }: Props) {
-  const [reaction, setReaction] = useState<PostReactionId | null>(null);
-  const [likeCount, setLikeCount] = useState(0);
+export function PostActionBar({ postId, replyCount, initialLikeCount, initialReaction, onCommentClick }: Props) {
   const [shareCount, setShareCount] = useState(0);
   const [showPicker, setShowPicker] = useState(false);
+
+  const reactMutation = useReactPost();
 
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -65,32 +70,39 @@ export function PostActionBar({ replyCount }: Props) {
 
   useEffect(() => () => clearHideTimer(), [clearHideTimer]);
 
+  function submitReaction(newReaction: PostReactionId | null) {
+    reactMutation.mutate({ postId, type: newReaction }, {
+      onError: () => {
+        toast.error('Có lỗi xảy ra, vui lòng thử lại');
+      }
+    });
+  }
+
   function selectReaction(id: PostReactionId) {
-    if (reaction === id) {
-      setReaction(null);
-      setLikeCount((c) => Math.max(0, c - 1));
-    } else {
-      const wasEmpty = reaction === null;
-      setReaction(id);
-      if (wasEmpty) setLikeCount((c) => c + 1);
-    }
     setShowPicker(false);
+    if (initialReaction === id) {
+      submitReaction(null);
+    } else {
+      submitReaction(id);
+    }
   }
 
   function toggleLike() {
-    if (reaction === 'like') {
-      setReaction(null);
-      setLikeCount((c) => Math.max(0, c - 1));
-    } else if (reaction === null) {
-      setReaction('like');
-      setLikeCount((c) => c + 1);
+    if (initialReaction === 'like') {
+      submitReaction(null);
+    } else if (initialReaction === null) {
+      submitReaction('like');
     } else {
-      setReaction('like');
+      submitReaction('like');
     }
   }
 
   function handleComment() {
-    toast.message('Bình luận — tính năng sắp có');
+    if (onCommentClick) {
+      onCommentClick();
+    } else {
+      toast.message('Bình luận — tính năng sắp có');
+    }
   }
 
   async function handleShare() {
@@ -109,8 +121,8 @@ export function PostActionBar({ replyCount }: Props) {
   }
 
   const summaryReactions = useMemo(
-    () => reactionSummaryStack(reaction, likeCount),
-    [reaction, likeCount],
+    () => reactionSummaryStack(initialReaction, initialLikeCount),
+    [initialReaction, initialLikeCount],
   );
 
   return (
@@ -148,7 +160,7 @@ export function PostActionBar({ replyCount }: Props) {
       )}
 
       <PostFooter
-        likeCount={likeCount}
+        likeCount={initialLikeCount}
         replyCount={replyCount}
         shareCount={shareCount}
         summaryReactions={summaryReactions}
@@ -172,6 +184,7 @@ export function PostActionBar({ replyCount }: Props) {
             longPressRef.current = null;
           }
         }}
+        currentReaction={initialReaction}
       />
 
     </div>

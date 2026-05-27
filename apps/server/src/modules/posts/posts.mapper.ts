@@ -4,7 +4,7 @@ import type { PostAuthorDto, PostFeedItemDto, PostMediaDto, PostMediaType, Reels
 type PostWithAuthorAndMedia = Post & {
   author: Pick<User, 'id' | 'username' | 'name' | 'image'>;
   media: Media[];
-  _count: { replies: number };
+  _count: { replies: number; likes: number };
 };
 
 function mediaKindToType(kind: MediaKind): PostMediaType {
@@ -24,13 +24,14 @@ function mapMediaRow(m: Media, position: number): PostMediaDto {
 }
 
 /** Single mapper for list + create — keeps API shape identical for the frontend. */
-export function mapPostToFeedItemDto(post: PostWithAuthorAndMedia): PostFeedItemDto {
+export function mapPostToFeedItemDto(post: PostWithAuthorAndMedia, myReaction: string | null = null): PostFeedItemDto {
   const sortedMedia = [...post.media].sort(
     (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
   );
 
   return {
     id: post.id,
+    parentId: post.parentId,
     content: post.content,
     createdAt: post.createdAt.toISOString(),
     author: {
@@ -40,6 +41,8 @@ export function mapPostToFeedItemDto(post: PostWithAuthorAndMedia): PostFeedItem
       image: post.author.image,
     },
     replyCount: post._count.replies,
+    likeCount: post._count.likes ?? 0,
+    myReaction,
     media: sortedMedia.map((m, index) => mapMediaRow(m, index)),
   };
 }
@@ -99,5 +102,5 @@ export const postFeedInclude = {
     where: { status: { not: MediaStatus.FAILED } },
     orderBy: { createdAt: 'asc' as const },
   },
-  _count: { select: { replies: true } },
+  _count: { select: { replies: true, likes: true } },
 } as const;

@@ -3,7 +3,7 @@
 import { MessageCircle, Share2, ThumbsUp } from 'lucide-react';
 
 import { ActionButton } from './action-button';
-import { ReactionFace, type PostReactionId } from './reaction-face';
+import { ReactionFace, type PostReactionId, REACTION_LABELS, REACTION_COLORS } from './reaction-face';
 
 import { cn } from '@/lib/utils';
 
@@ -20,6 +20,7 @@ type Props = {
   onLikePointerDown?: () => void;
   onLikePointerUp?: () => void;
   onLikePointerLeave?: () => void;
+  currentReaction?: PostReactionId | null;
 };
 
 export function PostFooter({
@@ -35,7 +36,30 @@ export function PostFooter({
   onLikePointerDown,
   onLikePointerUp,
   onLikePointerLeave,
+  currentReaction,
 }: Props) {
+  const isLiked = currentReaction === 'like';
+  const hasReaction = !!currentReaction;
+
+  let likeLabel = 'Thích';
+  let likeIcon = <ThumbsUp className="h-4 w-4" strokeWidth={1.75} />;
+  let likeColor = '';
+
+  if (hasReaction) {
+    likeLabel = REACTION_LABELS[currentReaction];
+    likeColor = REACTION_COLORS[currentReaction];
+    // If it's anything but a normal 'like', show the reaction face
+    if (!isLiked) {
+      likeIcon = <ReactionFace id={currentReaction} size="sm" />;
+    } else {
+      likeIcon = <ThumbsUp className="h-4 w-4 fill-current" strokeWidth={1.75} />;
+    }
+  }
+
+  if (likeCount > 0) {
+    likeLabel = `${likeCount} ${likeLabel.toLowerCase()}`;
+  }
+
   return (
     <footer
       className={cn(
@@ -44,16 +68,17 @@ export function PostFooter({
         'flex h-12 items-center justify-between border-t px-4',
       )}
     >
-      <div className="flex items-center gap-2">
-        <div className="relative" onMouseEnter={onLikeHoverEnter} onMouseLeave={onLikeHoverLeave}>
+      <div className="flex flex-1 items-center justify-between gap-1">
+        <div className="relative flex flex-1" onMouseEnter={onLikeHoverEnter} onMouseLeave={onLikeHoverLeave}>
           <ActionButton
-            icon={<ThumbsUp className="h-4 w-4" strokeWidth={1.75} />}
+            icon={likeIcon}
             count={likeCount > 0 ? likeCount : undefined}
-            label={likeCount > 0 ? `${likeCount} lượt thích` : 'Thích'}
+            label={likeLabel}
             onClick={onLikeClick}
             onPointerDown={onLikePointerDown}
             onPointerUp={onLikePointerUp}
             onPointerLeave={onLikePointerLeave}
+            className={likeColor}
           />
         </div>
 

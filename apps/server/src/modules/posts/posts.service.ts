@@ -11,6 +11,7 @@ import { AppError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
 
 import { mapPostToFeedItemDto, mapPostToReelsFeedItemDto, postFeedInclude, postReelInclude } from './posts.mapper.js';
+import { createNotification } from '../notifications/notifications.service.js';
 
 const IMAGE_MAX_BYTES = 10 * 1024 * 1024; // 10MB
 const VIDEO_MAX_BYTES = 500 * 1024 * 1024; // 500MB
@@ -99,7 +100,7 @@ function validatePostFiles(files: Express.Multer.File[], content: string): void 
 }
 
 // Lấy danh sách bài viết + phân trang khi cuộn xuống
-export async function listFeed(query: CursorPageQuery): Promise<{
+export async function listFeed(query: CursorPageQuery, viewerId?: string | null): Promise<{
   items: PostFeedItemDto[];
   nextCursor: string | null;
 }> {
@@ -130,7 +131,19 @@ export async function listFeed(query: CursorPageQuery): Promise<{
   const hasMore = rows.length > query.limit;
   const page = hasMore ? rows.slice(0, query.limit) : rows;
 
-  const items = page.map((p) => mapPostToFeedItemDto(p));
+  console.log(`[listFeed] viewerId=`, viewerId, `pageLength=`, page.length);
+
+  let viewerReactionMap = new Map<string, string>();
+  if (viewerId && page.length > 0) {
+    const likes = await prisma.postLike.findMany({
+      where: { userId: viewerId, postId: { in: page.map((p) => p.id) } },
+      select: { postId: true, type: true },
+    });
+    console.log(`[listFeed] likes=`, likes);
+    viewerReactionMap = new Map(likes.map((l) => [l.postId, l.type]));
+  }
+
+  const items = page.map((p) => mapPostToFeedItemDto(p, viewerReactionMap.get(p.id) ?? null));
 
   const tail = page[page.length - 1];
   const nextCursor = hasMore && tail ? encodeCursor(tail.createdAt, tail.id) : null;
@@ -233,6 +246,106 @@ export async function listReelsFeed(
   return { items, nextCursor };
 }
 
+export async function getPostById(postId: string, viewerId?: string | null): Promise<PostFeedItemDto> {
+  const row = await prisma.post.findUnique({
+    where: { id: postId, deletedAt: null },
+    include: postFeedInclude,
+  });
+
+  if (!row) {
+    throw AppError.notFound('Bài viết không tồn tại hoặc đã bị xóa');
+  }
+
+  let myReaction: string | null = null;
+  if (viewerId) {
+    const like = await prisma.postLike.findUnique({
+      where: { userId_postId: { userId: viewerId, postId } },
+      select: { type: true },
+    });
+    if (like) myReaction = like.type;
+  }
+
+  return mapPostToFeedItemDto(row, myReaction);
+}
+
+export async function getRootPostId(postId: string): Promise<string> {
+  let currentId = postId;
+  let limit = 10;
+  
+  while (limit > 0) {
+    const post = await prisma.post.findUnique({
+      where: { id: currentId },
+      select: { parentId: true },
+    });
+    
+    if (!post) throw AppError.notFound('Bài viết không tồn tại');
+    
+    if (!post.parentId) {
+      return currentId;
+    }
+    currentId = post.parentId;
+    limit--;
+  }
+  
+  return currentId;
+}
+
+// Lấy danh sách bình luận của 1 bài viết
+export async function listComments(
+  postId: string,
+  query: CursorPageQuery & { order?: 'asc' | 'desc' },
+  viewerId?: string | null,
+): Promise<{
+  items: PostFeedItemDto[];
+  nextCursor: string | null;
+}> {
+  const take = query.limit + 1;
+  const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
+  const isDesc = query.order !== 'asc'; // default desc
+  const op = isDesc ? 'lt' : 'gt';
+
+  const where = cursorData
+    ? {
+        deletedAt: null,
+        parentId: postId,
+        OR: [
+          { createdAt: { [op]: cursorData.createdAt } },
+          { AND: [{ createdAt: { equals: cursorData.createdAt } }, { id: { [op]: cursorData.id } }] },
+        ],
+      }
+    : {
+        deletedAt: null,
+        parentId: postId,
+      };
+
+  const rows = await prisma.post.findMany({
+    where,
+    orderBy: [{ createdAt: isDesc ? 'desc' : 'asc' }, { id: isDesc ? 'desc' : 'asc' }],
+    take,
+    include: postFeedInclude,
+  });
+
+  const hasMore = rows.length > query.limit;
+  const page = hasMore ? rows.slice(0, query.limit) : rows;
+
+  let viewerReactionMap = new Map<string, string>();
+  if (viewerId && page.length > 0) {
+    const likes = await prisma.postLike.findMany({
+      where: { userId: viewerId, postId: { in: page.map((p) => p.id) } },
+      select: { postId: true, type: true },
+    });
+    viewerReactionMap = new Map(likes.map((l) => [l.postId, l.type]));
+  }
+
+  const items = page.map((p) => mapPostToFeedItemDto(p, viewerReactionMap.get(p.id) ?? null));
+
+  const tail = page[page.length - 1];
+  const nextCursor = hasMore && tail ? encodeCursor(tail.createdAt, tail.id) : null;
+
+  return { items, nextCursor };
+}
+
+
 // Tạo bài viết
 export async function createPost(opts: {
   authorId: string;
@@ -286,15 +399,15 @@ export async function createPost(opts: {
             return {
               ownerId: opts.authorId,
               postId: post.id,
-              kind: isVideo ? MediaKind.VIDEO : MediaKind.IMAGE,
-              status: MediaStatus.READY,
+              kind: isVideo ? 'VIDEO' : 'IMAGE',
+              status: 'READY',
               mimeType: file.mimetype,
-              sizeBytes: result.bytes,
-              storageKey: result.publicId,
-              publicUrl: result.secureUrl,
-              width: result.width,
-              height: result.height,
-              durationMs: result.durationMs,
+              sizeBytes: file.size,
+              storagePath: result.public_id, // Cloudinary public_id
+              publicUrl: result.secure_url,
+              width: result.width || null,
+              height: result.height || null,
+              durationMs: isVideo && result.duration ? Math.floor(result.duration * 1000) : null,
             };
           }),
         });
@@ -308,6 +421,51 @@ export async function createPost(opts: {
       include: postFeedInclude,
     });
 
+    if (opts.body.parentId) {
+      const parentPost = await prisma.post.findUnique({
+        where: { id: opts.body.parentId },
+        select: { id: true, authorId: true }
+      });
+
+      if (parentPost) {
+        if (parentPost.authorId !== opts.authorId) {
+          await createNotification({
+            recipientId: parentPost.authorId,
+            actorId: opts.authorId,
+            type: 'POST_REPLIED',
+            entityType: 'post',
+            entityId: postId,
+          });
+        }
+
+        const parentLikers = await prisma.postLike.findMany({
+          where: { postId: parentPost.id },
+          select: { userId: true }
+        });
+        const parentCommenters = await prisma.post.findMany({
+          where: { parentId: parentPost.id, deletedAt: null },
+          select: { authorId: true }
+        });
+        
+        const followers = new Set<string>();
+        parentLikers.forEach(l => followers.add(l.userId));
+        parentCommenters.forEach(c => followers.add(c.authorId));
+        
+        followers.delete(opts.authorId);
+        followers.delete(parentPost.authorId);
+        
+        for (const recipientId of Array.from(followers)) {
+          await createNotification({
+            recipientId,
+            actorId: opts.authorId,
+            type: 'POST_COMMENTED_FOLLOWED',
+            entityType: 'post',
+            entityId: postId,
+          });
+        }
+      }
+    }
+
     return mapPostToFeedItemDto(row);
   } catch (error) {
     if (uploaded.length > 0) {
@@ -317,4 +475,65 @@ export async function createPost(opts: {
     }
     throw error;
   }
+}
+
+export async function setPostReaction(postId: string, userId: string, reactionType: string | null) {
+  // Check if post exists
+  const post = await prisma.post.findUnique({
+    where: { id: postId, deletedAt: null },
+  });
+  if (!post) throw AppError.notFound('Bài viết không tồn tại');
+
+  if (reactionType) {
+    await prisma.postLike.upsert({
+      where: { userId_postId: { userId, postId } },
+      update: { type: reactionType },
+      create: { userId, postId, type: reactionType },
+    });
+    
+    if (userId !== post.authorId) {
+      await createNotification({
+        recipientId: post.authorId,
+        actorId: userId,
+        type: 'POST_LIKED',
+        entityType: 'post',
+        entityId: postId,
+      });
+    }
+  } else {
+    await prisma.postLike.deleteMany({
+      where: { userId, postId },
+    });
+  }
+
+  // Lấy tổng like sau khi update
+  const likeCount = await prisma.postLike.count({ where: { postId } });
+  
+  return { postId, reactionType, likeCount };
+}
+
+// Xóa bài viết / bình luận
+export async function deletePost(postId: string, userId: string) {
+  const post = await prisma.post.findUnique({
+    where: { id: postId, deletedAt: null },
+    include: { parent: { select: { authorId: true } } }
+  });
+
+  if (!post) {
+    throw AppError.notFound('Bài viết không tồn tại');
+  }
+
+  const isOwner = post.authorId === userId;
+  const isParentOwner = post.parent?.authorId === userId;
+
+  if (!isOwner && !isParentOwner) {
+    throw AppError.forbidden('Bạn không có quyền xóa nội dung này');
+  }
+
+  await prisma.post.update({
+    where: { id: postId },
+    data: { deletedAt: new Date() }
+  });
+
+  return { success: true, postId };
 }

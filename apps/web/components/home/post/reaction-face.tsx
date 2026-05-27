@@ -17,6 +17,26 @@ const REACTION_ICON_SRC: Record<PostReactionId, string> = {
   angry: '/icon/haha-icon.svg',
 };
 
+export const REACTION_LABELS: Record<PostReactionId, string> = {
+  like: 'Thích',
+  love: 'Yêu thích',
+  care: 'Thương thương',
+  haha: 'Haha',
+  wow: 'Wow',
+  sad: 'Buồn',
+  angry: 'Phẫn nộ',
+};
+
+export const REACTION_COLORS: Record<PostReactionId, string> = {
+  like: 'text-blue-600 dark:text-blue-500',
+  love: 'text-red-500',
+  care: 'text-yellow-500',
+  haha: 'text-yellow-500',
+  wow: 'text-yellow-500',
+  sad: 'text-yellow-500',
+  angry: 'text-orange-500',
+};
+
 const SIZE_PX = { sm: 24, md: 44 } as const;
 
 type Props = {
@@ -31,6 +51,10 @@ export function reactionIconSrc(id: PostReactionId): string {
 
 export function ReactionFace({ id, size = 'md', className }: Props) {
   const px = SIZE_PX[size];
+  const src = REACTION_ICON_SRC[id];
+
+  if (!src) return null;
+
   const dim = size === 'sm' ? 'h-6 w-6' : 'h-11 w-11';
 
   return (
@@ -39,7 +63,7 @@ export function ReactionFace({ id, size = 'md', className }: Props) {
       aria-hidden
     >
       <Image
-        src={REACTION_ICON_SRC[id]}
+        src={src}
         alt=""
         width={px}
         height={px}
