@@ -7,37 +7,41 @@ import { requireAuth } from '../../middleware/auth.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
 
 import * as chatService from './chat.service.js';
+import { prisma } from '@threads/db';
 
 const router = Router();
 
 const messagesQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional(),
-  before: z.coerce.number().int().optional(),
+  before: z.string().optional(),
 });
 
-const peerParamSchema = z.object({
-  peerUserId: z.string().min(1),
+const roomIdParamSchema = z.object({
+  roomId: z.string().min(1),
 });
 
-const groupIdParamSchema = z.object({
-  groupId: z.coerce.number().int().positive(),
-});
-
-const directReadBody = z.object({
-  peerUserId: z.string().min(1),
-});
-
-const createGroupBody = z.object({
-  name: z.string().min(1).max(191),
+const createRoomBody = z.object({
+  isGroup: z.boolean().optional(),
+  name: z.string().max(191).optional(),
   memberUserIds: z.array(z.string().min(1)).min(1),
+  encryptedRoomKeys: z.record(z.string()), // userId -> encrypted AES key
 });
 
-/** POST — token handshake cho Socket.io `/chat` khi dev tách cổng (cookie không gửi cross-origin). */
+const uploadPublicKeyBody = z.object({
+  publicKey: z.string().min(1),
+});
+
+const getPublicKeysBody = z.object({
+  userIds: z.array(z.string()),
+});
+
+/** POST — token handshake cho Socket.io `/chat` */
 router.post('/socket-token', requireAuth, (req, res) => {
   const token = mintSocketToken(req.auth!.userId);
   res.json(ok({ token }));
 });
 
+/** GET — danh sách hội thoại */
 router.get('/conversations', requireAuth, async (req, res, next) => {
   try {
     const rows = await chatService.listConversationsForUser(req.auth!.userId);
@@ -46,17 +50,18 @@ router.get('/conversations', requireAuth, async (req, res, next) => {
     next(e);
   }
 });
-// GET — lấy lịch sử chat 1–1.
+
+/** GET — lịch sử tin nhắn trong phòng */
 router.get(
-  '/messages/:peerUserId',
+  '/rooms/:roomId/messages',
   requireAuth,
-  validate(peerParamSchema, 'params'),
+  validate(roomIdParamSchema, 'params'),
   validate(messagesQuerySchema, 'query'),
   async (req, res, next) => {
     try {
-      const { peerUserId } = req.params as unknown as z.infer<typeof peerParamSchema>;
+      const { roomId } = req.params as unknown as z.infer<typeof roomIdParamSchema>;
       const q = req.query as z.infer<typeof messagesQuerySchema>;
-      const messages = await chatService.listChatMessagesBetween(req.auth!.userId, peerUserId, {
+      const messages = await chatService.listRoomMessages(req.auth!.userId, roomId, {
         limit: q.limit,
         beforeId: q.before,
       });
@@ -66,64 +71,59 @@ router.get(
     }
   },
 );
-/** POST — đánh dấu “đã đọc” cuộc trò chuyện 1–1 tới thời điểm hiện tại. */
-router.post('/direct/read', requireAuth, validate(directReadBody), async (req, res, next) => {
+
+/** POST — đánh dấu đã đọc phòng */
+router.post('/rooms/:roomId/read', requireAuth, validate(roomIdParamSchema, 'params'), async (req, res, next) => {
   try {
-    const { peerUserId } = req.body as z.infer<typeof directReadBody>;
-    await chatService.markDirectThreadRead(req.auth!.userId, peerUserId);
-    res.json(ok({ peerUserId }));
+    const { roomId } = req.params as unknown as z.infer<typeof roomIdParamSchema>;
+    await chatService.markRoomRead(req.auth!.userId, roomId);
+    res.json(ok({ roomId }));
   } catch (e) {
     next(e);
   }
 });
-// POST — tạo nhóm mới + đẩy creator và các member ban đầu vào `ChatGroupMember`.
-router.post('/groups', requireAuth, validate(createGroupBody), async (req, res, next) => {
+
+/** POST — Tạo phòng (kèm mã hóa room key) */
+router.post('/rooms', requireAuth, validate(createRoomBody), async (req, res, next) => {
   try {
-    const body = req.body as z.infer<typeof createGroupBody>;
-    const group = await chatService.createChatGroup({
+    const body = req.body as z.infer<typeof createRoomBody>;
+    const room = await chatService.createChatRoom({
       creatorId: req.auth!.userId,
+      isGroup: body.isGroup,
       name: body.name,
       memberUserIds: body.memberUserIds,
+      encryptedRoomKeys: body.encryptedRoomKeys,
     });
-    res.status(201).json(ok(group));
+    res.status(201).json(ok(room));
   } catch (e) {
     next(e);
   }
 });
-// GET — lấy lịch sử chat nhóm.
-router.get(
-  '/groups/:groupId/messages',
-  requireAuth,
-  validate(groupIdParamSchema, 'params'),
-  validate(messagesQuerySchema, 'query'),
-  async (req, res, next) => {
-    try {
-      const { groupId } = req.params as unknown as z.infer<typeof groupIdParamSchema>;
-      const q = req.query as z.infer<typeof messagesQuerySchema>;
-      const messages = await chatService.listGroupMessages(req.auth!.userId, groupId, {
-        limit: q.limit,
-        beforeId: q.before,
-      });
-      res.json(ok(messages));
-    } catch (e) {
-      next(e);
-    }
-  },
-);
-// POST — đánh dấu “đã đọc” cuộc trò chuyện nhóm tới thời điểm hiện tại.
-router.post(
-  '/groups/:groupId/read',
-  requireAuth,
-  validate(groupIdParamSchema, 'params'),
-  async (req, res, next) => {
-    try {
-      const { groupId } = req.params as unknown as z.infer<typeof groupIdParamSchema>;
-      await chatService.markGroupThreadRead(req.auth!.userId, groupId);
-      res.json(ok({ groupId }));
-    } catch (e) {
-      next(e);
-    }
-  },
-);
+
+/** POST — Tải lên Public Key (RSA) của user */
+router.post('/keys', requireAuth, validate(uploadPublicKeyBody), async (req, res, next) => {
+  try {
+    const { publicKey } = req.body as z.infer<typeof uploadPublicKeyBody>;
+    await prisma.userPublicKey.upsert({
+      where: { userId: req.auth!.userId },
+      update: { publicKey },
+      create: { userId: req.auth!.userId, publicKey },
+    });
+    res.json(ok({ success: true }));
+  } catch (e) {
+    next(e);
+  }
+});
+
+/** POST — Lấy Public Keys của danh sách user */
+router.post('/keys/fetch', requireAuth, validate(getPublicKeysBody), async (req, res, next) => {
+  try {
+    const { userIds } = req.body as z.infer<typeof getPublicKeysBody>;
+    const keys = await chatService.getPublicKeys(userIds);
+    res.json(ok(keys));
+  } catch (e) {
+    next(e);
+  }
+});
 
 export { router as chatRouter };
