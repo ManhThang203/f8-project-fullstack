@@ -62,6 +62,11 @@ const envSchema = z.object({
     .preprocess((val) => (val == null || val === '' ? '' : String(val).trim()), z.string())
     .default(''),
 
+  /** Vercel AI Gateway API key — embedding search (openai/text-embedding-3-small). */
+  AI_GATEWAY_API_KEY: z
+    .preprocess((val) => (val == null || val === '' ? '' : String(val).trim()), z.string())
+    .default(''),
+
   /** When `true`, disables Better Auth built-in rate limiting (local Docker / debugging only). */
   AUTH_RATE_LIMIT_DISABLED: z
     .preprocess((val) => {

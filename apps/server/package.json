@@ -8,9 +8,11 @@
     "dev": "tsx watch --clear-screen=false src/index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "tsx src/index.ts",
+    "test": "vitest run",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "type-check": "tsc --noEmit",
-    "clean": "rimraf dist .turbo"
+    "clean": "rimraf dist .turbo",
+    "backfill-embeddings": "tsx scripts/backfill-post-embeddings.ts"
   },
   "dependencies": {
     "@threads/db": "workspace:*",
@@ -28,6 +30,7 @@
     "ioredis": "^5.4.1",
     "multer": "^2.1.1",
     "nodemailer": "^8.0.7",
+    "openai": "^4.77.0",
     "pino": "^9.5.0",
     "pino-http": "^10.3.0",
     "rate-limiter-flexible": "^5.0.4",
@@ -55,6 +58,7 @@
     "eslint": "^9.15.0",
     "pino-pretty": "^11.3.0",
     "rimraf": "^6.0.1",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
   }
 }
