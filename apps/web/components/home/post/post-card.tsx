@@ -3,19 +3,35 @@
 import type { PostFeedItemDto } from '@threads/shared';
 import { X } from 'lucide-react';
 
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/query-keys';
+import { PostDetailModal } from './post-detail-modal';
 import { PostMediaCarousel } from '../post-media/post-media-carousel';
 import { PostActionBar } from './post-action-bar';
 import { PostOptionsMenu } from './post-options-menu';
+import { authClient } from '@/lib/auth-client';
 
 import { cn } from '@/lib/utils';
 
 type Props = {
   post: PostFeedItemDto;
   onDismiss: (postId: string) => void;
+  disableCommentClick?: boolean;
+  onCommentClick?: () => void;
 };
 
-export function PostCard({ post, onDismiss }: Props) {
+export function PostCard({ post, onDismiss, disableCommentClick, onCommentClick }: Props) {
   const displayInitial = post.author.username.slice(0, 1).toUpperCase();
+  const [isReplyOpen, setIsReplyOpen] = useState(false);
+  const { data: session } = authClient.useSession();
+  const queryClient = useQueryClient();
+  
+  const me = session?.user;
+
+  function handleReplyPosted(newPost: PostFeedItemDto) {
+    queryClient.invalidateQueries({ queryKey: queryKeys.posts.feed });
+  }
 
   return (
     <li className="border-border border-b px-1 py-4 first:pt-0 last:border-b-0">
@@ -81,9 +97,24 @@ export function PostCard({ post, onDismiss }: Props) {
             <PostMediaCarousel mode="feed" postId={post.id} items={post.media} />
           )}
 
-          <PostActionBar replyCount={post.replyCount} />
+          <PostActionBar 
+            postId={post.id} 
+            replyCount={post.replyCount}
+            initialLikeCount={post.likeCount}
+            initialReaction={post.myReaction as import('./reaction-face').PostReactionId | null}
+            onCommentClick={disableCommentClick ? undefined : (onCommentClick || (() => setIsReplyOpen(true)))}
+          />
         </div>
       </article>
+
+      {isReplyOpen && (
+        <PostDetailModal
+          open={isReplyOpen}
+          onClose={() => setIsReplyOpen(false)}
+          post={post}
+          me={me as any}
+        />
+      )}
     </li>
   );
 }

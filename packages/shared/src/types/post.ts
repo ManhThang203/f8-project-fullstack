@@ -22,10 +22,13 @@ export interface PostMediaDto {
 /** Single item in the home feed. */
 export interface PostFeedItemDto {
   id: string;
+  parentId: string | null;
   content: string;
   createdAt: string;
   author: PostAuthorDto;
   replyCount: number;
+  likeCount: number;
+  myReaction: string | null;
   media: PostMediaDto[];
 }
 
