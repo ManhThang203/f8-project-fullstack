@@ -48,88 +48,117 @@ model User {
   accounts        Account[]
 
   chatMessagesSent       ChatMessage[]            @relation("ChatMessageSender")
-  chatMessagesReceived   ChatMessage[]            @relation("ChatMessageRecipient")
-  chatDirectReadsAsUser  ChatDirectReadState[]    @relation("ChatDirectReadOwner")
-  chatDirectReadsAsPeer  ChatDirectReadState[]    @relation("ChatDirectReadPeer")
-  chatGroupsCreated      ChatGroup[]              @relation("ChatGroupCreator")
-  chatGroupMemberships   ChatGroupMember[]
-  chatGroupMessages      ChatGroupMessage[]       @relation("ChatGroupMessageSender")
+  chatRoomsCreated       ChatRoom[]               @relation("ChatRoomCreator")
+  chatRoomMemberships    ChatRoomMember[]
+  userPublicKey          UserPublicKey?
+  messageReactions       MessageReaction[]
 
   @@index([deletedAt])
   @@map("users")
 }
 
-// ───────────────────────────── Chat (1–1 + nhóm, Socket.io) ───────
+// ───────────────────────────── E2EE Chat (Unified) ─────────────────
 
-model ChatMessage {
-  id          Int      @id @default(autoincrement())
-  senderId    String
-  recipientId String
-  body        String
-  createdAt   DateTime @default(now())
-
-  sender    User @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  recipient User @relation("ChatMessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
-
-  @@index([senderId, recipientId, createdAt])
-  @@index([recipientId, senderId, createdAt])
-  @@map("chat_messages")
+enum RoomType {
+  DIRECT
+  GROUP
 }
 
-model ChatDirectReadState {
-  userId     String
-  peerUserId String
-  lastReadAt DateTime?
-
-  user User @relation("ChatDirectReadOwner", fields: [userId], references: [id], onDelete: Cascade)
-  peer User @relation("ChatDirectReadPeer", fields: [peerUserId], references: [id], onDelete: Cascade)
-
-  @@id([userId, peerUserId])
-  @@index([userId])
-  @@index([peerUserId])
-  @@map("chat_direct_read_states")
-}
-
-model ChatGroup {
-  id          Int      @id @default(autoincrement())
-  name        String   @db.VarChar(191)
-  createdById String
+model ChatRoom {
+  id          String   @id @default(cuid())
+  type        RoomType
+  name        String?  // Null cho DIRECT, có thể null cho GROUP nếu tự generate
+  createdById String?
   createdAt   DateTime @default(now())
 
-  createdBy User               @relation("ChatGroupCreator", fields: [createdById], references: [id], onDelete: Cascade)
-  members   ChatGroupMember[]
-  messages  ChatGroupMessage[]
+  createdBy User?             @relation("ChatRoomCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  members   ChatRoomMember[]
+  messages  ChatMessage[]
+
+  // Khóa đối xứng mã hóa Room (nếu dùng chung cho cả group)
+  // Trong thực tế E2EE group có thể dùng Sender Keys (Signal)
+  // Ở đây lưu trữ tạm nếu dùng chung 1 khóa AES cho phòng
+  // encryptedRoomKey String? 
 
   @@index([createdById])
-  @@map("chat_groups")
+  @@map("e2ee_chat_rooms")
 }
 
-model ChatGroupMember {
-  groupId    Int
+model ChatRoomMember {
+  roomId     String
   userId     String
+  role       String    @default("MEMBER") // ADMIN, MEMBER
   joinedAt   DateTime  @default(now())
   lastReadAt DateTime?
+  lastDeliveredAt DateTime?
 
-  group ChatGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Khóa AES của Room được mã hóa bằng Public Key của User này
+  encryptedRoomKey String? @db.Text
 
-  @@id([groupId, userId])
+  room ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([roomId, userId])
   @@index([userId])
-  @@map("chat_group_members")
+  @@map("e2ee_chat_room_members")
 }
 
-model ChatGroupMessage {
-  id        Int      @id @default(autoincrement())
-  groupId   Int
+model ChatMessage {
+  id        String   @id @default(cuid())
+  roomId    String
   senderId  String
-  body      String
+  
+  // Loại tin nhắn: text, image, video, file, sticker, emoji
+  type      String   @default("text")
+
+  // Chứa nội dung text, thông tin sticker, hoặc khóa giải mã Media
+  // Đã được mã hóa bằng khóa AES của Room
+  encryptedPayload String @db.Text
+
+  mediaId   String?  // Foreign key đến bảng Media (cho phép server biết để tự động dọn dẹp)
+  replyToId String?  // ID của tin nhắn đang reply
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  room    ChatRoom     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender  User         @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  media   Media?       @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  replyTo ChatMessage? @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies ChatMessage[] @relation("MessageReplies")
+  
+  isUnsent   Boolean  @default(false)
+  deletedFor String[] @default([]) // Mảng các userId đã xoá tin nhắn này ở local
+  reactions  MessageReaction[] @relation("MessageReactions")
+
+  @@index([roomId, createdAt(sort: Desc)])
+  @@index([senderId])
+  @@map("e2ee_chat_messages")
+}
+
+model MessageReaction {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String
   createdAt DateTime @default(now())
 
-  group  ChatGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  sender User      @relation("ChatGroupMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  message ChatMessage @relation("MessageReactions", fields: [messageId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([groupId, createdAt])
-  @@map("chat_group_messages")
+  @@unique([messageId, userId, emoji])
+  @@map("message_reactions")
+}
+
+// User Public Keys cho E2EE
+model UserPublicKey {
+  userId    String   @id
+  publicKey String   @db.Text
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_public_keys")
 }
 
 model Follow {
@@ -173,6 +202,7 @@ model Post {
 model PostLike {
   userId    String
   postId    String
+  type      String   @default("like")
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -212,28 +242,32 @@ enum MediaKind {
 }
 
 model Media {
-  id         String      @id @default(cuid())
-  ownerId    String
-  postId     String?
-  kind       MediaKind
-  status     MediaStatus @default(PENDING)
-  mimeType   String
-  sizeBytes  Int
-  storageKey String
-  publicUrl  String?
-  width      Int?
-  height     Int?
-  durationMs Int?
+  id          String      @id @default(cuid())
+  ownerId     String
+  postId      String?
+  kind        MediaKind
+  status      MediaStatus @default(PENDING)
+  mimeType    String
+  sizeBytes   Int
+  storagePath String      // Đường dẫn file lưu trên ổ đĩa VPS cục bộ
+  publicUrl   String?     // URL tĩnh để serve (chỉ khả dụng sau khi giải mã hoặc public resource)
+  width       Int?
+  height      Int?
+  durationMs  Int?
+
+  expiresAt   DateTime?   // Phục vụ xóa file tự động sau 7 ngày
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   owner User  @relation("MediaOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   post  Post? @relation(fields: [postId], references: [id], onDelete: SetNull)
+  messages ChatMessage[] // Cho phép tin nhắn liên kết tới Media
 
   @@index([ownerId])
   @@index([postId])
   @@index([status])
+  @@index([expiresAt])
   @@map("media")
 }
 
@@ -242,6 +276,7 @@ model Media {
 enum NotificationType {
   POST_LIKED
   POST_REPLIED
+  POST_COMMENTED_FOLLOWED
   USER_FOLLOWED
   MENTION
   SYSTEM
