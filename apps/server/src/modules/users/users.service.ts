@@ -16,6 +16,7 @@ import {
   mapUserToSummaryDto,
   profilePostMediaKind,
 } from './users.mapper.js';
+import { createNotification } from '../notifications/notifications.service.js';
 
 // ── Cursor helpers ─────────────────────────────────────────────────────────────
 
@@ -358,20 +359,17 @@ export async function followUser(followerId: string, targetId: string): Promise<
   });
 
   if (!existing) {
-    await prisma.$transaction([
-      prisma.follow.create({
-        data: { followerId, followingId: targetId },
-      }),
-      prisma.notification.create({
-        data: {
-          recipientId: targetId,
-          actorId: followerId,
-          type: NotificationType.USER_FOLLOWED,
-          entityType: 'user',
-          entityId: followerId,
-        },
-      }),
-    ]);
+    await prisma.follow.create({
+      data: { followerId, followingId: targetId },
+    });
+
+    await createNotification({
+      recipientId: targetId,
+      actorId: followerId,
+      type: 'USER_FOLLOWED',
+      entityType: 'user',
+      entityId: followerId,
+    });
   }
 
   return { isFollowing: true };

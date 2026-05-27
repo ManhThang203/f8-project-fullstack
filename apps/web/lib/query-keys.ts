@@ -12,8 +12,11 @@ export const queryKeys = {
   },
   chat: {
     conversations: ['chat', 'conversations'] as const,
-    directMessages: (peerUserId: string) => ['chat', 'direct', peerUserId] as const,
-    groupMessages: (groupId: number) => ['chat', 'group', groupId] as const,
+    roomMessages: (roomId: string) => ['chat', 'rooms', roomId, 'messages'] as const,
     threadMessages: (threadKey: string) => ['chat', 'thread', threadKey] as const,
+  },
+  notifications: {
+    all: () => ['notifications'] as const,
+    unreadCount: () => ['notifications', 'unreadCount'] as const,
   },
 } as const;

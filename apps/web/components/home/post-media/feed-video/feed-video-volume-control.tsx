@@ -25,7 +25,7 @@ export function FeedVideoVolumeControl({
   onToggleMute,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const canHoverRef = useRef(true);
 
   const [sliderOpen, setSliderOpen] = useState(false);

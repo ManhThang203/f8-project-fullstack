@@ -45,10 +45,16 @@ export async function apiFetch<TData, TMeta = undefined>(
   init?: RequestInit,
 ): Promise<ApiResponse<TData, TMeta>> {
   let res: Response;
+  let headers = { 'Content-Type': 'application/json', ...init?.headers } as Record<string, string>;
+  if (init?.body instanceof FormData) {
+    // Let browser set the content type with boundary automatically
+    delete headers['Content-Type'];
+  }
+
   try {
     res = await fetch(`${BASE}/v1${path}`, {
       ...init,
-      headers: { 'Content-Type': 'application/json', ...init?.headers },
+      headers,
       credentials: 'include',
     });
   } catch (err) {

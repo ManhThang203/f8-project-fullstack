@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { ProvidersShell } from '@/components/shared/providers-shell';
 
 import './globals.css';
+import "@aejkatappaja/phantom-ui/ssr.css";
 
 export const metadata: Metadata = {
   title: {
