@@ -13,7 +13,7 @@ import { iconButtonClass } from '@/components/shared/icon-button';
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';
-import { NotificationDto } from '@threads/shared';
+import { NotificationDto } from '@costy/shared';
 
 function getRelativeTime(dateString: string) {
   const date = new Date(dateString);

@@ -24,7 +24,7 @@ export async function sendMail(opts: { to: string; subject: string; text: string
 export function sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
   return sendMail({
     to,
-    subject: 'Đặt lại mật khẩu — threads-clone',
+    subject: 'Đặt lại mật khẩu — costy',
     text: `Bạn đã yêu cầu đặt lại mật khẩu. Mở liên kết sau (có hiệu lực trong thời gian giới hạn):\n\n${resetUrl}\n\nNếu bạn không yêu cầu, bỏ qua email này.`,
   });
 }

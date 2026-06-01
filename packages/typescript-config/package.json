@@ -1,5 +1,5 @@
 {
-  "name": "@threads/typescript-config",
+  "name": "@costy/typescript-config",
   "version": "0.1.0",
   "private": true,
   "files": ["base.json", "library.json", "nextjs.json", "server.json"]

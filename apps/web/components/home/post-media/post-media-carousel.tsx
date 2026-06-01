@@ -1,6 +1,6 @@
 'use client';
 
-import type { PostMediaDto } from '@threads/shared';
+import type { PostMediaDto } from '@costy/shared';
 import { X } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';

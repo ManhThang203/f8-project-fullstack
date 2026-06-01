@@ -1,6 +1,6 @@
 'use client';
 
-import type { ProfileDto } from '@threads/shared';
+import type { ProfileDto } from '@costy/shared';
 import { ChevronDown, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';

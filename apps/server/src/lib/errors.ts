@@ -1,4 +1,4 @@
-import type { ErrorCode } from '@threads/shared';
+import type { ErrorCode } from '@costy/shared';
 
 /**
  * Typed application error. Always carries an HTTP status + machine code.

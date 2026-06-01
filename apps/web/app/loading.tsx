@@ -1,5 +1,5 @@
-import { ThreadsSplash } from '@/components/shared/threads-splash';
+import { CostySplash } from '@/components/shared/costy-splash';
 
 export default function Loading() {
-  return <ThreadsSplash />;
+  return <CostySplash />;
 }

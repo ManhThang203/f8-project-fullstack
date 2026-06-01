@@ -1,6 +1,6 @@
 'use client';
 
-import { ErrorCode, type ProfileDto, type ProfileGridItemDto } from '@threads/shared';
+import { ErrorCode, type ProfileDto, type ProfileGridItemDto } from '@costy/shared';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiQuery } from '@/lib/api-query';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import type { PostFeedItemDto } from '@threads/shared';
+import type { PostFeedItemDto } from '@costy/shared';
 import { PostDetailView } from './post-detail-view';
 
 type Props = {

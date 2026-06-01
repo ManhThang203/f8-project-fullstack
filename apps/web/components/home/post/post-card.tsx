@@ -1,6 +1,6 @@
 'use client';
 
-import type { PostFeedItemDto } from '@threads/shared';
+import type { PostFeedItemDto } from '@costy/shared';
 import { X } from 'lucide-react';
 
 import { useState } from 'react';

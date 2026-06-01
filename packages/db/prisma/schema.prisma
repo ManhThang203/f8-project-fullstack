@@ -1,4 +1,4 @@
-// Threads-clone DB schema (Prisma ORM 7+)
+// Costy DB schema (Prisma ORM 7+)
 //
 // Connection URLs live in `prisma.config.ts` (CLI / Migrate). Runtime uses the
 // `pg` driver via `@prisma/adapter-pg` — see `src/index.ts`.
@@ -13,6 +13,152 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// ───────────────────────────── RBAC & Admin ─────────────────────────────
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  LOCKED
+  BANNED
+}
+
+enum PermissionEffect {
+  GRANT
+  REVOKE
+}
+
+model Permission {
+  id     String @id @default(cuid())
+  key    String @unique
+  domain String
+  label  String
+
+  rolePermissions RolePermission[]
+  userPermissions UserPermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  role         Role
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([role, permissionId])
+  @@map("role_permissions")
+}
+
+model UserPermission {
+  userId       String
+  permissionId String
+  effect       PermissionEffect
+  grantedById  String
+  createdAt    DateTime         @default(now())
+
+  user       User       @relation("UserPermissionTarget", fields: [userId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  grantedBy  User       @relation("UserPermissionGrantedBy", fields: [grantedById], references: [id], onDelete: Cascade)
+
+  @@id([userId, permissionId])
+  @@index([userId])
+  @@map("user_permissions")
+}
+
+enum ReportTargetType {
+  POST
+  USER
+  COMMENT
+}
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  NUDITY
+  VIOLENCE
+  HATE_SPEECH
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  REJECTED
+  ACTION_TAKEN
+}
+
+model Report {
+  id             String           @id @default(cuid())
+  reporterId     String
+  targetType     ReportTargetType
+  targetId       String
+  reason         ReportReason
+  description    String?
+  status         ReportStatus     @default(PENDING)
+  reviewedById   String?
+  reviewedAt     DateTime?
+  resolutionNote String?
+  createdAt      DateTime         @default(now())
+
+  reporter User  @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reviewer User? @relation("ReportReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([targetType, targetId, status])
+  @@map("reports")
+}
+
+enum HashtagStatus {
+  ACTIVE
+  HIDDEN
+  BLOCKED
+}
+
+model Hashtag {
+  id        String        @id @default(cuid())
+  tag       String        @unique
+  status    HashtagStatus @default(ACTIVE)
+  featured  Boolean       @default(false)
+  createdAt DateTime      @default(now())
+
+  posts PostHashtag[]
+
+  @@map("hashtags")
+}
+
+model PostHashtag {
+  postId    String
+  hashtagId String
+
+  post    Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  hashtag Hashtag @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, hashtagId])
+  @@index([hashtagId])
+  @@map("post_hashtags")
+}
+
+model AdminAuditLog {
+  id         String   @id @default(cuid())
+  actorId    String
+  action     String
+  targetType String
+  targetId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  actor User @relation("AdminAuditActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([actorId, createdAt(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
+  @@map("admin_audit_logs")
 }
 
 // ───────────────────────────── Users ─────────────────────────────
@@ -30,6 +176,11 @@ model User {
   name          String?
   bio           String?
   image         String?
+
+  role          Role       @default(USER)
+  status        UserStatus @default(ACTIVE)
+  bannedUntil   DateTime?
+  statusReason  String?
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -53,7 +204,15 @@ model User {
   userPublicKey          UserPublicKey?
   messageReactions       MessageReaction[]
 
+  reportsSubmitted       Report[]         @relation("ReportReporter")
+  reportsReviewed        Report[]         @relation("ReportReviewer")
+  userPermissions        UserPermission[] @relation("UserPermissionTarget")
+  permissionsGranted     UserPermission[] @relation("UserPermissionGrantedBy")
+  adminAuditLogs         AdminAuditLog[]  @relation("AdminAuditActor")
+
   @@index([deletedAt])
+  @@index([role])
+  @@index([status])
   @@map("users")
 }
 
@@ -185,6 +344,7 @@ model Post {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+  hiddenAt  DateTime?
 
   author    User           @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   parent    Post?          @relation("PostReplies", fields: [parentId], references: [id], onDelete: SetNull)
@@ -192,10 +352,13 @@ model Post {
   likes     PostLike[]
   media     Media[]
   embedding PostEmbedding?
+  hashtags  PostHashtag[]
 
   @@index([authorId, createdAt(sort: Desc)])
   @@index([parentId])
   @@index([deletedAt])
+  @@index([createdAt])
+  @@index([hiddenAt])
   @@map("posts")
 }
 
@@ -314,6 +477,7 @@ model Session {
 
   @@unique([token])
   @@index([userId])
+  @@index([updatedAt])
   @@map("session")
 }
 

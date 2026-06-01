@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { defineConfig, env } from 'prisma/config';
 
-/** Root of `@threads/db` */
+/** Root of `@costy/db` */
 const packageRoot = path.dirname(fileURLToPath(import.meta.url));
 /** Monorepo root (contains workspace `.env`) */
 const repoRoot = path.resolve(packageRoot, '../..');

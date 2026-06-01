@@ -1,6 +1,6 @@
 'use client';
 
-import type { FollowStateDto } from '@threads/shared';
+import type { FollowStateDto } from '@costy/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { apiQueryData } from '@/lib/api-query';

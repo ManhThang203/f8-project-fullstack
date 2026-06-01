@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { cn } from '@/lib/utils';
+import { apiFetch } from '@/lib/api-client';
 
 type Props = {
   postId: string;
@@ -57,7 +58,17 @@ export function PostOptionsMenu({ postId, hasVideo = false, onHidePost }: Props)
         break;
       }
       case 'report':
-        toast.message('Báo cáo bài viết — tính năng sắp có');
+        void apiFetch('/reports', {
+          method: 'POST',
+          body: JSON.stringify({
+            targetType: 'POST',
+            targetId: postId,
+            reason: 'SPAM',
+          }),
+        }).then((res) => {
+          if (res.success) toast.success('Đã gửi báo cáo');
+          else toast.error(res.error.message);
+        });
         break;
       case 'hide':
         onHidePost?.();

@@ -1,6 +1,6 @@
 'use client';
 
-import type { ProfileGridItemDto } from '@threads/shared';
+import type { ProfileGridItemDto } from '@costy/shared';
 import { Copy, Heart, MessageCircle, Play } from 'lucide-react';
 import { useReducedMotion } from 'motion/react';
 

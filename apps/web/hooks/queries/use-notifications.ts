@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiQueryData, apiQuery } from '@/lib/api-query';
-import { NotificationDto } from '@threads/shared';
+import { NotificationDto } from '@costy/shared';
 import { queryKeys } from '@/lib/query-keys';
 
 export function useNotifications() {

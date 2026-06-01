@@ -42,7 +42,7 @@ export default function Error({
         </div>
       </div>
       <footer className="text-muted-foreground px-6 pb-8 text-center text-xs">
-        © 2026 · Điều khoản của Threads · Chính sách quyền riêng tư · Chính sách cookie
+        © 2026 · Điều khoản của Costy · Chính sách quyền riêng tư · Chính sách cookie
       </footer>
     </div>
   );

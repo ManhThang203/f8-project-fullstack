@@ -1,6 +1,6 @@
 'use client';
 
-import type { PostFeedItemDto } from '@threads/shared';
+import type { PostFeedItemDto } from '@costy/shared';
 import { Image, MoreHorizontal, Smile, Sticker, UserPlus, MapPin } from 'lucide-react';
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { toast } from 'sonner';

@@ -1,5 +1,5 @@
 {
-  "name": "@threads/web",
+  "name": "@costy/web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -15,7 +15,7 @@
     "@aejkatappaja/phantom-ui": "^0.10.1",
     "@hookform/resolvers": "^3.9.1",
     "@tanstack/react-query": "^5.62.0",
-    "@threads/shared": "workspace:*",
+    "@costy/shared": "workspace:*",
     "better-auth": "^1.6.11",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -42,8 +42,8 @@
   },
   "devDependencies": {
     "@tanstack/react-query-devtools": "^5.62.0",
-    "@threads/eslint-config": "workspace:*",
-    "@threads/typescript-config": "workspace:*",
+    "@costy/eslint-config": "workspace:*",
+    "@costy/typescript-config": "workspace:*",
     "@types/node": "^22.10.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

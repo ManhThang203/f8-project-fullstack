@@ -1,4 +1,4 @@
-import type { ApiResponse, PostFeedItemDto } from '@threads/shared';
+import type { ApiResponse, PostFeedItemDto } from '@costy/shared';
 
 export type CreatePostWithMediaResult =
   | { ok: true; post: PostFeedItemDto }

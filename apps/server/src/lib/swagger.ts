@@ -6,9 +6,9 @@ export const swaggerSpec = swaggerJSDoc({
   definition: {
     openapi: '3.0.3',
     info: {
-      title: 'Threads Clone API',
+      title: 'Costy API',
       version: '0.1.0',
-      description: 'REST API for the Threads-like social media app.',
+      description: 'REST API for the Costy-like social media app.',
     },
     servers: [{ url: `${env.SERVER_URL}/api/v1`, description: 'Local' }],
     components: {

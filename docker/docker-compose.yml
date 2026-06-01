@@ -9,13 +9,13 @@
 # Sau khi đổi NEXT_PUBLIC_*: build lại image (pnpm docker:rebuild).
 # =============================================================================
 
-name: threads-clone
+name: costy
 
 services:
   # ─── PostgreSQL + pgvector — Prisma, full-text / vector search ─────────────
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: threads-postgres
+    container_name: costy-postgres
     restart: unless-stopped
     env_file:
       - .env.docker
@@ -32,7 +32,7 @@ services:
   # ─── Redis — BullMQ queue, cache, rate-limit store ─────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: threads-redis
+    container_name: costy-redis
     restart: unless-stopped
     command: ['redis-server', '--appendonly', 'yes']
     ports:
@@ -48,7 +48,7 @@ services:
   # ─── MinIO — S3-compatible object storage (media uploads) ────────────────────
   minio:
     image: minio/minio:latest
-    container_name: threads-minio
+    container_name: costy-minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
     env_file:
@@ -67,7 +67,7 @@ services:
   # ─── Mailhog — SMTP dev catcher (UI http://localhost:8025) ─────────────────
   mailhog:
     image: mailhog/mailhog:latest
-    container_name: threads-mailhog
+    container_name: costy-mailhog
     restart: unless-stopped
     ports:
       - '1025:1025' # SMTP
@@ -84,8 +84,8 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
         NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL:-http://localhost:4000}
         NEXT_PUBLIC_DEMO_USER_ID: ${NEXT_PUBLIC_DEMO_USER_ID:-seed_demo_user_001}
-    image: threads-clone:local
-    container_name: threads-api
+    image: costy:local
+    container_name: costy-api
     restart: unless-stopped
     command: ['/usr/local/bin/api-entrypoint.sh']
     ports:
@@ -108,10 +108,10 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
         NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL:-http://localhost:4000}
         NEXT_PUBLIC_DEMO_USER_ID: ${NEXT_PUBLIC_DEMO_USER_ID:-seed_demo_user_001}
-    image: threads-clone:local
-    container_name: threads-web
+    image: costy:local
+    container_name: costy-web
     restart: unless-stopped
-    command: ['pnpm', '--filter', '@threads/web', 'start']
+    command: ['pnpm', '--filter', '@costy/web', 'start']
     ports:
       - '3000:3000'
     env_file:

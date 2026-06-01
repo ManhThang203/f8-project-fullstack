@@ -1,2 +1,2 @@
-import config from '@threads/eslint-config/server';
+import config from '@costy/eslint-config/server';
 export default config;

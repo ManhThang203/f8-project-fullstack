@@ -1,7 +1,7 @@
 'use client';
 
 import { PostCard } from '../post/post-card';
-import type { PostFeedItemDto } from '@threads/shared';
+import type { PostFeedItemDto } from '@costy/shared';
 import '@aejkatappaja/phantom-ui';
 
 const fakePostNoMedia: PostFeedItemDto = {

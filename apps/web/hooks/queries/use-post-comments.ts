@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { apiQuery } from '@/lib/api-query';
-import type { CursorPageQuery, PostFeedItemDto } from '@threads/shared';
+import type { CursorPageQuery, PostFeedItemDto } from '@costy/shared';
 
 export function usePostComments(postId: string, order: 'asc' | 'desc' = 'desc', enabled = true) {
   return useInfiniteQuery({

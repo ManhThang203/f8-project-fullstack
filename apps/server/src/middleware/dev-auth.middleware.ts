@@ -1,4 +1,4 @@
-import { prisma } from '@threads/db';
+import { prisma } from '@costy/db';
 import type { RequestHandler } from 'express';
 
 import { env } from '../config/env.js';

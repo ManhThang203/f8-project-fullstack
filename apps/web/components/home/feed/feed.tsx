@@ -1,6 +1,6 @@
 'use client';
 
-import type { PostFeedItemDto } from '@threads/shared';
+import type { PostFeedItemDto } from '@costy/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

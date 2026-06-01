@@ -1,6 +1,6 @@
 'use client';
 
-import type { UserSummaryDto } from '@threads/shared';
+import type { UserSummaryDto } from '@costy/shared';
 import { X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';

@@ -1,5 +1,5 @@
-import type { ApiResponse } from '@threads/shared';
-import { ErrorCode } from '@threads/shared';
+import type { ApiResponse } from '@costy/shared';
+import { ErrorCode } from '@costy/shared';
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? '/api';
 

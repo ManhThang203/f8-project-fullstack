@@ -1,5 +1,5 @@
 {
-  "name": "@threads/server",
+  "name": "@costy/server",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -13,8 +13,8 @@
     "clean": "rimraf dist .turbo"
   },
   "dependencies": {
-    "@threads/db": "workspace:*",
-    "@threads/shared": "workspace:*",
+    "@costy/db": "workspace:*",
+    "@costy/shared": "workspace:*",
     "@types/uuid": "^11.0.0",
     "better-auth": "^1.6.11",
     "bullmq": "^5.34.0",
@@ -40,8 +40,8 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@threads/eslint-config": "workspace:*",
-    "@threads/typescript-config": "workspace:*",
+    "@costy/eslint-config": "workspace:*",
+    "@costy/typescript-config": "workspace:*",
     "@types/compression": "^1.7.5",
     "@types/cookie-parser": "^1.4.7",
     "@types/cors": "^2.8.17",

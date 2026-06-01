@@ -109,7 +109,7 @@ export function PostActionBar({ postId, replyCount, initialLikeCount, initialRea
     const url = window.location.href;
     if (typeof navigator.share === 'function') {
       try {
-        await navigator.share({ title: 'Threads', url });
+        await navigator.share({ title: 'Costy', url });
         setShareCount((c) => c + 1);
         return;
       } catch {

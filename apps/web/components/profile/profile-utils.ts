@@ -1,4 +1,4 @@
-import type { ProfileDto, ProfileGridItemDto } from '@threads/shared';
+import type { ProfileDto, ProfileGridItemDto } from '@costy/shared';
 
 export type ProfileTab = 'posts' | 'reels' | 'liked';
 

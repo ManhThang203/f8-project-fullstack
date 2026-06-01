@@ -11,13 +11,13 @@
 # Hoặc xóa volume node_modules: docker compose -f docker/docker-compose.dev.yml down -v
 # =============================================================================
 
-name: threads-clone-dev
+name: costy-dev
 
 services:
   # ─── PostgreSQL + pgvector ─────────────────────────────────────────────────
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: threads-postgres-dev
+    container_name: costy-postgres-dev
     restart: unless-stopped
     env_file:
       - .env.docker
@@ -34,7 +34,7 @@ services:
   # ─── Redis ─────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: threads-redis-dev
+    container_name: costy-redis-dev
     restart: unless-stopped
     command: ['redis-server', '--appendonly', 'yes']
     ports:
@@ -50,7 +50,7 @@ services:
   # ─── MinIO ─────────────────────────────────────────────────────────────────
   minio:
     image: minio/minio:latest
-    container_name: threads-minio-dev
+    container_name: costy-minio-dev
     restart: unless-stopped
     command: server /data --console-address ":9001"
     env_file:
@@ -69,7 +69,7 @@ services:
   # ─── Mailhog ───────────────────────────────────────────────────────────────
   mailhog:
     image: mailhog/mailhog:latest
-    container_name: threads-mailhog-dev
+    container_name: costy-mailhog-dev
     restart: unless-stopped
     ports:
       - '1025:1025' # SMTP
@@ -80,8 +80,8 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.dev
-    image: threads-clone:dev
-    container_name: threads-app-dev
+    image: costy:dev
+    container_name: costy-app-dev
     restart: unless-stopped
     env_file:
       - .env.docker

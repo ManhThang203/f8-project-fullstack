@@ -18,9 +18,9 @@ echo "dev-entrypoint: prisma generate..."
 pnpm db:generate
 
 echo "dev-entrypoint: prisma migrate deploy..."
-if ! pnpm --filter @threads/db exec prisma migrate deploy; then
+if ! pnpm --filter @costy/db exec prisma migrate deploy; then
   echo "dev-entrypoint: migrate deploy failed (e.g. DB chưa baseline) — chạy db push để đồng bộ schema..."
-  pnpm --filter @threads/db exec prisma db push
+  pnpm --filter @costy/db exec prisma db push
 fi
 
 exec /sbin/tini -- "$@"
