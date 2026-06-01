@@ -8,7 +8,11 @@ export function QueryProvider({ children }: { children: ReactNode }) {
     () =>
       new QueryClient({
         defaultOptions: {
-          queries: { staleTime: 30_000, retry: 1 },
+          queries: {
+            staleTime: 5 * 60 * 1000,          // Tăng thời gian dữ liệu được coi là fresh lên 5 phút
+            refetchOnWindowFocus: false,       // Tắt tính năng tự động gọi lại API khi chuyển/focus tab
+            retry: 1
+          },
         },
       }),
   );

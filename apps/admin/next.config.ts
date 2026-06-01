@@ -15,7 +15,7 @@ loadRootEnvFile('.env.local', true);
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['@costy/shared'],
+  transpilePackages: ['@costy/shared', '@costy/ui'],
   webpack: (config) => {
     config.resolve = config.resolve ?? {};
     config.resolve.extensionAlias = {

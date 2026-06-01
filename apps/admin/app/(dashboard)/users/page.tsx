@@ -1,13 +1,15 @@
 'use client';
 
 import { X } from 'lucide-react';
-import { memo, useState } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { UsersTable } from '@/components/admin/users-table';
-import { LoadingState } from '@/components/shared/loading-state';
+import { CursorPagination } from '@/components/shared/cursor-pagination';
+import { TableSkeleton } from '@/components/shared/table-skeleton';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useAdminUsers } from '@/hooks/queries/use-admin-queries';
+import { useCursorPagination } from '@/hooks/use-cursor-pagination';
 import { cn } from '@/lib/utils';
 
 /** Input tìm kiếm tách riêng để không re-render khi fetch danh sách. */
@@ -51,7 +53,22 @@ const UsersSearchInput = memo(function UsersSearchInput({
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedTerm = useDebounce(searchTerm, 400);
-  const { data, isFetching, isLoading } = useAdminUsers({ q: debouncedTerm || undefined });
+
+  const { limit, setLimit, cursor, pageIndex, handleNext, handlePrev, reset } =
+    useCursorPagination(10);
+
+  useEffect(() => {
+    reset();
+  }, [debouncedTerm]);
+
+  const { data, isFetching, isLoading } = useAdminUsers({
+    q: debouncedTerm || undefined,
+    cursor,
+    limit,
+  });
+
+  const users = data?.data ?? [];
+  const nextCursor = data?.meta?.nextCursor;
 
   return (
     <div className="space-y-4">
@@ -59,9 +76,19 @@ export default function UsersPage() {
         <UsersSearchInput value={searchTerm} onChange={setSearchTerm} />
       </div>
       {isLoading && !data ? (
-        <LoadingState />
+        <TableSkeleton rows={limit} cols={5} />
       ) : (
-        <UsersTable users={data?.data ?? []} isFetching={isFetching && !isLoading} />
+        <>
+          <UsersTable users={users} isFetching={isFetching && !isLoading} />
+          <CursorPagination
+            limit={limit}
+            onLimitChange={setLimit}
+            hasMore={!!nextCursor}
+            pageIndex={pageIndex}
+            onPrev={handlePrev}
+            onNext={() => handleNext(nextCursor)}
+          />
+        </>
       )}
     </div>
   );

@@ -1,5 +1,6 @@
 'use client';
 
+import { CostySplash } from '@costy/ui';
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -9,20 +10,26 @@ type Props = {
   variant?: 'page' | 'inline' | 'overlay';
   className?: string;
   label?: string;
+  hideText?: boolean;
 };
 
-/** Trạng thái loading với spinner và text i18n. */
-export function LoadingState({ variant = 'inline', className, label }: Props) {
+/** Trạng thái loading với spinner và text i18n, hỗ trợ logo động cho màn hình F5. */
+export function LoadingState({ variant = 'inline', className, label, hideText = false }: Props) {
   const { t } = useTranslation();
   const message = label ?? t('common.loading');
+
+  if (variant === 'page') {
+    return <CostySplash className={className} />;
+  }
+
+  const isOverlay = variant === 'overlay';
 
   return (
     <div
       className={cn(
         'flex flex-row items-center justify-center gap-2 text-muted-foreground',
-        variant === 'page' && 'min-h-screen bg-background',
+        isOverlay && 'absolute inset-0 z-10 rounded-xl bg-background/60',
         variant === 'inline' && 'py-12',
-        variant === 'overlay' && 'absolute inset-0 z-10 rounded-xl bg-background/60',
         className,
       )}
       role="status"
@@ -33,7 +40,8 @@ export function LoadingState({ variant = 'inline', className, label }: Props) {
         className="size-5 shrink-0 animate-spin motion-reduce:animate-none"
         aria-hidden
       />
-      <span className="text-sm">{message}</span>
+      {!hideText && !isOverlay && <span className="text-sm">{message}</span>}
     </div>
   );
 }
+

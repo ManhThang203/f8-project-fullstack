@@ -8,7 +8,7 @@ import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 
 import { Avatar } from '@/components/shared/avatar';
-import { CotsyLogo } from '@/components/shared/cotsy-logo';
+import { CotsyLogo } from '@costy/ui';
 import { iconButtonClass } from '@/components/shared/icon-button';
 import { NotificationBadge } from '@/components/shared/notification-badge';
 import { NotificationDropdown } from './notification-dropdown';

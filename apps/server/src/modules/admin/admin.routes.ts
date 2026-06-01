@@ -12,6 +12,7 @@ import {
   adminUserListQuerySchema,
   adminUserPermissionsPutSchema,
   adminUserStatusPatchSchema,
+  cursorPageQuerySchema,
 } from '@costy/shared';
 
 import { requireAuth } from '../../middleware/auth.middleware.js';
@@ -240,14 +241,19 @@ adminRouter.patch(
   },
 );
 
-adminRouter.get('/moderators', requirePermission('moderator:manage'), async (_req, res, next) => {
-  try {
-    const data = await listModerators();
-    res.json(ok(data));
-  } catch (e) {
-    next(e);
-  }
-});
+adminRouter.get(
+  '/moderators',
+  requirePermission('moderator:manage'),
+  validate(cursorPageQuerySchema, 'query'),
+  async (req, res, next) => {
+    try {
+      const result = await listModerators(req.query as never);
+      res.json(ok(result.items, { nextCursor: result.nextCursor }));
+    } catch (e) {
+      next(e);
+    }
+  },
+);
 
 adminRouter.post('/moderators', requirePermission('moderator:manage'), async (req, res, next) => {
   try {

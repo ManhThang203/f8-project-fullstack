@@ -11,11 +11,18 @@ import type {
   AdminTopHashtagDto,
   AdminUserListItemDto,
 } from '@costy/shared';
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { apiQuery } from '@/lib/api-query';
 import { queryKeys } from '@/lib/query-keys';
 
+// ── helpers ──────────────────────────────────────────────────────────
+/** Gộp tất cả page của useInfiniteQuery thành mảng phẳng. */
+export function flattenPages<T>(pages: { data: T[] }[] | undefined): T[] {
+  return pages?.flatMap((p) => p.data) ?? [];
+}
+
+// ── non-paginated queries ────────────────────────────────────────────
 export function useAdminMe() {
   return useQuery({
     queryKey: queryKeys.admin.me,
@@ -52,46 +59,6 @@ export function useTopHashtags(range = '7d') {
   });
 }
 
-export function useAdminUsers(filters: { q?: string; status?: string } = {}) {
-  const qs = new URLSearchParams();
-  if (filters.q) qs.set('q', filters.q);
-  if (filters.status) qs.set('status', filters.status);
-  const suffix = qs.toString() ? `?${qs}` : '';
-  return useQuery({
-    queryKey: queryKeys.admin.users(suffix),
-    queryFn: () =>
-      apiQuery<AdminUserListItemDto[], { nextCursor: string | null }>(`/admin/users${suffix}`),
-    placeholderData: keepPreviousData,
-  });
-}
-
-export function useAdminReports(status = 'PENDING') {
-  return useQuery({
-    queryKey: queryKeys.admin.reports(status),
-    queryFn: () =>
-      apiQuery<AdminReportDto[], { nextCursor: string | null }>(
-        `/admin/reports?status=${status}&limit=20`,
-      ),
-  });
-}
-
-export function useAdminHashtags(range = '7d') {
-  return useQuery({
-    queryKey: queryKeys.admin.hashtags(range),
-    queryFn: () =>
-      apiQuery<AdminHashtagDto[], { nextCursor: string | null }>(
-        `/admin/hashtags?range=${range}`,
-      ),
-  });
-}
-
-export function useModerators() {
-  return useQuery({
-    queryKey: queryKeys.admin.moderators,
-    queryFn: () => apiQuery<AdminModeratorDto[]>('/admin/moderators'),
-  });
-}
-
 export function useUserPermissions(userId: string) {
   return useQuery({
     queryKey: queryKeys.admin.permissions(userId),
@@ -100,11 +67,81 @@ export function useUserPermissions(userId: string) {
   });
 }
 
-export function useAuditLogs() {
+// ── paginated (cursor-based) queries ──────────────────────────────────
+type CursorMeta = { nextCursor: string | null };
+
+export function useAdminUsers(filters: { q?: string; status?: string; cursor?: string; limit?: number } = {}) {
+  const base = new URLSearchParams();
+  if (filters.q) base.set('q', filters.q);
+  if (filters.status) base.set('status', filters.status);
+  if (filters.cursor) base.set('cursor', filters.cursor);
+  if (filters.limit) base.set('limit', String(filters.limit));
+  const filterKey = base.toString();
+
   return useQuery({
-    queryKey: queryKeys.admin.audit(''),
-    queryFn: () =>
-      apiQuery<AdminAuditLogDto[], { nextCursor: string | null }>('/admin/audit-logs?limit=30'),
+    queryKey: queryKeys.admin.users(filterKey),
+    queryFn: () => {
+      const suffix = filterKey ? `?${filterKey}` : '';
+      return apiQuery<AdminUserListItemDto[], CursorMeta>(`/admin/users${suffix}`);
+    },
+  });
+}
+
+export function useAdminReports(status = 'PENDING', cursor?: string, limit?: number) {
+  const base = new URLSearchParams({ status });
+  if (cursor) base.set('cursor', cursor);
+  if (limit) base.set('limit', String(limit));
+  const filterKey = base.toString();
+
+  return useQuery({
+    queryKey: queryKeys.admin.reports(filterKey),
+    queryFn: () => {
+      return apiQuery<AdminReportDto[], CursorMeta>(`/admin/reports?${base}`);
+    },
+  });
+}
+
+export function useAdminHashtags(range = '7d', cursor?: string, limit?: number) {
+  const base = new URLSearchParams({ range });
+  if (cursor) base.set('cursor', cursor);
+  if (limit) base.set('limit', String(limit));
+  const filterKey = base.toString();
+
+  return useQuery({
+    queryKey: queryKeys.admin.hashtags(filterKey),
+    queryFn: () => {
+      return apiQuery<AdminHashtagDto[], CursorMeta>(`/admin/hashtags?${base}`);
+    },
+  });
+}
+
+export function useModerators(cursor?: string, limit?: number) {
+  const base = new URLSearchParams();
+  if (cursor) base.set('cursor', cursor);
+  if (limit) base.set('limit', String(limit));
+  const filterKey = base.toString();
+
+  return useQuery({
+    queryKey: ['admin', 'moderators', filterKey],
+    queryFn: () => {
+      const suffix = filterKey ? `?${filterKey}` : '';
+      return apiQuery<AdminModeratorDto[], CursorMeta>(`/admin/moderators${suffix}`);
+    },
+  });
+}
+
+export function useAuditLogs(cursor?: string, limit?: number) {
+  const base = new URLSearchParams();
+  if (cursor) base.set('cursor', cursor);
+  if (limit) base.set('limit', String(limit));
+  const filterKey = base.toString();
+
+  return useQuery({
+    queryKey: queryKeys.admin.audit(filterKey),
+    queryFn: () => {
+      const suffix = filterKey ? `?${filterKey}` : '';
+      return apiQuery<AdminAuditLogDto[], CursorMeta>(`/admin/audit-logs${suffix}`);
+    },
   });
 }
 
@@ -159,3 +196,22 @@ export function usePatchHashtag() {
     },
   });
 }
+
+export function useUpdateUserPermissions() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (opts: { id: string; grants: string[]; revokes: string[] }) =>
+      apiQuery(`/admin/users/${opts.id}/permissions`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          grants: opts.grants,
+          revokes: opts.revokes,
+        }),
+      }),
+    onSuccess: (_, variables) => {
+      void qc.invalidateQueries({ queryKey: queryKeys.admin.permissions(variables.id) });
+      void qc.invalidateQueries({ queryKey: ['admin', 'moderators'] });
+    },
+  });
+}
+

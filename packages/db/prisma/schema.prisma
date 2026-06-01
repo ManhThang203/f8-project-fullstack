@@ -56,6 +56,7 @@ model RolePermission {
   @@map("role_permissions")
 }
 
+
 model UserPermission {
   userId       String
   permissionId String

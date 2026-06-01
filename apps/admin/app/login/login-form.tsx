@@ -3,7 +3,7 @@
 import { Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -153,6 +153,10 @@ export default function LoginForm() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    document.title = `${t('login.title')} | Costy Admin`;
+  }, [t]);
 
   return (
     <main className="min-h-[100dvh] overflow-x-hidden bg-muted/40">

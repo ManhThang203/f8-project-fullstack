@@ -1,10 +1,10 @@
 import type { SVGAttributes } from 'react';
 
-import { cn } from '@/lib/utils';
+import { cn } from '../utils/cn';
 
 type MetaWordmarkProps = Omit<SVGAttributes<SVGSVGElement>, 'xmlns' | 'viewBox'>;
 
-/** Meta wordmark (infinity + type). Monochrome via `currentColor`; omit gradients from source SVG. */
+/** Meta wordmark (infinity + type). Monochrome via `currentColor`. */
 export function MetaWordmark({ className, fill = 'currentColor', role = 'img', ...props }: MetaWordmarkProps) {
   return (
     <svg

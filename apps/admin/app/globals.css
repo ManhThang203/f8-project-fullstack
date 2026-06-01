@@ -68,9 +68,9 @@
     @apply border-border;
   }
 
-  /* Tránh layout giật khi modal khóa cuộn (scrollbar biến mất): luôn dành gutter ở cạnh thanh cuộn. */
+  /* Mặc định không dùng scrollbar-gutter */
   html {
-    scrollbar-gutter: stable;
+    scrollbar-gutter: auto;
   }
 
   body {
@@ -81,15 +81,6 @@
   }
 }
 
-/* Reels: lock document scroll without leaving a visible gutter strip on the right. */
-html.reels-scroll-lock {
-  overflow: hidden;
-  scrollbar-gutter: auto;
-}
-
-html.reels-scroll-lock body {
-  overflow: hidden;
-}
 
 @media (hover: hover) {
   .group\/stage:not(.reels-stage-immersive) .reels-stage-controls {
@@ -100,8 +91,7 @@ html.reels-scroll-lock body {
   }
 
   .group\/stage:not(.reels-stage-immersive):hover .reels-stage-controls,
-  .group\/stage:not(.reels-stage-immersive):has(.reels-stage-controls:focus-visible)
-    .reels-stage-controls {
+  .group\/stage:not(.reels-stage-immersive):has(.reels-stage-controls:focus-visible) .reels-stage-controls {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
@@ -142,13 +132,11 @@ html.reels-scroll-lock body {
 .reels-volume-slider::-webkit-slider-runnable-track {
   height: 2px;
   border-radius: 9999px;
-  background: linear-gradient(
-    to right,
-    rgb(255 255 255) 0%,
-    rgb(255 255 255) var(--reels-volume-pct, 100%),
-    rgb(255 255 255 / 0.3) var(--reels-volume-pct, 100%),
-    rgb(255 255 255 / 0.3) 100%
-  );
+  background: linear-gradient(to right,
+      rgb(255 255 255) 0%,
+      rgb(255 255 255) var(--reels-volume-pct, 100%),
+      rgb(255 255 255 / 0.3) var(--reels-volume-pct, 100%),
+      rgb(255 255 255 / 0.3) 100%);
 }
 
 .reels-volume-slider::-webkit-slider-thumb {
@@ -211,13 +199,11 @@ html.reels-scroll-lock body {
 .feed-volume-slider::-webkit-slider-runnable-track {
   height: 2px;
   border-radius: 9999px;
-  background: linear-gradient(
-    to right,
-    rgb(255 255 255) 0%,
-    rgb(255 255 255) var(--feed-volume-pct, 100%),
-    rgb(255 255 255 / 0.3) var(--feed-volume-pct, 100%),
-    rgb(255 255 255 / 0.3) 100%
-  );
+  background: linear-gradient(to right,
+      rgb(255 255 255) 0%,
+      rgb(255 255 255) var(--feed-volume-pct, 100%),
+      rgb(255 255 255 / 0.3) var(--feed-volume-pct, 100%),
+      rgb(255 255 255 / 0.3) 100%);
 }
 
 .feed-volume-slider::-webkit-slider-thumb {
@@ -249,4 +235,12 @@ html.reels-scroll-lock body {
   border-radius: 9999px;
   background: rgb(255 255 255);
   box-shadow: 0 0 0 1px rgb(0 0 0 / 0.15);
+}
+
+/* Vô hiệu hóa việc ẩn thanh cuộn và căn lề dịch chuyển giao diện của Radix Select */
+html[data-scroll-locked],
+html[data-scroll-locked] body,
+body[data-scroll-locked] {
+  overflow: auto !important;
+  overflow-y: auto !important;
 }

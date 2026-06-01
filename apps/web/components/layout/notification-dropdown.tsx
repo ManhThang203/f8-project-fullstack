@@ -152,7 +152,7 @@ export function NotificationDropdown() {
             {unreadCount > 0 && (
               <button 
                 type="button"
-                onClick={() => { markRead(); setOpen(false); }}
+                onClick={() => { markRead(undefined); setOpen(false); }}
                 className="text-sm text-primary hover:underline"
               >
                 Đánh dấu đã đọc tất cả

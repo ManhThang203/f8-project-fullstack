@@ -13,6 +13,7 @@ const fakePostNoMedia: PostFeedItemDto = {
   likeCount: 0,
   myReaction: null,
   media: [],
+  parentId: null,
 };
 
 const fakePostShort: PostFeedItemDto = {

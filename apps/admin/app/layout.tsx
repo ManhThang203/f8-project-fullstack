@@ -11,6 +11,9 @@ import './globals.css';
 export const metadata: Metadata = {
   title: { default: 'Costy Admin', template: '%s | Costy Admin' },
   description: 'Admin dashboard for Costy',
+  icons: {
+    icon: '/icon/Logo-app-2.webp',
+  },
 };
 
 const themeScript = `

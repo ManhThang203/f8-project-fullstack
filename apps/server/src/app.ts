@@ -83,9 +83,9 @@ export function buildApp(): Express {
   // `attachDevAuthContext` cho phép giả lập user qua header trong môi trường
   // dev (xem env `DEV_AUTH_*`); ở prod middleware này tự no-op.
   app.use('/api/v1', attachBetterAuthSession);
+  app.use('/api/v1', attachDevAuthContext);
   app.use('/api/v1', attachAuthContext);
   app.use('/api/v1', blockInactiveUsers);
-  app.use('/api/v1', attachDevAuthContext);
   app.use('/api/v1/health', healthRouter);
   app.use('/api/v1/posts', postsRouter);
   app.use('/api/v1/chat', chatRouter);

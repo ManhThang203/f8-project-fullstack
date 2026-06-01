@@ -12,7 +12,7 @@ export function useNotifications() {
       const data = await apiQueryData<NotificationDto[]>(`/notifications?${qs.toString()}`);
       return {
         items: data,
-        nextCursor: data.length === 20 ? data[19].id : undefined,
+        nextCursor: data.length === 20 ? data[19]?.id : undefined,
       };
     },
     initialPageParam: undefined as string | undefined,
