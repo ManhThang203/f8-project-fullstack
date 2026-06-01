@@ -2,8 +2,8 @@
  * Mapper: chuyển Prisma row → DTO cho module users.
  */
 
-import { MediaKind, type Follow, type Media, type Post, type User } from '@threads/db';
-import type { ProfileDto, ProfileGridItemDto, UserSummaryDto } from '@threads/shared';
+import { MediaKind, type Follow, type Media, type Post, type User } from '@costy/db';
+import type { ProfileDto, ProfileGridItemDto, UserSummaryDto } from '@costy/shared';
 
 type UserProfileRow = Pick<
   User,

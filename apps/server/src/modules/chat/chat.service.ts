@@ -1,4 +1,4 @@
-import { prisma, Prisma } from '@threads/db';
+import { prisma, Prisma } from '@costy/db';
 import { AppError } from '../../lib/errors.js';
 
 type ListMsgOpts = { limit?: number; beforeId?: string };

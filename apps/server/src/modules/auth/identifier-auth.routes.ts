@@ -1,4 +1,4 @@
-import { loginBodySchema } from '@threads/shared';
+import { loginBodySchema } from '@costy/shared';
 import { fromNodeHeaders } from 'better-auth/node';
 import type { RequestHandler } from 'express';
 

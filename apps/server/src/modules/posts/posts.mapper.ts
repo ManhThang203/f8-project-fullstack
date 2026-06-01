@@ -1,5 +1,5 @@
-import { MediaKind, MediaStatus, type Media, type Post, type User } from '@threads/db';
-import type { PostAuthorDto, PostFeedItemDto, PostMediaDto, PostMediaType, ReelsFeedItemDto } from '@threads/shared';
+import { MediaKind, MediaStatus, type Media, type Post, type User } from '@costy/db';
+import type { PostAuthorDto, PostFeedItemDto, PostMediaDto, PostMediaType, ReelsFeedItemDto } from '@costy/shared';
 
 type PostWithAuthorAndMedia = Post & {
   author: Pick<User, 'id' | 'username' | 'name' | 'image'>;

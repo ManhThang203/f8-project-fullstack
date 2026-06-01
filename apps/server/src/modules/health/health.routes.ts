@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { ok } from '@threads/shared';
+import { ok } from '@costy/shared';
 
-import { prisma } from '@threads/db';
+import { prisma } from '@costy/db';
 
 import { redis } from '../../lib/redis.js';
 

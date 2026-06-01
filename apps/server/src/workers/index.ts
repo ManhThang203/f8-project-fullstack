@@ -30,7 +30,7 @@ export function startWorkers(): Worker[] {
     new Worker(
       QueueName.MediaCleanup,
       async (job) => {
-        const { prisma } = await import('@threads/db');
+        const { prisma } = await import('@costy/db');
         const fs = await import('fs');
         const path = await import('path');
 
@@ -58,6 +58,17 @@ export function startWorkers(): Worker[] {
         }
 
         logger.info({ jobId: job.id, deletedCount }, 'Hoàn thành dọn dẹp media');
+      },
+      baseOpts,
+    ),
+    new Worker(
+      QueueName.TrendingHashtags,
+      async (job) => {
+        const { computeTrendingHashtags } = await import(
+          '../modules/admin/admin-stats.service.js'
+        );
+        logger.info({ jobId: job.id }, 'Tính trending hashtag');
+        await computeTrendingHashtags();
       },
       baseOpts,
     ),
