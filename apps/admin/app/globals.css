@@ -1,0 +1,252 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Threads light theme — off-white surface, near-black text */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --border: 0 0% 90%;
+    --ring: 0 0% 70%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --accent: 0 0% 94%;
+    --accent-foreground: 0 0% 9%;
+    /* Auth marketing hero (purple tint) — dùng trang đăng nhập / đăng ký */
+    --auth-hero: 262 58% 56%;
+    --auth-hero-soft: 262 48% 94%;
+    --auth-illustration-bg: 0 0% 96%;
+    --auth-form-title: 0 0% 9%;
+    --auth-form-button-bg: 0 0% 9%;
+    --auth-form-button-fg: 0 0% 98%;
+    --auth-form-input-bg: 0 0% 100%;
+    --auth-form-input-border: 0 0% 86%;
+    --auth-form-input-icon: 0 0% 40%;
+    --radius: 1rem;
+    --chart-1: 221 83% 53%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+
+  .dark {
+    --background: 0 0% 7%;
+    --foreground: 0 0% 96%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 96%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 64%;
+    --border: 0 0% 18%;
+    --ring: 0 0% 35%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --accent: 0 0% 16%;
+    --accent-foreground: 0 0% 96%;
+    --auth-hero: 262 52% 68%;
+    --auth-hero-soft: 262 28% 22%;
+    --auth-illustration-bg: 0 0% 100%;
+    --auth-form-title: 0 0% 9%;
+    --auth-form-button-bg: 0 0% 9%;
+    --auth-form-button-fg: 0 0% 98%;
+    --auth-form-input-bg: 0 0% 96%;
+    --auth-form-input-border: 0 0% 82%;
+    --auth-form-input-icon: 0 0% 35%;
+    --chart-1: 217 91% 60%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  /* Tránh layout giật khi modal khóa cuộn (scrollbar biến mất): luôn dành gutter ở cạnh thanh cuộn. */
+  html {
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
+  }
+}
+
+/* Reels: lock document scroll without leaving a visible gutter strip on the right. */
+html.reels-scroll-lock {
+  overflow: hidden;
+  scrollbar-gutter: auto;
+}
+
+html.reels-scroll-lock body {
+  overflow: hidden;
+}
+
+@media (hover: hover) {
+  .group\/stage:not(.reels-stage-immersive) .reels-stage-controls {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 150ms, visibility 150ms;
+  }
+
+  .group\/stage:not(.reels-stage-immersive):hover .reels-stage-controls,
+  .group\/stage:not(.reels-stage-immersive):has(.reels-stage-controls:focus-visible)
+    .reels-stage-controls {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .reels-stage-immersive .reels-immersive-meta {
+    bottom: 1.5rem;
+  }
+
+  .reels-stage-immersive .reels-immersive-rail {
+    bottom: 2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reels-stage-controls {
+    transition: none;
+  }
+}
+
+/* Reels volume slider — FB-style pill track */
+.reels-volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  width: 100%;
+  height: 1.25rem;
+  padding-inline: 6px;
+  background: transparent;
+}
+
+.reels-volume-slider:focus-visible {
+  outline: none;
+}
+
+.reels-volume-slider::-webkit-slider-runnable-track {
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    rgb(255 255 255) 0%,
+    rgb(255 255 255) var(--reels-volume-pct, 100%),
+    rgb(255 255 255 / 0.3) var(--reels-volume-pct, 100%),
+    rgb(255 255 255 / 0.3) 100%
+  );
+}
+
+.reels-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -5px;
+  border-radius: 9999px;
+  background: rgb(255 255 255);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.15);
+}
+
+.reels-volume-slider::-moz-range-track {
+  height: 2px;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.3);
+}
+
+.reels-volume-slider::-moz-range-progress {
+  height: 2px;
+  border-radius: 9999px;
+  background: rgb(255 255 255);
+}
+
+.reels-volume-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 9999px;
+  background: rgb(255 255 255);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.15);
+}
+
+@media (hover: none) {
+  .reels-volume-slider-wrap--open {
+    width: 8.5rem;
+    padding-left: 0.25rem;
+    padding-right: 0.75rem;
+    opacity: 1;
+  }
+}
+
+/* Feed volume slider — vertical popover (rotate horizontal track) */
+.feed-volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  width: 5rem;
+  height: 1.25rem;
+  padding-inline: 6px;
+  background: transparent;
+  transform: rotate(-90deg);
+  cursor: pointer;
+}
+
+.feed-volume-slider:focus-visible {
+  outline: none;
+}
+
+.feed-volume-slider::-webkit-slider-runnable-track {
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    rgb(255 255 255) 0%,
+    rgb(255 255 255) var(--feed-volume-pct, 100%),
+    rgb(255 255 255 / 0.3) var(--feed-volume-pct, 100%),
+    rgb(255 255 255 / 0.3) 100%
+  );
+}
+
+.feed-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -5px;
+  border-radius: 9999px;
+  background: rgb(255 255 255);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.15);
+}
+
+.feed-volume-slider::-moz-range-track {
+  height: 2px;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.3);
+}
+
+.feed-volume-slider::-moz-range-progress {
+  height: 2px;
+  border-radius: 9999px;
+  background: rgb(255 255 255);
+}
+
+.feed-volume-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 9999px;
+  background: rgb(255 255 255);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.15);
+}
