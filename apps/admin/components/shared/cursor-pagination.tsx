@@ -43,7 +43,7 @@ export function CursorPagination({
                 className="h-9 w-full justify-between bg-background px-3 font-normal text-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <span>{limit}</span>
-                <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[80px] p-1" align="center">

@@ -80,12 +80,12 @@ export function AccountMenu({ role, permissions, onLogout }: Props) {
             @{username}
           </p>
 
-          <div className="space-y-2 px-3 py-3">
+           <div className="space-y-2 px-3 py-3">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs text-muted-foreground">{t('account.role')}</span>
               {role ? (
-                <span className="rounded-md border border-border bg-muted px-2 py-0.5 text-xs font-medium uppercase tracking-wide">
-                  {role}
+                <span className="rounded-md border border-border bg-muted px-2 py-0.5 text-xs font-medium">
+                  {t(`roles.${role}`, role)}
                 </span>
               ) : (
                 <span className="text-xs text-muted-foreground">—</span>
@@ -106,7 +106,7 @@ export function AccountMenu({ role, permissions, onLogout }: Props) {
                         'rounded-md border border-border bg-muted px-2 py-0.5 text-xs text-foreground',
                       )}
                     >
-                      {permission}
+                      {t(`permissions.${permission}`, permission)}
                     </li>
                   ))}
                 </ul>

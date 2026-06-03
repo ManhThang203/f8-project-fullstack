@@ -51,7 +51,7 @@ export default function ModeratorsPage() {
                       <p className="text-xs text-muted-foreground">@{mod.username}</p>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="font-semibold">{mod.role}</span>
+                      <span className="font-semibold">{t(`roles.${mod.role}`, mod.role)}</span>
                     </td>
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground ring-1 ring-inset ring-border">
@@ -68,7 +68,7 @@ export default function ModeratorsPage() {
                         }}
                         className="min-h-9 min-w-9 h-9 gap-1.5 px-3 text-xs text-primary hover:bg-primary hover:text-primary-foreground disabled:text-muted-foreground disabled:hover:bg-transparent"
                       >
-                        <Key className="size-3.5" />
+                        <Key className="size-3.5 text-primary" aria-hidden />
                         {t('moderators.editPermissions')}
                       </Button>
                     </td>

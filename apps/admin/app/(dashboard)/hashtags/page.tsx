@@ -70,7 +70,7 @@ export default function HashtagsPage() {
                               className={`size-4 transition-all duration-200 ${
                                 tag.featured
                                   ? 'fill-amber-400 text-amber-400 drop-shadow-sm'
-                                  : 'text-muted-foreground/30 hover:text-amber-400 hover:fill-amber-400/20'
+                                  : 'text-muted-foreground hover:text-amber-600 hover:fill-amber-400/20 dark:hover:text-amber-400'
                               }`}
                             />
                           </button>
