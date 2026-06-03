@@ -153,7 +153,7 @@ export function EditPermissionsModal({ isOpen, onClose, user }: Props) {
               {t('moderators.modalTitle', { name: user.name ?? user.username })}
             </h3>
             <p className="text-xs text-muted-foreground">
-              @{user.username} • {t('common.role')}: <span className="font-semibold text-foreground">{user.role}</span>
+              @{user.username} • {t('common.role')}: <span className="font-semibold text-foreground">{t(`roles.${user.role}`, user.role)}</span>
             </p>
           </div>
         </div>
@@ -197,10 +197,10 @@ export function EditPermissionsModal({ isOpen, onClose, user }: Props) {
                         if (isChecked !== p.isDefaultForRole) {
                           if (isChecked) {
                             badgeText = t('moderators.customGranted');
-                            badgeClass = 'bg-success/10 text-success border-success/20';
+                            badgeClass = 'bg-success/10 text-success-foreground border-success/20';
                           } else {
                             badgeText = t('moderators.customRevoked');
-                            badgeClass = 'bg-destructive/10 text-destructive border-destructive/20';
+                            badgeClass = 'bg-destructive/10 text-destructive-foreground border-destructive/20';
                           }
                         } else if (p.isDefaultForRole) {
                           badgeText = t('moderators.defaultForRole');
@@ -233,7 +233,6 @@ export function EditPermissionsModal({ isOpen, onClose, user }: Props) {
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs text-muted-foreground font-mono">{p.key}</p>
                             </div>
                           </div>
                         );

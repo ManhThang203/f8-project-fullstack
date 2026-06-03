@@ -1,0 +1,33 @@
+---
+description: Theme-aware icon and badge colors in the admin dashboard (Lucide, semantic tokens).
+globs: apps/admin/**/*
+---
+# Admin icon & badge colors
+
+Lucide icons use `currentColor`. Always set semantic text classes on the icon or its interactive parent.
+
+## Lucide icons
+
+- Default: `text-muted-foreground` on controls (chevrons, menu, theme toggle parent).
+- Active/emphasis: `text-foreground` or `text-primary`.
+- Do NOT use `text-white`, `text-black`, or fixed `text-zinc-*` / `text-gray-*` unless the icon sits on a guaranteed dark media overlay (e.g. blurred image reveal).
+
+## Dropdown / select icons
+
+- ChevronDown, ChevronUp, Check in shared Select: `text-muted-foreground` or `text-foreground`.
+- Never rely on `opacity-50` alone without a semantic text color.
+
+## Status badges & chips
+
+- Use light/dark pairs: `text-{color}-700 dark:text-{color}-400` (and matching borders/backgrounds).
+- Or semantic tokens: `text-warning-foreground`, `text-success-foreground`, `text-destructive-foreground`.
+- Do not use a single fixed palette step (e.g. only `text-zinc-400`) for both themes.
+
+## CSS variables
+
+- Prefer tokens from `apps/admin/app/globals.css`: `--foreground`, `--muted-foreground`, `--popover-foreground`, `--warning`, `--success`, `--destructive`.
+- When adding new popover/dropdown UI, ensure `--popover` and `--popover-foreground` exist before using `text-popover-foreground`.
+
+## Auth login icons
+
+- Password toggle (Eye/EyeOff): use `text-auth-form-input-icon` with hover `text-auth-form-title`; keep `--auth-form-input-icon` readable on light input backgrounds in both `:root` and `.dark`.
