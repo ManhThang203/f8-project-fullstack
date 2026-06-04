@@ -10,7 +10,8 @@
     "start": "tsx src/index.ts",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "type-check": "tsc --noEmit",
-    "clean": "rimraf dist .turbo"
+    "clean": "rimraf dist .turbo",
+    "promote": "tsx src/scripts/promote.ts"
   },
   "dependencies": {
     "@costy/db": "workspace:*",

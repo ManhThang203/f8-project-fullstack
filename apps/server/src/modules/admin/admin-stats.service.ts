@@ -59,11 +59,12 @@ export async function getStatsOverview(range = '30d'): Promise<{
       wauRows,
       mauRows,
       postsToday,
-      pendingReports,
+      pendingCount,
+      underReviewCount,
       totalReports,
       resolvedReports,
-      rejectedReports,
-      actionTakenReports,
+      dismissedReports,
+      autoHiddenReports,
       activeHashtags,
     ] = await Promise.all([
       prisma.user.count({ where: { deletedAt: null } }),
@@ -87,17 +88,19 @@ export async function getStatsOverview(range = '30d'): Promise<{
         where: { deletedAt: null, parentId: null, createdAt: { gte: todayStart } },
       }),
       prisma.report.count({ where: { status: 'PENDING' } }),
+      prisma.report.count({ where: { status: 'UNDER_REVIEW' } }),
       prisma.report.count(),
       prisma.report.count({ where: { status: 'RESOLVED' } }),
-      prisma.report.count({ where: { status: 'REJECTED' } }),
-      prisma.report.count({ where: { status: 'ACTION_TAKEN' } }),
+      prisma.report.count({ where: { status: 'DISMISSED' } }),
+      prisma.report.count({ where: { status: 'AUTO_HIDDEN' } }),
       prisma.hashtag.count({ where: { status: 'ACTIVE' } }),
     ]);
 
+    const pendingReports = pendingCount + underReviewCount;
     const reportResolutionRate =
       totalReports === 0
         ? 0
-        : Math.round(((resolvedReports + actionTakenReports) / totalReports) * 100);
+        : Math.round(((resolvedReports + dismissedReports + autoHiddenReports) / totalReports) * 100);
 
     return {
       totalUsers,
@@ -112,8 +115,8 @@ export async function getStatsOverview(range = '30d'): Promise<{
       reportStatusBreakdown: {
         pending: pendingReports,
         resolved: resolvedReports,
-        rejected: rejectedReports,
-        actionTaken: actionTakenReports,
+        rejected: dismissedReports,
+        actionTaken: autoHiddenReports,
       },
     };
   });
