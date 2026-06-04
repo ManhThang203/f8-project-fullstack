@@ -5,12 +5,13 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { cn } from '@/lib/utils';
-import { apiFetch } from '@/lib/api-client';
+import { ReportModal } from '@/components/shared/report-modal';
 
 type Props = {
   postId: string;
   hasVideo?: boolean;
   onHidePost?: () => void;
+  isOwnPost?: boolean;
 };
 
 const MENU_ITEMS = [
@@ -19,8 +20,9 @@ const MENU_ITEMS = [
   { id: 'hide', label: 'Ẩn bài viết' },
 ] as const;
 
-export function PostOptionsMenu({ postId, hasVideo = false, onHidePost }: Props) {
+export function PostOptionsMenu({ postId, hasVideo = false, onHidePost, isOwnPost = false }: Props) {
   const [open, setOpen] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
 
@@ -58,17 +60,7 @@ export function PostOptionsMenu({ postId, hasVideo = false, onHidePost }: Props)
         break;
       }
       case 'report':
-        void apiFetch('/reports', {
-          method: 'POST',
-          body: JSON.stringify({
-            targetType: 'POST',
-            targetId: postId,
-            reason: 'SPAM',
-          }),
-        }).then((res) => {
-          if (res.success) toast.success('Đã gửi báo cáo');
-          else toast.error(res.error.message);
-        });
+        setReportModalOpen(true);
         break;
       case 'hide':
         onHidePost?.();
@@ -104,7 +96,7 @@ export function PostOptionsMenu({ postId, hasVideo = false, onHidePost }: Props)
             'rounded-xl border py-1 shadow-lg',
           )}
         >
-          {MENU_ITEMS.map((item) => (
+          {MENU_ITEMS.filter((item) => !(item.id === 'report' && isOwnPost)).map((item) => (
             <button
               key={item.id}
               type="button"
@@ -121,6 +113,13 @@ export function PostOptionsMenu({ postId, hasVideo = false, onHidePost }: Props)
           ))}
         </div>
       )}
+
+      <ReportModal
+        open={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        targetType="POST"
+        targetId={postId}
+      />
     </div>
   );
 }
