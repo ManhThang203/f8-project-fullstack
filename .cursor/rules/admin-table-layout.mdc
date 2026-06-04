@@ -1,5 +1,4 @@
 ---
-description: Chuẩn UI bảng admin — th/td căn giữa, cột theo nội dung, dùng adminTable/adminCol
 globs: apps/admin/lib/admin-table.ts,apps/admin/components/admin/**/*table*.tsx,apps/admin/components/admin/**/*-table*.tsx
 alwaysApply: false
 ---
@@ -15,19 +14,20 @@ Responsive card/table breakpoint: xem `admin-responsive-lists.mdc`.
 ## 1. Token bắt buộc — `lib/admin-table.ts`
 
 - Import `adminTable`, `adminCol` — **không** tự định nghĩa class `th`/`td` riêng.
-- Wrapper: `adminTable.wrap` hoặc `wrapRelative`.
+- Wrapper: `adminTable.wrap` hoặc `wrapRelative` (`block max-lg:hidden` — table từ `lg` trở lên).
+- Class token trong `lib/admin-table.ts` — `tailwind.config.ts` phải có `'./lib/**/*.{ts,tsx}'` trong `content`.
 - Table: `adminTable.table` — **cấm** `min-w-[Npx]` trên `<table>`.
 
 ---
 
 ## 2. Căn giữa — `th` và `td`
 
-| Cấm | Dùng |
-|-----|------|
-| `text-left`, `text-right` trên `th`/`td` | `text-center` (đã có trong `adminTable.th`, `tdCenter`, `tdEnd`) |
-| `justify-start`, `justify-end`, `items-start` trong ô bảng | `justify-center`, `items-center` |
-| `flex w-full` + `justify-end` cho nút action | `adminTable.actionsGroup` |
-| `ml-auto` trên skeleton/nút trong ô | `mx-auto` hoặc bọc `actionsGroup` / `cellCenter` |
+| Cấm                                                        | Dùng                                                             |
+| ---------------------------------------------------------- | ---------------------------------------------------------------- |
+| `text-left`, `text-right` trên `th`/`td`                   | `text-center` (đã có trong `adminTable.th`, `tdCenter`, `tdEnd`) |
+| `justify-start`, `justify-end`, `items-start` trong ô bảng | `justify-center`, `items-center`                                 |
+| `flex w-full` + `justify-end` cho nút action               | `adminTable.actionsGroup`                                        |
+| `ml-auto` trên skeleton/nút trong ô                        | `mx-auto` hoặc bọc `actionsGroup` / `cellCenter`                 |
 
 **Mọi `th`:** `text-align: center` — qua `col*.th` từ `adminCol()` (đã map `thCenter`).
 
@@ -50,11 +50,11 @@ const colActions = adminCol('actions', 'end'); // cell → actionsGroup (nút gi
 </td>
 ```
 
-| `width` | `cell` wrapper |
-|---------|----------------|
-| `'grow'` + `align: 'start'` | `stackCenter` — user/target nhiều dòng |
-| `'grow'` + `align: 'center'` | `cellCenter` — text, badge, số |
-| `'actions'` | `actionsGroup` — nhóm nút căn giữa |
+| `width`                      | `cell` wrapper                         |
+| ---------------------------- | -------------------------------------- |
+| `'grow'` + `align: 'start'`  | `stackCenter` — user/target nhiều dòng |
+| `'grow'` + `align: 'center'` | `cellCenter` — text, badge, số         |
+| `'actions'`                  | `actionsGroup` — nhóm nút căn giữa     |
 
 `align` **không** đổi `text-align` th/td (luôn center); chỉ chọn loại wrapper `cell`.
 
@@ -64,7 +64,8 @@ const colActions = adminCol('actions', 'end'); // cell → actionsGroup (nút gi
 
 - Badge/chip: `inline-flex shrink-0 whitespace-nowrap` bên trong `col*.cell`.
 - Text dài: `truncate` + `min-w-0` **bên trong** `stackCenter` / `cellCenter`, không `max-w-[200px]` trên `td`.
-- Nút: `adminTable.actionBtn` (`min-h-9`) trong `actionsGroup`.
+- Nút: `adminTable.actionBtn` + `variant="secondary"` (hoặc `ghost` với `text-foreground`) trong `actionsGroup`.
+- Icon trong nút (Lucide): **không** class `text-primary` / màu cứng — để stroke `currentColor` theo màu chữ nút (light/dark + hover).
 - Cột ẩn responsive: cùng class trên **cả** `th` và `td` — `cn(colEmail.th, 'hidden xl:table-cell')`.
 
 ---

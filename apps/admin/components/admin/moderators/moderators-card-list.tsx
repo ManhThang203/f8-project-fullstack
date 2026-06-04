@@ -50,12 +50,12 @@ export function ModeratorsCardList({ moderators, onEditPermissions }: Props) {
           <PermissionChip count={mod.permissionCount} />
 
           <Button
-            variant="ghost"
+            variant="secondary"
             disabled={mod.role === 'SUPER_ADMIN'}
             onClick={() => onEditPermissions(mod)}
-            className="h-9 w-full gap-1.5 text-xs text-primary hover:bg-primary hover:text-primary-foreground disabled:text-muted-foreground disabled:hover:bg-transparent"
+            className="h-9 w-full gap-1.5 text-xs"
           >
-            <Key className="size-3.5 text-primary" aria-hidden />
+            <Key className="size-3.5 shrink-0" aria-hidden />
             {t('moderators.editPermissions')}
           </Button>
         </div>
