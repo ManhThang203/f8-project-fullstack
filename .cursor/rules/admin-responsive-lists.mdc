@@ -8,7 +8,9 @@ alwaysApply: false
 
 Áp dụng khi làm responsive trang admin có **bảng hoặc danh sách dữ liệu** (Users, Reports, Moderators, Hashtags…).
 
-Tham chiếu đã chuẩn: `components/admin/reports/`, `components/admin/users/`, `components/admin/moderators/`.
+Tham chiếu đã chuẩn: `components/admin/reports/`, `components/admin/users/`, `components/admin/moderators/`, `components/admin/hashtags/`.
+
+**Layout bảng desktop (căn giữa th/td):** bắt buộc theo `admin-table-layout.mdc`.
 
 ---
 
@@ -16,10 +18,10 @@ Tham chiếu đã chuẩn: `components/admin/reports/`, `components/admin/users/
 
 Admin có sidebar từ `md` (~256px). Content thực tế tablet chỉ ~464–700px.
 
-| Sai | Đúng |
-|-----|------|
-| Table `hidden md:block` + card `md:hidden` | Table `hidden lg:block` + card `lg:hidden` |
-| Chỉ `overflow-x-auto` trên table | **Card layout** cho `< lg`; table cho `≥ lg` |
+| Sai                                        | Đúng                                         |
+| ------------------------------------------ | -------------------------------------------- |
+| Table `hidden md:block` + card `md:hidden` | Table `hidden lg:block` + card `lg:hidden`   |
+| Chỉ `overflow-x-auto` trên table           | **Card layout** cho `< lg`; table cho `≥ lg` |
 
 **Tablet (768–1023px) phải thấy card**, không ép scroll ngang cả bảng.
 
@@ -45,13 +47,10 @@ Loading: render **cả hai skeleton** (table + card), không dùng `TableSkeleto
 
 ## 3. Table desktop — cột và text
 
-- Đặt `min-w-[…]` hợp lý; nếu > 5 cột → **ẩn cột phụ** ở `lg–xl`, gộp meta vào cell chính (`hidden xl:table-cell` + dòng phụ `xl:hidden`).
-- Badge/chip/role: `whitespace-nowrap shrink-0`.
-- Email, username, preview: `truncate min-w-0`.
+Xem **`admin-table-layout.mdc`** (căn giữa th/td, `adminCol`, cấm `min-w` cứng).
+
+- Nếu > 5 cột → **ẩn cột phụ** ở `lg–xl`, gộp meta vào cell chính (`hidden xl:table-cell` + dòng phụ `xl:hidden`).
 - Nút action: `min-h-9` (≥ 44px touch target).
-- Header cột: `t('…')` — không hardcode EN/VI lẫn lộn.
-- `th`/`td`: dùng `align-middle` (token `adminTable` trong `lib/admin-table.ts`).
-- `th` `text-left` | `text-center` | `text-right` phải khớp `cellStart` | `cellCenter` | `cellEnd` của cột tương ứng.
 
 ---
 
