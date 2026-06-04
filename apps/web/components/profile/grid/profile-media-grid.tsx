@@ -1,6 +1,6 @@
 'use client';
 
-import type { ProfileGridItemDto } from '@threads/shared';
+import type { ProfileGridItemDto } from '@costy/shared';
 import { useEffect, useRef } from 'react';
 
 import { ProfileMediaTile } from '@/components/profile/grid/profile-media-tile';

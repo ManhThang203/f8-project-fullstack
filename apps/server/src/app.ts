@@ -29,6 +29,9 @@ import { healthRouter } from './modules/health/health.routes.js';
 import { chatRouter } from './modules/chat/chat.routes.js';
 import { postsRouter } from './modules/posts/posts.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
+import { mediaRouter } from './modules/media/media.routes.js';
+import { notificationsRouter } from './modules/notifications/notifications.routes.js';
+import path from 'path';
 
 export function buildApp(): Express {
   const app = express();
@@ -82,6 +85,11 @@ export function buildApp(): Express {
   app.use('/api/v1/posts', postsRouter);
   app.use('/api/v1/chat', chatRouter);
   app.use('/api/v1/users', usersRouter);
+  app.use('/api/v1/media', mediaRouter);
+  app.use('/api/v1/notifications', notificationsRouter);
+
+  // Phục vụ tĩnh các file tải lên cho E2EE Chat
+  app.use('/api/v1/media/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
   // Phải nằm cuối cùng: error middleware có 4 tham số `(err, req, res, next)`
   // mới được Express nhận diện.

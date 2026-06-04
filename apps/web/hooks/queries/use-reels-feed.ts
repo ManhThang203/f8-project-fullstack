@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReelsFeedItemDto, ReelsFeedMeta } from '@threads/shared';
+import type { ReelsFeedItemDto, ReelsFeedMeta } from '@costy/shared';
 import { useInfiniteQuery } from '@tanstack/react-query';
 
 import { apiQuery } from '@/lib/api-query';

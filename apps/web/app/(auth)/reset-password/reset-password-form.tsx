@@ -1,6 +1,6 @@
 'use client';
 
-import { resetPasswordFormSchema } from '@threads/shared';
+import { resetPasswordFormSchema } from '@costy/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';

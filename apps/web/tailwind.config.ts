@@ -2,7 +2,7 @@ import type { Config } from 'tailwindcss';
 import animate from 'tailwindcss-animate';
 
 /**
- * Threads-style palette: off-white surface, near-black text, minimal accents.
+ * Costy-style palette: off-white surface, near-black text, minimal accents.
  * Real shadcn/ui CSS variables live in app/globals.css; this config just wires
  * Tailwind utility classes to those variables.
  */
@@ -35,13 +35,13 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       keyframes: {
-        'threads-pulse': {
+        'costy-pulse': {
           '0%, 100%': { transform: 'scale(1)', opacity: '1' },
           '50%': { transform: 'scale(1.25)', opacity: '0.25' },
         },
       },
       animation: {
-        'threads-pulse': 'threads-pulse 1.4s ease-in-out infinite',
+        'costy-pulse': 'costy-pulse 1.4s ease-in-out infinite',
       },
     },
   },

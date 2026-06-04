@@ -1,6 +1,6 @@
 'use client';
 
-import type { PostFeedItemDto, PostFeedMeta } from '@threads/shared';
+import type { PostFeedItemDto, PostFeedMeta } from '@costy/shared';
 import { useInfiniteQuery } from '@tanstack/react-query';
 
 import { apiQuery } from '@/lib/api-query';

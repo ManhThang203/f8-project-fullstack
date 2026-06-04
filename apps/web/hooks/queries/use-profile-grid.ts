@@ -1,6 +1,6 @@
 'use client';
 
-import type { ProfileGridItemDto, ProfileGridMeta } from '@threads/shared';
+import type { ProfileGridItemDto, ProfileGridMeta } from '@costy/shared';
 import { useInfiniteQuery } from '@tanstack/react-query';
 
 import type { ProfileTab } from '@/components/profile/profile-utils';

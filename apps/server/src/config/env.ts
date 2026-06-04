@@ -11,13 +11,14 @@ loadDotenv({ path: path.join(repoRoot, '.env.local') });
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  APP_NAME: z.string().default('threads-clone'),
+  APP_NAME: z.string().default('costy'),
 
   SERVER_PORT: z.coerce.number().int().positive().default(4000),
   SERVER_HOST: z.string().default('0.0.0.0'),
   SERVER_URL: z.string().url().default('http://localhost:4000'),
 
   WEB_URL: z.string().url().default('http://localhost:3000'),
+  ADMIN_URL: z.string().url().default('http://localhost:3001'),
 
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
 
@@ -41,12 +42,12 @@ const envSchema = z.object({
   SMTP_PORT: z.coerce.number().int().positive().default(1025),
   SMTP_USER: z.string().optional().default(''),
   SMTP_PASS: z.string().optional().default(''),
-  SMTP_FROM: z.string().default('no-reply@threads.local'),
+  SMTP_FROM: z.string().default('no-reply@costy.local'),
 
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('debug'),
   CORS_ORIGINS: z
     .string()
-    .default('http://localhost:3000')
+    .default('http://localhost:3000,http://localhost:3001')
     .transform((s) => s.split(',').map((o) => o.trim()).filter(Boolean)),
 
   RATE_LIMIT_POINTS: z.coerce.number().int().positive().default(500),

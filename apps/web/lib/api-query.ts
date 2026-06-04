@@ -1,4 +1,4 @@
-import type { ApiResponse } from '@threads/shared';
+import type { ApiResponse } from '@costy/shared';
 
 import { apiFetch } from '@/lib/api-client';
 

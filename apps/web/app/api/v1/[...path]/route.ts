@@ -4,6 +4,7 @@ import { applyUpstreamProxyHeaders } from '@/lib/upstream-client-ip';
 import { HOP_BY_HOP_HEADERS, nextResponseFromUpstream } from '@/lib/proxy-to-upstream';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 /**
  * BFF proxy: forwards `/api/v1/*` from the Next.js app to the upstream Express
@@ -33,6 +34,7 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
     body: ['GET', 'HEAD'].includes(req.method) ? undefined : req.body,
     // @ts-expect-error - undici-specific flag, required when streaming a body
     duplex: 'half',
+    cache: 'no-store',
   };
   // Next ghép URL upstream
   const upstream = await fetch(url, init);

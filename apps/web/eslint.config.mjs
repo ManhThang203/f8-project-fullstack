@@ -1,2 +1,2 @@
-import config from '@threads/eslint-config/next';
+import config from '@costy/eslint-config/next';
 export default config;

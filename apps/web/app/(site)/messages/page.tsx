@@ -22,7 +22,7 @@ function MessagesFallback() {
 
 export default function MessagesPage() {
   return (
-    <main className="min-h-screen bg-background">
+    <main className="fixed inset-0 top-14 bg-background overflow-hidden flex flex-col">
       <Suspense fallback={<MessagesFallback />}>
         <ClientOnly fallback={<MessagesSsrFallback />}>
           <MessagesView />

@@ -1,6 +1,6 @@
 'use client';
 
-import type { UserListMeta, UserSummaryDto } from '@threads/shared';
+import type { UserListMeta, UserSummaryDto } from '@costy/shared';
 import { useInfiniteQuery } from '@tanstack/react-query';
 
 import { apiQuery } from '@/lib/api-query';

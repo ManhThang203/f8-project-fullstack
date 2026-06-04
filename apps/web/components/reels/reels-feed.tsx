@@ -1,6 +1,6 @@
 'use client';
 
-import { ErrorCode } from '@threads/shared';
+import { ErrorCode } from '@costy/shared';
 import { notFound } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 

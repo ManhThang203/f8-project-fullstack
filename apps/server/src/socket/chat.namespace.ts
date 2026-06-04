@@ -51,14 +51,14 @@ function registerChatAuth(chatNs: Namespace) {
   });
 }
 
-/** Join sẵn tất cả phòng nhóm user đang thuộc về (query DB một lần lúc connect). */
-async function joinGroupRooms(socket: Socket, userId: string) {
-  const memberships = await prisma.chatGroupMember.findMany({
+/** Join tất cả các phòng ChatRoom (cả 1-1 và Group) mà user đang là thành viên */
+async function joinChatRooms(socket: Socket, userId: string) {
+  const memberships = await prisma.chatRoomMember.findMany({
     where: { userId },
-    select: { groupId: true },
+    select: { roomId: true },
   });
   for (const m of memberships) {
-    socket.join(`group:${m.groupId}`);
+    socket.join(`room:${m.roomId}`);
   }
 }
 
@@ -69,43 +69,96 @@ export function registerChatNamespace(chatNs: Namespace) {
   chatNs.on('connection', (socket) => {
     const userId = socket.data.userId as string;
 
-    socket.join(`user:${userId}`);
-    void joinGroupRooms(socket, userId).catch((err: unknown) => {
-      logger.warn({ err, userId }, 'chat socket: failed to join group rooms');
+    socket.join(`user:${userId}`); // Phòng riêng của user (để nhận notification hoặc force refresh)
+    void joinChatRooms(socket, userId).catch((err: unknown) => {
+      logger.warn({ err, userId }, 'chat socket: failed to join rooms');
     });
 
-    // ── Chat 1-1 ──────────────────────────────────────────────────────────
+    /** Subscribe vào 1 phòng cụ thể (khi vừa được add vào nhóm mới) */
+    socket.on('room:subscribe', async (payload: unknown, ack: (r: unknown) => void) => {
+      try {
+        const { roomId } = payload as { roomId?: string };
+        if (!roomId) return ack?.({ ok: false, error: 'roomId missing' });
+        
+        const mem = await prisma.chatRoomMember.findUnique({
+          where: { roomId_userId: { roomId, userId } },
+        });
+        if (!mem) return ack?.({ ok: false, error: 'Not a member' });
 
-    /** Lưu DB → push tới peer qua room `user:{peerUserId}` → ack cho sender. */
+        socket.join(`room:${roomId}`);
+        ack?.({ ok: true });
+      } catch (err) {
+        ack?.({ ok: false, error: 'subscribe error' });
+      }
+    });
+
+    /** 
+     * Relay tin nhắn E2EE: client gửi encryptedPayload, server lưu DB và broadcast
+     */
     socket.on('chat:send', async (payload: unknown, ack: (r: unknown) => void) => {
       try {
-        const p = payload as { peerUserId?: unknown; text?: unknown };
-        const peerUserId = String(p?.peerUserId ?? '');
-        const text = String(p?.text ?? '');
-        if (!peerUserId) {
-          ack?.({ ok: false, error: 'peerUserId không hợp lệ' });
+        const p = payload as { roomId?: string; encryptedPayload?: string; type?: string; mediaId?: string; replyToId?: string };
+        const { roomId, encryptedPayload, type = 'text', mediaId, replyToId } = p;
+        
+        if (!roomId || !encryptedPayload) {
+          ack?.({ ok: false, error: 'Thiếu dữ liệu E2EE message' });
           return;
         }
-        const saved = await chatService.createChatMessage({
-          senderId: userId,
-          recipientId: peerUserId,
-          body: text,
+
+        // Kiểm tra quyền gửi
+        const isMember = await prisma.chatRoomMember.findUnique({
+          where: { roomId_userId: { roomId, userId } },
         });
-        chatNs.to(`user:${peerUserId}`).emit('chat:message', {
-          kind: 'direct' as const,
+        if (!isMember) {
+          ack?.({ ok: false, error: 'Không thuộc phòng chat này' });
+          return;
+        }
+
+        // Lưu vào DB (server mù, không biết nội dung là gì)
+        const saved = await prisma.chatMessage.create({
+          data: {
+            roomId,
+            senderId: userId,
+            encryptedPayload,
+            type,
+            mediaId,
+            replyToId,
+          },
+          include: {
+            replyTo: true,
+          }
+        });
+
+        // Phát tới tất cả mọi người trong phòng (trừ sender, trừ khi client muốn tự nhận)
+        socket.to(`room:${roomId}`).emit('chat:message', {
           id: saved.id,
-          body: saved.body,
+          roomId: saved.roomId,
+          senderId: saved.senderId,
+          encryptedPayload: saved.encryptedPayload,
+          type: saved.type,
+          mediaId: saved.mediaId,
+          replyToId: saved.replyToId,
+          replyToMessage: saved.replyTo,
+          isUnsent: saved.isUnsent,
+          deletedFor: saved.deletedFor,
+          reactions: [],
           createdAt: saved.createdAt.toISOString(),
-          senderId: userId,
-          recipientId: peerUserId,
         });
+
         ack?.({
           ok: true,
           message: {
             id: saved.id,
+            roomId: saved.roomId,
             senderId: saved.senderId,
-            recipientId: saved.recipientId,
-            body: saved.body,
+            encryptedPayload: saved.encryptedPayload,
+            type: saved.type,
+            mediaId: saved.mediaId,
+            replyToId: saved.replyToId,
+            replyToMessage: saved.replyTo,
+            isUnsent: saved.isUnsent,
+            deletedFor: saved.deletedFor,
+            reactions: [],
             createdAt: saved.createdAt.toISOString(),
           },
         });
@@ -115,94 +168,96 @@ export function registerChatNamespace(chatNs: Namespace) {
       }
     });
 
-    /** Chuyển tiếp trạng thái "đang gõ" tới peer (không lưu DB). */
     socket.on('chat:typing', (payload: unknown) => {
-      const p = payload as { peerUserId?: unknown };
-      const peerUserId = String(p?.peerUserId ?? '');
-      if (!peerUserId || peerUserId === userId) return;
-      socket.to(`user:${peerUserId}`).emit('chat:typing', { fromUserId: userId });
+      const { roomId } = payload as { roomId?: string };
+      if (!roomId) return;
+      socket.to(`room:${roomId}`).emit('chat:typing', { roomId, fromUserId: userId });
     });
 
-    // ── Chat nhóm ─────────────────────────────────────────────────────────
+    /** Trạng thái đã nhận */
+    socket.on('chat:delivered', async (payload: unknown) => {
+      const { roomId } = payload as { roomId?: string };
+      if (!roomId) return;
+      await prisma.chatRoomMember.updateMany({
+        where: { roomId, userId },
+        data: { lastDeliveredAt: new Date() },
+      });
+      socket.to(`room:${roomId}`).emit('chat:delivered', { roomId, userId });
+    });
 
-    /** Chuyển tiếp "đang gõ" trong nhóm — chỉ forward nếu user là thành viên. */
-    socket.on('group:typing', async (payload: unknown) => {
-      const p = payload as { groupId?: unknown };
-      const groupId = Number(p?.groupId);
-      if (!Number.isFinite(groupId) || groupId <= 0) return;
+    /** Trạng thái đã xem */
+    socket.on('chat:read', async (payload: unknown) => {
+      const { roomId } = payload as { roomId?: string };
+      if (!roomId) return;
+      await prisma.chatRoomMember.updateMany({
+        where: { roomId, userId },
+        data: { lastReadAt: new Date(), lastDeliveredAt: new Date() },
+      });
+      socket.to(`room:${roomId}`).emit('chat:read', { roomId, userId });
+    });
+
+    /** Cảm xúc (Reaction) */
+    socket.on('chat:react', async (payload: unknown, ack: (r: unknown) => void) => {
       try {
-        const mem = await prisma.chatGroupMember.findUnique({
-          where: { groupId_userId: { groupId, userId } },
-          select: { groupId: true },
+        const { messageId, emoji } = payload as { messageId?: string; emoji?: string };
+        if (!messageId || !emoji) return ack?.({ ok: false });
+
+        const msg = await prisma.chatMessage.findUnique({ where: { id: messageId } });
+        if (!msg) return ack?.({ ok: false });
+
+        const reaction = await prisma.messageReaction.upsert({
+          where: { messageId_userId_emoji: { messageId, userId, emoji } },
+          update: {},
+          create: { messageId, userId, emoji },
         });
-        if (!mem) return;
-        socket.to(`group:${groupId}`).emit('group:typing', { groupId, fromUserId: userId });
+
+        socket.to(`room:${msg.roomId}`).emit('chat:reaction', { messageId, reaction });
+        ack?.({ ok: true, reaction });
       } catch (err) {
-        logger.warn({ err, userId }, 'group:typing failed');
+        ack?.({ ok: false });
       }
     });
 
-    /** Join phòng nhóm thủ công — dùng khi user vừa được thêm vào nhóm sau khi đã connect. */
-    socket.on('group:subscribe', async (payload: unknown, ack: (r: unknown) => void) => {
+    /** Thu hồi tin nhắn */
+    socket.on('chat:unsend', async (payload: unknown, ack: (r: unknown) => void) => {
       try {
-        const p = payload as { groupId?: unknown };
-        const groupId = Number(p?.groupId);
-        if (!Number.isFinite(groupId) || groupId <= 0) {
-          ack?.({ ok: false, error: 'groupId không hợp lệ' });
-          return;
-        }
-        const mem = await prisma.chatGroupMember.findUnique({
-          where: { groupId_userId: { groupId, userId } },
-          select: { groupId: true },
+        const { messageId } = payload as { messageId?: string };
+        if (!messageId) return ack?.({ ok: false });
+
+        const msg = await prisma.chatMessage.findUnique({ where: { id: messageId } });
+        if (!msg || msg.senderId !== userId) return ack?.({ ok: false });
+
+        await prisma.chatMessage.update({
+          where: { id: messageId },
+          data: { isUnsent: true },
         });
-        if (!mem) {
-          ack?.({ ok: false, error: 'Không thuộc nhóm' });
-          return;
-        }
-        socket.join(`group:${groupId}`);
+
+        socket.to(`room:${msg.roomId}`).emit('chat:unsent', { messageId, roomId: msg.roomId });
         ack?.({ ok: true });
       } catch (err) {
-        logger.warn({ err, userId }, 'group:subscribe failed');
-        ack?.({ ok: false, error: err instanceof Error ? err.message : 'subscribe failed' });
+        ack?.({ ok: false });
       }
     });
 
-    /** Lưu DB → broadcast tới room nhóm (trừ sender) → ack cho sender. */
-    socket.on('group:send', async (payload: unknown, ack: (r: unknown) => void) => {
+    /** Xoá tin nhắn (chỉ phía tôi) */
+    socket.on('chat:delete', async (payload: unknown, ack: (r: unknown) => void) => {
       try {
-        const p = payload as { groupId?: unknown; text?: unknown };
-        const groupId = Number(p?.groupId);
-        const text = String(p?.text ?? '');
-        if (!Number.isFinite(groupId) || groupId <= 0) {
-          ack?.({ ok: false, error: 'groupId không hợp lệ' });
-          return;
-        }
-        const saved = await chatService.createGroupMessage({
-          senderId: userId,
-          groupId,
-          body: text,
+        const { messageId } = payload as { messageId?: string };
+        if (!messageId) return ack?.({ ok: false });
+
+        const msg = await prisma.chatMessage.findUnique({ where: { id: messageId } });
+        if (!msg) return ack?.({ ok: false });
+
+        await prisma.chatMessage.update({
+          where: { id: messageId },
+          data: { deletedFor: { push: userId } },
         });
-        socket.to(`group:${groupId}`).emit('chat:group:message', {
-          kind: 'group' as const,
-          id: saved.id,
-          groupId: saved.groupId,
-          senderId: saved.senderId,
-          body: saved.body,
-          createdAt: saved.createdAt.toISOString(),
-        });
-        ack?.({
-          ok: true,
-          message: {
-            id: saved.id,
-            groupId: saved.groupId,
-            senderId: saved.senderId,
-            body: saved.body,
-            createdAt: saved.createdAt.toISOString(),
-          },
-        });
+
+        // Chỉ emit cho các session khác của cùng user (nếu có)
+        socket.to(`user:${userId}`).emit('chat:deleted', { messageId, roomId: msg.roomId });
+        ack?.({ ok: true });
       } catch (err) {
-        logger.warn({ err, userId }, 'group:send failed');
-        ack?.({ ok: false, error: err instanceof Error ? err.message : 'send failed' });
+        ack?.({ ok: false });
       }
     });
 

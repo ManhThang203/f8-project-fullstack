@@ -1,6 +1,6 @@
 'use client';
 
-import type { PostAuthorDto } from '@threads/shared';
+import type { PostAuthorDto } from '@costy/shared';
 import { Globe } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 

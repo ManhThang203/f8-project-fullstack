@@ -30,8 +30,8 @@ FROM base AS builder
 COPY --from=deps /app /app
 COPY . .
 # Prisma Generate reads `DATABASE_URL` via `prisma.config.ts` / `env()`; URL is not embedded in the schema.
-ENV DATABASE_URL="postgresql://threads:threads@localhost:5432/threads?schema=public"
-RUN pnpm --filter @threads/db generate
+ENV DATABASE_URL="postgresql://costy:costy12345@localhost:5432/costy?schema=public"
+RUN pnpm --filter @costy/db generate
 
 # Next.js nhúng `NEXT_PUBLIC_*` vào JS lúc `pnpm build` — runtime `env_file` không đổi được giá trị đã build.
 # Truyền qua `docker compose build` (xem docker-compose.yml `args`) hoặc `docker build --build-arg ...`.
@@ -82,4 +82,4 @@ RUN sed -i 's/\r$//' /usr/local/bin/api-entrypoint.sh && chmod +x /usr/local/bin
 
 # tini reaps zombie children (workers, ffmpeg subprocesses).
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["pnpm", "--filter", "@threads/server", "start"]
+CMD ["pnpm", "--filter", "@costy/server", "start"]

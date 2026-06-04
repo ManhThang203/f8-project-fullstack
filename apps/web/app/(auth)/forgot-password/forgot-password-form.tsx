@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { forgotPasswordRequestSchema } from '@threads/shared';
+import { forgotPasswordRequestSchema } from '@costy/shared';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';

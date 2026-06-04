@@ -1,6 +1,6 @@
 'use client';
 
-import type { ProfileGridItemDto } from '@threads/shared';
+import type { ProfileGridItemDto } from '@costy/shared';
 import { Heart, MessageCircle } from 'lucide-react';
 
 import { Modal } from '@/components/shared/modal';

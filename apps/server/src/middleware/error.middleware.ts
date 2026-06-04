@@ -1,6 +1,6 @@
 import type { ErrorRequestHandler } from 'express';
 import { ZodError } from 'zod';
-import { err } from '@threads/shared';
+import { err } from '@costy/shared';
 
 import { AppError } from '../lib/errors.js';
 import { logger } from '../lib/logger.js';

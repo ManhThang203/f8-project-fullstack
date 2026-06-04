@@ -1,6 +1,6 @@
 'use client';
 
-import type { ProfileDto } from '@threads/shared';
+import type { ProfileDto } from '@costy/shared';
 import { useQuery } from '@tanstack/react-query';
 
 import { apiQuery } from '@/lib/api-query';

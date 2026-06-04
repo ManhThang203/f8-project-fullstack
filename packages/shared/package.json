@@ -1,5 +1,5 @@
 {
-  "name": "@threads/shared",
+  "name": "@costy/shared",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -19,7 +19,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@threads/typescript-config": "workspace:*",
+    "@costy/typescript-config": "workspace:*",
     "rimraf": "^6.0.1",
     "typescript": "^5.6.3"
   }

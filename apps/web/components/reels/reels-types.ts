@@ -1,4 +1,4 @@
-import type { ReelsFeedItemDto } from '@threads/shared';
+import type { ReelsFeedItemDto } from '@costy/shared';
 
 export type { ReelsFeedItemDto };
 

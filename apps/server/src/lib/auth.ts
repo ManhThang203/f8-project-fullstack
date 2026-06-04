@@ -7,7 +7,7 @@ import { APIError } from 'better-auth/api';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { username } from 'better-auth/plugins';
 
-import { prisma } from '@threads/db';
+import { prisma } from '@costy/db';
 
 import { env } from '../config/env.js';
 import { logger } from './logger.js';
@@ -60,7 +60,7 @@ const authRateLimit = env.AUTH_RATE_LIMIT_DISABLED
  * GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET (optional), SMTP_* for password reset emails.
  */
 export const auth = betterAuth({
-  appName: 'threads-clone',
+  appName: 'costy',
   database: prismaAdapter(prisma, { provider: 'postgresql' }),
   advanced: {
     ipAddress: {
@@ -126,6 +126,7 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3000',
   trustedOrigins: [
     process.env.WEB_URL ?? 'http://localhost:3000',
+    process.env.ADMIN_URL ?? 'http://localhost:3001',
     process.env.BETTER_AUTH_URL ?? 'http://localhost:3000',
     process.env.SERVER_URL ?? 'http://localhost:4000',
   ],

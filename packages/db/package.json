@@ -1,5 +1,5 @@
 {
-  "name": "@threads/db",
+  "name": "@costy/db",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -28,7 +28,7 @@
     "pg": "^8.13.1"
   },
   "devDependencies": {
-    "@threads/typescript-config": "workspace:*",
+    "@costy/typescript-config": "workspace:*",
     "@types/node": "^22.10.0",
     "@types/pg": "^8.11.10",
     "prisma": "^7.0.0",
