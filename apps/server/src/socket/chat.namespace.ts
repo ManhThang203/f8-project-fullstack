@@ -8,7 +8,7 @@
 
 import type { IncomingHttpHeaders } from 'node:http';
 
-import { prisma } from '@threads/db';
+import { prisma } from '@costy/db';
 import { fromNodeHeaders } from 'better-auth/node';
 import type { Namespace, Socket } from 'socket.io';
 

@@ -5,7 +5,7 @@ import {
   reelsFeedQuerySchema,
   type CursorPageQuery,
   type ReelsFeedQuery,
-} from '@threads/shared';
+} from '@costy/shared';
 import { Router } from 'express';
 
 import { requireAuth } from '../../middleware/auth.middleware.js';

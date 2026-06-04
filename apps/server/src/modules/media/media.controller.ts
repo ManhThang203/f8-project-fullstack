@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { prisma } from '@threads/db';
+import { prisma } from '@costy/db';
 import { AppError } from '../../lib/errors.js';
 import { env } from '../../config/env.js';
 

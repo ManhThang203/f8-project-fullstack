@@ -22,6 +22,7 @@ import { auth } from './lib/auth.js';
 import { logger } from './lib/logger.js';
 import { swaggerSpec } from './lib/swagger.js';
 import { attachBetterAuthSession } from './middleware/better-auth-session.middleware.js';
+import { attachAuthContext, blockInactiveUsers } from './middleware/auth-context.middleware.js';
 import { attachDevAuthContext } from './middleware/dev-auth.middleware.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
 import { handleSignInIdentifier } from './modules/auth/identifier-auth.routes.js';
@@ -31,6 +32,8 @@ import { postsRouter } from './modules/posts/posts.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
 import { mediaRouter } from './modules/media/media.routes.js';
 import { notificationsRouter } from './modules/notifications/notifications.routes.js';
+import { adminRouter } from './modules/admin/admin.routes.js';
+import { reportsRouter } from './modules/reports/reports.routes.js';
 import path from 'path';
 
 export function buildApp(): Express {
@@ -80,6 +83,8 @@ export function buildApp(): Express {
   // `attachDevAuthContext` cho phép giả lập user qua header trong môi trường
   // dev (xem env `DEV_AUTH_*`); ở prod middleware này tự no-op.
   app.use('/api/v1', attachBetterAuthSession);
+  app.use('/api/v1', attachAuthContext);
+  app.use('/api/v1', blockInactiveUsers);
   app.use('/api/v1', attachDevAuthContext);
   app.use('/api/v1/health', healthRouter);
   app.use('/api/v1/posts', postsRouter);
@@ -87,6 +92,8 @@ export function buildApp(): Express {
   app.use('/api/v1/users', usersRouter);
   app.use('/api/v1/media', mediaRouter);
   app.use('/api/v1/notifications', notificationsRouter);
+  app.use('/api/v1/reports', reportsRouter);
+  app.use('/api/v1/admin', adminRouter);
 
   // Phục vụ tĩnh các file tải lên cho E2EE Chat
   app.use('/api/v1/media/uploads', express.static(path.resolve(process.cwd(), 'uploads')));

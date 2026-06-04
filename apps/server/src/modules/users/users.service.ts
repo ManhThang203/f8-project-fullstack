@@ -1,4 +1,4 @@
-import { MediaStatus, NotificationType, prisma } from '@threads/db';
+import { MediaStatus, NotificationType, prisma } from '@costy/db';
 import type {
   FollowStateDto,
   ProfileDto,
@@ -6,7 +6,7 @@ import type {
   ProfileListQuery,
   ProfilePostsQuery,
   UserSummaryDto,
-} from '@threads/shared';
+} from '@costy/shared';
 
 import { AppError } from '../../lib/errors.js';
 

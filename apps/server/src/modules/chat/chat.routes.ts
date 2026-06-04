@@ -1,4 +1,4 @@
-import { ok } from '@threads/shared';
+import { ok } from '@costy/shared';
 import { Router } from 'express';
 import { z } from 'zod';
 
@@ -7,7 +7,7 @@ import { requireAuth } from '../../middleware/auth.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
 
 import * as chatService from './chat.service.js';
-import { prisma } from '@threads/db';
+import { prisma } from '@costy/db';
 
 const router = Router();
 

@@ -11,6 +11,31 @@ import { setRealtimeIo } from './lib/realtime.js';
 import { initSocket } from './socket/socket.js';
 import { startWorkers } from './workers/index.js';
 
+/** Đăng ký các repeatable job (cleanup media, refresh trending) lên BullMQ; nuốt lỗi Redis để không sập server. */
+async function scheduleRepeatableJobs(): Promise<void> {
+  try {
+    const { mediaCleanupQueue, trendingHashtagsQueue } = await import('./queues/index.js');
+    await mediaCleanupQueue.add(
+      'hourly-cleanup',
+      {},
+      {
+        repeat: { pattern: '0 * * * *' },
+        jobId: 'e2ee-media-cleanup',
+      },
+    );
+    await trendingHashtagsQueue.add(
+      'trending-hashtags',
+      {},
+      {
+        repeat: { every: 5 * 60 * 1000 },
+        jobId: 'trending-hashtags-refresh',
+      },
+    );
+  } catch (err) {
+    logger.error({ err }, 'failed to schedule repeatable jobs');
+  }
+}
+
 async function main(): Promise<void> {
   const app = buildApp();
 
@@ -21,22 +46,19 @@ async function main(): Promise<void> {
 
   const workers = startWorkers();
 
-  const { mediaCleanupQueue } = await import('./queues/index.js');
-  await mediaCleanupQueue.add(
-    'hourly-cleanup',
-    {},
-    {
-      repeat: { pattern: '0 * * * *' }, // Chạy mỗi giờ một lần
-      jobId: 'e2ee-media-cleanup', // Tránh trùng lặp job
-    },
-  );
-
+  // Mở port HTTP ngay, không chờ Redis/BullMQ: nếu Redis chập chờn lúc khởi động
+  // (ECONNRESET trên Docker/Windows) thì API vẫn lắng nghe được trên port, tránh
+  // tình trạng web/admin proxy nhận ECONNREFUSED.
   httpServer.listen(env.SERVER_PORT, env.SERVER_HOST, () => {
     logger.info(
       { port: env.SERVER_PORT, host: env.SERVER_HOST, url: env.SERVER_URL },
       'server listening',
     );
   });
+
+  // Lên lịch các repeatable job ở chế độ nền; lỗi Redis chỉ được log chứ không
+  // làm sập tiến trình server.
+  void scheduleRepeatableJobs();
 
   /** Đóng workers trước, rồi ngừng nhận kết nối mới; force exit nếu treo quá 10s. */
   const shutdown = async (signal: string) => {

@@ -6,7 +6,7 @@ import {
   usernameParamSchema,
   type ProfileListQuery,
   type ProfilePostsQuery,
-} from '@threads/shared';
+} from '@costy/shared';
 import { Router } from 'express';
 import { z } from 'zod';
 

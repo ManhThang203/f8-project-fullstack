@@ -1,5 +1,5 @@
-import { MediaKind, MediaStatus, prisma } from '@threads/db';
-import type { CreatePostBody, CursorPageQuery, PostFeedItemDto, ReelsFeedItemDto, ReelsFeedQuery } from '@threads/shared';
+import { MediaKind, MediaStatus, prisma } from '@costy/db';
+import type { CreatePostBody, CursorPageQuery, PostFeedItemDto, ReelsFeedItemDto, ReelsFeedQuery } from '@costy/shared';
 
 import {
   destroyMany,
@@ -12,6 +12,7 @@ import { logger } from '../../lib/logger.js';
 
 import { mapPostToFeedItemDto, mapPostToReelsFeedItemDto, postFeedInclude, postReelInclude } from './posts.mapper.js';
 import { createNotification } from '../notifications/notifications.service.js';
+import { syncPostHashtags } from '../../lib/hashtag/hashtag.service.js';
 
 const IMAGE_MAX_BYTES = 10 * 1024 * 1024; // 10MB
 const VIDEO_MAX_BYTES = 500 * 1024 * 1024; // 500MB
@@ -110,6 +111,7 @@ export async function listFeed(query: CursorPageQuery, viewerId?: string | null)
   const where = cursorData
     ? {
         deletedAt: null,
+        hiddenAt: null,
         parentId: null,
         OR: [
           { createdAt: { lt: cursorData.createdAt } },
@@ -118,6 +120,7 @@ export async function listFeed(query: CursorPageQuery, viewerId?: string | null)
       }
     : {
         deletedAt: null,
+        hiddenAt: null,
         parentId: null,
       };
 
@@ -175,6 +178,7 @@ export async function listReelsFeed(
   const where = cursorData
     ? {
         deletedAt: null,
+        hiddenAt: null,
         parentId: null,
         media: { some: { kind: MediaKind.VIDEO, status: MediaStatus.READY } },
         OR: [
@@ -184,6 +188,7 @@ export async function listReelsFeed(
       }
     : {
         deletedAt: null,
+        hiddenAt: null,
         parentId: null,
         media: { some: { kind: MediaKind.VIDEO, status: MediaStatus.READY } },
       };
@@ -207,6 +212,7 @@ export async function listReelsFeed(
       where: {
         id: startPostId,
         deletedAt: null,
+        hiddenAt: null,
         parentId: null,
         media: { some: { kind: MediaKind.VIDEO, status: MediaStatus.READY } },
       },
@@ -399,15 +405,15 @@ export async function createPost(opts: {
             return {
               ownerId: opts.authorId,
               postId: post.id,
-              kind: isVideo ? 'VIDEO' : 'IMAGE',
-              status: 'READY',
+              kind: isVideo ? MediaKind.VIDEO : MediaKind.IMAGE,
+              status: MediaStatus.READY,
               mimeType: file.mimetype,
               sizeBytes: file.size,
-              storagePath: result.public_id, // Cloudinary public_id
-              publicUrl: result.secure_url,
+              storagePath: result.publicId,
+              publicUrl: result.secureUrl,
               width: result.width || null,
               height: result.height || null,
-              durationMs: isVideo && result.duration ? Math.floor(result.duration * 1000) : null,
+              durationMs: isVideo ? result.durationMs : null,
             };
           }),
         });
@@ -420,6 +426,10 @@ export async function createPost(opts: {
       where: { id: postId },
       include: postFeedInclude,
     });
+
+    if (!opts.body.parentId) {
+      await syncPostHashtags(postId, content);
+    }
 
     if (opts.body.parentId) {
       const parentPost = await prisma.post.findUnique({

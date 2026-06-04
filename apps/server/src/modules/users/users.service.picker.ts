@@ -2,7 +2,7 @@
  * Picker service: cung cấp danh sách user gợi ý cho composer/share/tạo nhóm.
  */
 
-import { prisma } from '@threads/db';
+import { prisma } from '@costy/db';
 
 /**
  * Tìm kiếm user theo username hoặc name (case-insensitive).
