@@ -70,6 +70,23 @@ export const adminUserPermissionsPutSchema = z.object({
   revokes: z.array(z.string()).default([]),
 });
 
+export const moderationCaseListQuerySchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  status: z.enum(['OPEN', 'UNDER_REVIEW', 'UPHELD', 'RESTORED', 'EXPIRED']).optional(),
+  hasAppeal: z.enum(['true', 'false']).optional(),
+  slaBreached: z.enum(['true', 'false']).optional(),
+});
+
+export const moderationCaseResolveSchema = z.object({
+  decision: z.enum(['UPHOLD', 'RESTORE']),
+  resolutionNote: z.string().min(1).max(1000),
+});
+
+export const createAppealBodySchema = z.object({
+  message: z.string().min(1).max(2000),
+});
+
 export const adminAuditLogQuerySchema = z.object({
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
@@ -86,3 +103,6 @@ export type AdminReportListQuery = z.infer<typeof adminReportListQuerySchema>;
 export type AdminReportReview = z.infer<typeof adminReportReviewSchema>;
 export type AdminReportAction = z.infer<typeof adminReportActionSchema>;
 export type CreateReportBody = z.infer<typeof createReportBodySchema>;
+export type ModerationCaseListQuery = z.infer<typeof moderationCaseListQuerySchema>;
+export type ModerationCaseResolve = z.infer<typeof moderationCaseResolveSchema>;
+export type CreateAppealBody = z.infer<typeof createAppealBodySchema>;

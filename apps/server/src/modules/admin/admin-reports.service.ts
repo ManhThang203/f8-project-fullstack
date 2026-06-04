@@ -1,4 +1,5 @@
-import { prisma, ReportTargetType, ReportReason } from '@costy/db';
+import { prisma } from '@costy/db';
+import type { ReportReason, ReportTargetType } from '@costy/db';
 import type {
   AdminReportDto,
   AdminReportDetailDto,
@@ -14,6 +15,7 @@ import { AppError } from '../../lib/errors.js';
 import { createNotification } from '../notifications/notifications.service.js';
 import { patchAdminUserStatus } from './admin-users.service.js';
 import { invalidateStatsCache } from './admin-stats.service.js';
+import { openCaseFromAutoHide } from './moderation-cases.service.js';
 
 // ─────────────────────────────────────────────
 // Mapper
@@ -86,9 +88,9 @@ async function runAutoHideCheck(targetType: string, targetId: string): Promise<v
   // Kiểm tra bài chưa bị ẩn/xóa
   const post = await prisma.post.findUnique({
     where: { id: targetId },
-    select: { id: true, hiddenAt: true, deletedAt: true },
+    select: { id: true, authorId: true, hiddenAt: true, deletedAt: true, moderationReviewedAt: true },
   });
-  if (!post || post.hiddenAt || post.deletedAt) return;
+  if (!post || post.hiddenAt || post.deletedAt || post.moderationReviewedAt) return;
 
   await prisma.$transaction([
     prisma.post.update({
@@ -113,6 +115,8 @@ async function runAutoHideCheck(targetType: string, targetId: string): Promise<v
       trigger: 'auto_threshold',
     },
   });
+
+  await openCaseFromAutoHide(targetId, post.authorId, count);
 }
 
 /**
@@ -412,7 +416,7 @@ export async function executeReportAction(
   const report = await prisma.report.findUnique({ where: { id: reportId } });
   if (!report) throw AppError.notFound('Không tìm thấy báo cáo');
 
-  let auditAction = body.action;
+  const auditAction = body.action;
   let auditMetadata: Record<string, unknown> = {
     reportId,
     targetType: report.targetType,

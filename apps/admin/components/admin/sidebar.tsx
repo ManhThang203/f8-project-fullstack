@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Flag,
+  Gavel,
   Hash,
   LogOut,
   ScrollText,
@@ -22,7 +23,7 @@ import { cn } from '@/lib/utils';
 
 type NavItem = {
   href: string;
-  labelKey: 'overview' | 'users' | 'reports' | 'hashtags' | 'moderators' | 'audit';
+  labelKey: 'overview' | 'users' | 'reports' | 'moderation' | 'hashtags' | 'moderators' | 'audit';
   icon: typeof BarChart3;
   permission: string;
 };
@@ -31,6 +32,12 @@ const NAV: NavItem[] = [
   { href: '/', labelKey: 'overview', icon: BarChart3, permission: 'stats:view' },
   { href: '/users', labelKey: 'users', icon: Users, permission: 'user:read' },
   { href: '/reports', labelKey: 'reports', icon: Flag, permission: 'report:read' },
+  {
+    href: '/moderation/cases',
+    labelKey: 'moderation',
+    icon: Gavel,
+    permission: 'report:read',
+  },
   { href: '/hashtags', labelKey: 'hashtags', icon: Hash, permission: 'hashtag:read' },
   { href: '/moderators', labelKey: 'moderators', icon: Shield, permission: 'moderator:manage' },
   { href: '/audit', labelKey: 'audit', icon: ScrollText, permission: 'audit:read' },
@@ -107,7 +114,8 @@ function SidebarPanel({
               className={cn(
                 'flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm no-underline transition-colors',
                 collapsed && 'justify-center px-0',
-                pathname === item.href
+                pathname === item.href ||
+                (item.href !== '/' && pathname.startsWith(`${item.href}/`))
                   ? 'bg-accent text-accent-foreground'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',
               )}

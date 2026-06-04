@@ -9,6 +9,8 @@ import {
   adminReportActionSchema,
   adminReportListQuerySchema,
   adminReportReviewSchema,
+  moderationCaseListQuerySchema,
+  moderationCaseResolveSchema,
   adminUserListQuerySchema,
   adminUserPermissionsPutSchema,
   adminUserStatusPatchSchema,
@@ -39,6 +41,11 @@ import {
   listAdminReports,
   reviewReport,
 } from './admin-reports.service.js';
+import {
+  getModerationCase,
+  listModerationCases,
+  resolveModerationCase,
+} from './moderation-cases.service.js';
 import {
   getActiveUsersPerDay,
   getPostsPerDay,
@@ -208,6 +215,43 @@ adminRouter.patch(
     try {
       const body = adminReportActionSchema.parse(req.body);
       const data = await executeReportAction(req.auth!.userId, paramId(req.params.id), body);
+      res.json(ok(data));
+    } catch (e) {
+      next(e);
+    }
+  },
+);
+
+adminRouter.get(
+  '/moderation/cases',
+  requirePermission('report:read'),
+  validate(moderationCaseListQuerySchema, 'query'),
+  async (req, res, next) => {
+    try {
+      const result = await listModerationCases(req.query as never);
+      res.json(ok(result.items, { nextCursor: result.nextCursor }));
+    } catch (e) {
+      next(e);
+    }
+  },
+);
+
+adminRouter.get('/moderation/cases/:id', requirePermission('report:read'), async (req, res, next) => {
+  try {
+    const data = await getModerationCase(paramId(req.params.id));
+    res.json(ok(data));
+  } catch (e) {
+    next(e);
+  }
+});
+
+adminRouter.patch(
+  '/moderation/cases/:id/resolve',
+  requirePermission('report:review'),
+  async (req, res, next) => {
+    try {
+      const body = moderationCaseResolveSchema.parse(req.body);
+      const data = await resolveModerationCase(req.auth!.userId, paramId(req.params.id), body);
       res.json(ok(data));
     } catch (e) {
       next(e);

@@ -7,6 +7,8 @@ import type {
   AdminPostsPerDayDto,
   AdminReportDetailDto,
   AdminReportDto,
+  ModerationCaseDetailDto,
+  ModerationCaseDto,
   AdminStatsMeta,
   AdminStatsOverviewDto,
   AdminTopHashtagDto,
@@ -123,6 +125,64 @@ export function useAdminReportDetail(reportId: string | null) {
     queryKey: ['admin', 'reports', reportId, 'detail'],
     queryFn: () => apiQuery<AdminReportDetailDto>(`/admin/reports/${reportId}`),
     enabled: Boolean(reportId),
+  });
+}
+
+export function useModerationCases(
+  filters: {
+    status?: string;
+    hasAppeal?: string;
+    slaBreached?: string;
+    cursor?: string;
+    limit?: number;
+  } = {},
+) {
+  const base = new URLSearchParams();
+  if (filters.status) base.set('status', filters.status);
+  if (filters.hasAppeal) base.set('hasAppeal', filters.hasAppeal);
+  if (filters.slaBreached) base.set('slaBreached', filters.slaBreached);
+  if (filters.cursor) base.set('cursor', filters.cursor);
+  if (filters.limit) base.set('limit', String(filters.limit));
+  const filterKey = base.toString();
+
+  return useQuery({
+    queryKey: queryKeys.moderation.cases(filterKey),
+    queryFn: () => {
+      const suffix = filterKey ? `?${filterKey}` : '';
+      return apiQuery<ModerationCaseDto[], CursorMeta>(`/admin/moderation/cases${suffix}`);
+    },
+  });
+}
+
+export function useModerationCaseDetail(caseId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.moderation.case(caseId ?? ''),
+    queryFn: () => apiQuery<ModerationCaseDetailDto>(`/admin/moderation/cases/${caseId}`),
+    enabled: Boolean(caseId),
+  });
+}
+
+export function useResolveModerationCase() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (opts: {
+      id: string;
+      decision: 'RESTORE' | 'UPHOLD';
+      resolutionNote: string;
+    }) =>
+      apiQuery(`/admin/moderation/cases/${opts.id}/resolve`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          decision: opts.decision,
+          resolutionNote: opts.resolutionNote,
+        }),
+      }),
+    onSuccess: (_data, variables) => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'moderation', 'cases'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.moderation.case(variables.id) });
+      void qc.invalidateQueries({ queryKey: ['admin', 'reports'] });
+      void qc.invalidateQueries({ queryKey: ['admin', 'stats'] });
+    },
   });
 }
 

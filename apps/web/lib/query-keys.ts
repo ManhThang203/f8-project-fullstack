@@ -19,4 +19,7 @@ export const queryKeys = {
     all: () => ['notifications'] as const,
     unreadCount: () => ['notifications', 'unreadCount'] as const,
   },
+  me: {
+    restrictedPosts: () => ['me', 'restrictedPosts'] as const,
+  },
 } as const;
