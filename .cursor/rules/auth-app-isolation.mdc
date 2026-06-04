@@ -1,0 +1,39 @@
+---
+description: Web vs Admin Better Auth session isolation (cookie prefix + base path)
+globs:
+  - apps/admin/**/*
+  - apps/server/src/lib/auth.ts
+  - apps/server/src/app.ts
+  - apps/server/src/middleware/better-auth-session.middleware.ts
+---
+
+# Auth app isolation
+
+Web and Admin each have a **separate Better Auth instance** on the Express server (same DB, different cookies).
+
+## Admin app
+
+- **Client `basePath`**: `/api/admin/auth` (Next BFF → Express `/api/admin/auth/*`)
+- **Session cookie prefix**: `costy-admin` (no trailing dot)
+- **`getSessionCookie`**: always pass `{ cookiePrefix: 'costy-admin' }` in middleware/guards
+- **Do not** proxy admin auth through `/api/auth` or reuse web cookie helpers without the admin prefix
+
+## Web app
+
+- **Client `basePath`**: `/api/auth`
+- **Default cookie prefix**: `better-auth`
+- Google OAuth is enabled on web only (`authWeb`)
+
+## Server
+
+- `authWeb` + `attachWebAuthSession` → `/api/auth/*` and `/api/v1` except `/api/v1/admin`
+- `authAdmin` + `attachAdminAuthSession` → `/api/admin/auth/*` and `/api/v1/admin`
+- Server `authAdmin` **must** set `basePath: '/api/admin/auth'` (Better Auth default is `/api/auth`)
+- Do **not** enable `crossSubDomainCookies` for isolation between apps on the same host
+
+## Manual checks
+
+1. Log in on Web → Admin stays logged out
+2. Log in on Admin → Web stays logged out
+3. Log out on one app → the other session remains
+4. Admin dashboard API (`/api/v1/admin`) works only with admin session cookies

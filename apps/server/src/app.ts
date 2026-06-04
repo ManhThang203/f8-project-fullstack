@@ -18,10 +18,13 @@ import { pinoHttp } from 'pino-http';
 import swaggerUi from 'swagger-ui-express';
 
 import { env } from './config/env.js';
-import { auth } from './lib/auth.js';
+import { authAdmin, authWeb } from './lib/auth.js';
 import { logger } from './lib/logger.js';
 import { swaggerSpec } from './lib/swagger.js';
-import { attachBetterAuthSession } from './middleware/better-auth-session.middleware.js';
+import {
+  attachAdminAuthSession,
+  attachWebAuthSession,
+} from './middleware/better-auth-session.middleware.js';
 import { attachAuthContext, blockInactiveUsers } from './middleware/auth-context.middleware.js';
 import { attachDevAuthContext } from './middleware/dev-auth.middleware.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
@@ -54,7 +57,7 @@ export function buildApp(): Express {
   app.use(compression()); // Nén response. BFF Next đã xử lý `content-encoding` khi proxy.
 
   // ─── Auth routes ────────────────────────────────────────────────────────
-  // Lưu ý: cả hai khối auth bên dưới phải nằm **trước** `express.json()` toàn
+  // Lưu ý: các khối auth bên dưới phải nằm **trước** `express.json()` toàn
   // cục. Better Auth `toNodeHandler` đọc raw body của Node; nếu `express.json()`
   // chạy trước, body đã bị consume → handler treo hoặc parse lỗi.
 
@@ -64,9 +67,11 @@ export function buildApp(): Express {
   // để không bị `toNodeHandler` nuốt mất.
   app.post('/api/auth/sign-in/identifier', express.json({ limit: '32kb' }), handleSignInIdentifier);
 
-  // Catch-all Better Auth: sign-up, OAuth callback, get-session, sign-out…
-  // `app.all` để cover GET/POST/PUT/PATCH/DELETE/HEAD theo nhu cầu của lib.
-  app.all('/api/auth/*', toNodeHandler(auth));
+  // Web Better Auth: sign-up, OAuth callback, get-session, sign-out…
+  app.all('/api/auth/*', toNodeHandler(authWeb));
+
+  // Admin Better Auth — separate cookie namespace (`costy-admin`).
+  app.all('/api/admin/auth/*', toNodeHandler(authAdmin));
 
   // ─── Body parsers + logging (áp dụng cho phần còn lại) ──────────────────
   app.use(express.json({ limit: '1mb' })); // JSON body cho `/api/v1/*`.
@@ -79,10 +84,12 @@ export function buildApp(): Express {
   app.get('/openapi.json', (_req, res) => res.json(swaggerSpec));
 
   // ─── API v1 ─────────────────────────────────────────────────────────────
-  // `attachBetterAuthSession` đọc cookie → gắn `req.user` cho các route v1.
-  // `attachDevAuthContext` cho phép giả lập user qua header trong môi trường
-  // dev (xem env `DEV_AUTH_*`); ở prod middleware này tự no-op.
-  app.use('/api/v1', attachBetterAuthSession);
+  // Admin routes use `authAdmin` cookies; all other v1 routes use `authWeb`.
+  app.use('/api/v1/admin', attachAdminAuthSession);
+  app.use('/api/v1', (req, res, next) => {
+    if (req.path.startsWith('/admin')) return next();
+    return attachWebAuthSession(req, res, next);
+  });
   app.use('/api/v1', attachDevAuthContext);
   app.use('/api/v1', attachAuthContext);
   app.use('/api/v1', blockInactiveUsers);

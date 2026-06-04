@@ -12,11 +12,9 @@ import { prisma } from '@costy/db';
 import { fromNodeHeaders } from 'better-auth/node';
 import type { Namespace, Socket } from 'socket.io';
 
-import { auth } from '../lib/auth.js';
+import { authWeb } from '../lib/auth.js';
 import { logger } from '../lib/logger.js';
 import { verifySocketToken } from '../lib/socket-token.js';
-import * as chatService from '../modules/chat/chat.service.js';
-
 /**
  * Middleware xác thực namespace `/chat`.
  * Ưu tiên token HMAC (handshake.auth.token), fallback về cookie session Better Auth.
@@ -35,7 +33,7 @@ function registerChatAuth(chatNs: Namespace) {
         return;
       }
     }
-    void auth.api
+    void authWeb.api
       .getSession({
         headers: fromNodeHeaders(socket.handshake.headers as IncomingHttpHeaders),
       })
@@ -79,7 +77,7 @@ export function registerChatNamespace(chatNs: Namespace) {
       try {
         const { roomId } = payload as { roomId?: string };
         if (!roomId) return ack?.({ ok: false, error: 'roomId missing' });
-        
+
         const mem = await prisma.chatRoomMember.findUnique({
           where: { roomId_userId: { roomId, userId } },
         });
@@ -88,18 +86,25 @@ export function registerChatNamespace(chatNs: Namespace) {
         socket.join(`room:${roomId}`);
         ack?.({ ok: true });
       } catch (err) {
+        logger.warn({ err, userId }, 'room:subscribe failed');
         ack?.({ ok: false, error: 'subscribe error' });
       }
     });
 
-    /** 
+    /**
      * Relay tin nhắn E2EE: client gửi encryptedPayload, server lưu DB và broadcast
      */
     socket.on('chat:send', async (payload: unknown, ack: (r: unknown) => void) => {
       try {
-        const p = payload as { roomId?: string; encryptedPayload?: string; type?: string; mediaId?: string; replyToId?: string };
+        const p = payload as {
+          roomId?: string;
+          encryptedPayload?: string;
+          type?: string;
+          mediaId?: string;
+          replyToId?: string;
+        };
         const { roomId, encryptedPayload, type = 'text', mediaId, replyToId } = p;
-        
+
         if (!roomId || !encryptedPayload) {
           ack?.({ ok: false, error: 'Thiếu dữ liệu E2EE message' });
           return;
@@ -126,7 +131,7 @@ export function registerChatNamespace(chatNs: Namespace) {
           },
           include: {
             replyTo: true,
-          }
+          },
         });
 
         // Phát tới tất cả mọi người trong phòng (trừ sender, trừ khi client muốn tự nhận)
@@ -214,6 +219,7 @@ export function registerChatNamespace(chatNs: Namespace) {
         socket.to(`room:${msg.roomId}`).emit('chat:reaction', { messageId, reaction });
         ack?.({ ok: true, reaction });
       } catch (err) {
+        logger.warn({ err, userId }, 'chat:react failed');
         ack?.({ ok: false });
       }
     });
@@ -235,6 +241,7 @@ export function registerChatNamespace(chatNs: Namespace) {
         socket.to(`room:${msg.roomId}`).emit('chat:unsent', { messageId, roomId: msg.roomId });
         ack?.({ ok: true });
       } catch (err) {
+        logger.warn({ err, userId }, 'chat:unsend failed');
         ack?.({ ok: false });
       }
     });
@@ -257,6 +264,7 @@ export function registerChatNamespace(chatNs: Namespace) {
         socket.to(`user:${userId}`).emit('chat:deleted', { messageId, roomId: msg.roomId });
         ack?.({ ok: true });
       } catch (err) {
+        logger.warn({ err, userId }, 'chat:delete failed');
         ack?.({ ok: false });
       }
     });

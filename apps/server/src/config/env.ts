@@ -33,7 +33,10 @@ const envSchema = z.object({
     .default(false),
 
   BETTER_AUTH_SECRET: z.string().min(1).default('change_me_in_production'),
+  /** Public URL of the Web app (Better Auth `baseURL` for web sessions). Falls back to BETTER_AUTH_URL in `auth.ts`. */
   BETTER_AUTH_URL: z.string().url().default('http://localhost:3000'),
+  /** Cookie prefix for Admin Better Auth (no trailing dot). Must match admin `getSessionCookie`. */
+  AUTH_ADMIN_COOKIE_PREFIX: z.string().min(1).default('costy-admin'),
 
   GOOGLE_CLIENT_ID: z.string().optional().default(''),
   GOOGLE_CLIENT_SECRET: z.string().optional().default(''),
