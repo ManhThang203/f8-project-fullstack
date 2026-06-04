@@ -1,0 +1,27 @@
+---
+description: Prevent displaying raw database enums, technical IDs, or technical permissions to users on the front-end.
+globs: apps/admin/**/*
+---
+# Rules for User-Facing UI Abstraction
+
+Do NOT output raw database values directly to the front-end user interface. All technical identifiers, database enums, and system-level fields must go through an abstraction/translation layer before being rendered.
+
+## Guidelines
+
+1. **Role Display**
+   - Do NOT output role keys (`SUPER_ADMIN`, `ADMIN`, `MODERATOR`, `USER`) directly.
+   - Use `t('roles.ROLE_NAME')` or helper mapping.
+
+2. **Report Status & Reason**
+   - Do NOT render status enums (`PENDING`, `UNDER_REVIEW`, `RESOLVED`, `DISMISSED`) or reason enums (`MINOR_SAFETY`, `SPAM`, etc.) directly.
+   - Use `t('reportStatus.STATUS')` and `t('reportReason.REASON')`.
+
+3. **Audit Log Actions & Metadata**
+   - Do NOT render technical action keys (`USER_LOCK`, `AUTO_HIDE_POST`, etc.) directly.
+   - Use `t(AUDIT_ACTION_KEY_MAP[action])` or translation helper.
+   - Do NOT output raw `metadata` JSON using `JSON.stringify(metadata)`.
+   - Use `renderAuditMetadata(metadata, t)` to filter out sensitive technical IDs (e.g., CUIDs like `postId`, `userId`, `reportId`) and render only descriptive, formatted properties.
+
+4. **Technical Keys & IDs**
+   - Do NOT render raw permission keys (`user:read`, `report:read`) or CUIDs in places where standard users or non-technical administrators can see them.
+   - Hide technical keys or translate them using `t('permissions.PERMISSION_KEY')`.
