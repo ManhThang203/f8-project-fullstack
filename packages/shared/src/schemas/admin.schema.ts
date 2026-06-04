@@ -23,28 +23,30 @@ export const adminUserStatusPatchSchema = z.object({
 export const adminReportListQuerySchema = z.object({
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
-  status: z.enum(['PENDING', 'RESOLVED', 'REJECTED', 'ACTION_TAKEN']).optional(),
+  status: z.enum(['PENDING', 'UNDER_REVIEW', 'RESOLVED', 'DISMISSED', 'AUTO_HIDDEN']).optional(),
   targetType: z.enum(['POST', 'USER', 'COMMENT']).optional(),
   reason: z
-    .enum(['SPAM', 'HARASSMENT', 'NUDITY', 'VIOLENCE', 'HATE_SPEECH', 'OTHER'])
+    .enum(['SPAM', 'BULLYING', 'MINOR_SAFETY', 'SELF_HARM', 'VIOLENCE', 'RESTRICTED_GOODS', 'ADULT_CONTENT', 'MISINFORMATION', 'IP_VIOLATION', 'NOT_INTERESTED'])
     .optional(),
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
 });
 
 export const adminReportReviewSchema = z.object({
-  status: z.enum(['RESOLVED', 'REJECTED', 'ACTION_TAKEN']),
+  status: z.enum(['UNDER_REVIEW', 'RESOLVED', 'DISMISSED']),
   resolutionNote: z.string().max(1000).optional(),
 });
 
 export const adminReportActionSchema = z.object({
-  action: z.enum(['hide_post', 'delete_post', 'ban_author_temp', 'ban_author_perm']),
-  reason: z.string().min(1).max(500),
-  bannedUntil: z.string().datetime().optional(),
+  action: z.enum(['DISMISS', 'HIDE_POST', 'DELETE_POST', 'WARN_USER', 'BAN_ACCOUNT']),
+  resolutionNote: z.string().min(1).max(1000),
+  bannedUntil: z.string().datetime().optional(), // chỉ dùng khi action = BAN_ACCOUNT (temp)
 });
 
 export const createReportBodySchema = z.object({
   targetType: z.enum(['POST', 'USER', 'COMMENT']),
   targetId: z.string().min(1),
-  reason: z.enum(['SPAM', 'HARASSMENT', 'NUDITY', 'VIOLENCE', 'HATE_SPEECH', 'OTHER']),
+  reason: z.enum(['SPAM', 'BULLYING', 'MINOR_SAFETY', 'SELF_HARM', 'VIOLENCE', 'RESTRICTED_GOODS', 'ADULT_CONTENT', 'MISINFORMATION', 'IP_VIOLATION', 'NOT_INTERESTED']),
   description: z.string().max(1000).optional(),
 });
 

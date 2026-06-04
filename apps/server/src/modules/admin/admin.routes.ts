@@ -185,6 +185,7 @@ adminRouter.get('/reports/:id', requirePermission('report:read'), async (req, re
   }
 });
 
+/** PATCH /admin/reports/:id — Admin cập nhật status (mark under_review / dismiss nhanh). */
 adminRouter.patch(
   '/reports/:id',
   requirePermission('report:review'),
@@ -199,8 +200,9 @@ adminRouter.patch(
   },
 );
 
-adminRouter.post(
-  '/reports/:id/actions',
+/** PATCH /admin/reports/:id/action — Admin thực thi hành động kiểm duyệt. */
+adminRouter.patch(
+  '/reports/:id/action',
   requirePermission('report:review'),
   async (req, res, next) => {
     try {
@@ -213,6 +215,7 @@ adminRouter.post(
   },
 );
 
+/** GET /admin/hashtags */
 adminRouter.get(
   '/hashtags',
   requirePermission('hashtag:read'),
