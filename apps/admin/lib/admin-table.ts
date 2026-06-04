@@ -2,8 +2,10 @@ import { cn } from '@/lib/utils';
 
 /** Shared admin data-table layout tokens (th/td alignment). */
 export const adminTable = {
-  wrap: 'hidden w-full overflow-x-auto rounded-xl border border-border bg-card lg:block',
-  wrapRelative: 'relative hidden overflow-x-auto rounded-xl border border-border lg:block',
+  /** Desktop table: visible from lg up; hidden below lg (card view). */
+  wrap: 'block w-full max-lg:hidden overflow-x-auto rounded-xl border border-border bg-card',
+  wrapRelative:
+    'relative block w-full max-lg:hidden overflow-x-auto rounded-xl border border-border bg-card',
   table: 'w-full text-sm',
   thead: 'border-b border-border bg-muted/30',
   theadAlt: 'border-b border-border bg-muted/50 text-muted-foreground',

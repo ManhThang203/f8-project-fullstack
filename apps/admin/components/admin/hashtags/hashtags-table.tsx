@@ -23,7 +23,7 @@ export function HashtagsTable({ hashtags, isPending, onAction }: Props) {
   const { t } = useTranslation();
 
   return (
-    <div className={cn(adminTable.wrap, 'block')}>
+    <div className={adminTable.wrap}>
       <table className={cn(adminTable.table, 'min-w-[520px]')}>
         <thead className={adminTable.theadAlt}>
           <tr>

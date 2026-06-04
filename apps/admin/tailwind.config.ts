@@ -11,9 +11,11 @@ const config: Config = {
   content: [
     './app/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
+    './lib/**/*.{ts,tsx}',
     './modules/**/*.{ts,tsx}',
     '../../packages/ui/src/**/*.{ts,tsx}',
   ],
+  safelist: ['lg:block', 'max-lg:hidden'],
   theme: {
     container: { center: true, padding: '1rem', screens: { '2xl': '640px' } },
     extend: {
