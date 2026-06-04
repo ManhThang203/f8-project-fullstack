@@ -17,6 +17,15 @@
     --primary-foreground: 0 0% 98%;
     --accent: 0 0% 94%;
     --accent-foreground: 0 0% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+    --input: 0 0% 90%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 92% 30%;
+    --success: 160 60% 35%;
+    --success-foreground: 160 60% 28%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 72% 40%;
     /* Auth marketing hero (purple tint) — dùng trang đăng nhập / đăng ký */
     --auth-hero: 262 58% 56%;
     --auth-hero-soft: 262 48% 94%;
@@ -48,6 +57,15 @@
     --primary-foreground: 0 0% 9%;
     --accent: 0 0% 16%;
     --accent-foreground: 0 0% 96%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 96%;
+    --input: 0 0% 18%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 38 92% 75%;
+    --success: 160 60% 45%;
+    --success-foreground: 160 55% 75%;
+    --destructive: 0 62% 55%;
+    --destructive-foreground: 0 70% 75%;
     --auth-hero: 262 52% 68%;
     --auth-hero-soft: 262 28% 22%;
     --auth-illustration-bg: 0 0% 100%;
@@ -56,7 +74,7 @@
     --auth-form-button-fg: 0 0% 98%;
     --auth-form-input-bg: 0 0% 96%;
     --auth-form-input-border: 0 0% 82%;
-    --auth-form-input-icon: 0 0% 35%;
+    --auth-form-input-icon: 0 0% 55%;
     --chart-1: 217 91% 60%;
     --chart-2: 160 60% 45%;
     --chart-3: 38 92% 50%;
@@ -71,6 +89,8 @@
   /* Mặc định không dùng scrollbar-gutter */
   html {
     scrollbar-gutter: auto;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
   }
 
   body {
@@ -78,6 +98,29 @@
     font-feature-settings:
       'rlig' 1,
       'calt' 1;
+  }
+
+  /* Custom Scrollbar for modern and elegant aesthetics */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.5);
+    border: 2px solid transparent;
+    background-clip: padding-box;
   }
 }
 

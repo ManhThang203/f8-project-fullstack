@@ -29,7 +29,7 @@ export function CursorPagination({
   const [open, setOpen] = React.useState(false);
 
   return (
-    <div className="flex items-center justify-between gap-4 py-4 px-1">
+    <div className="flex flex-col gap-3 py-4 px-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
       {/* Page Size Select */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <span>{t('pagination.show')}</span>
@@ -75,12 +75,12 @@ export function CursorPagination({
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex items-center gap-2">
+      <div className="flex w-full items-center gap-2 sm:w-auto">
         <Button
           variant="secondary"
           onClick={onPrev}
           disabled={pageIndex === 0}
-          className="gap-1 min-h-9 px-3 text-sm font-normal"
+          className="min-h-9 flex-1 justify-center gap-1 px-3 text-sm font-normal sm:flex-none"
         >
           <ChevronLeft className="size-4" />
           <span>{t('pagination.prev')}</span>
@@ -89,7 +89,7 @@ export function CursorPagination({
           variant="secondary"
           onClick={onNext}
           disabled={!hasMore}
-          className="gap-1 min-h-9 px-3 text-sm font-normal"
+          className="min-h-9 flex-1 justify-center gap-1 px-3 text-sm font-normal sm:flex-none"
         >
           <span>{t('pagination.next')}</span>
           <ChevronRight className="size-4" />

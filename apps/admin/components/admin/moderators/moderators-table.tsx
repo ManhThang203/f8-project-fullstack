@@ -5,7 +5,7 @@ import { Key } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/shared/button';
-import { adminTable } from '@/lib/admin-table';
+import { adminCol, adminTable } from '@/lib/admin-table';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -13,22 +13,21 @@ type Props = {
   onEditPermissions: (mod: AdminModeratorDto) => void;
 };
 
+const colUser = adminCol('grow', 'start');
+const colRole = adminCol('grow', 'center');
+const colPermissions = adminCol('grow', 'center');
+const colActions = adminCol('actions', 'end');
+
 /** Hiển thị nhãn số quyền hoặc toàn quyền cho moderator. */
 function PermissionLabel({ count }: { count: number }) {
   const { t } = useTranslation();
 
   if (count === 999) {
-    return (
-      <span className="whitespace-nowrap">
-        ★ {t('account.allPermissions')}
-      </span>
-    );
+    return <span className="whitespace-nowrap">★ {t('account.allPermissions')}</span>;
   }
 
   return (
-    <span className="whitespace-nowrap">
-      {t('moderators.permissionCountValue', { count })}
-    </span>
+    <span className="whitespace-nowrap">{t('moderators.permissionCountValue', { count })}</span>
   );
 }
 
@@ -40,44 +39,42 @@ export function ModeratorsTable({ moderators, onEditPermissions }: Props) {
       <table className={cn(adminTable.table, 'min-w-[480px]')}>
         <thead className={adminTable.theadAlt}>
           <tr>
-            <th className={cn(adminTable.th, adminTable.thLeft)}>{t('common.user')}</th>
-            <th className={cn(adminTable.th, adminTable.thLeft)}>{t('common.role')}</th>
-            <th className={cn(adminTable.th, adminTable.thLeft)}>
-              {t('moderators.permissionCount')}
-            </th>
-            <th className={cn(adminTable.th, adminTable.thRight)}>{t('common.actions')}</th>
+            <th className={colUser.th}>{t('common.user')}</th>
+            <th className={colRole.th}>{t('common.role')}</th>
+            <th className={colPermissions.th}>{t('moderators.permissionCount')}</th>
+            <th className={colActions.th}>{t('common.actions')}</th>
           </tr>
         </thead>
         <tbody>
           {moderators.map((mod) => (
             <tr key={mod.id} className={adminTable.row}>
-              <td className={adminTable.td}>
-                <div className={adminTable.cellColStart}>
+              <td className={colUser.td}>
+                <div className={colUser.cell}>
                   <p className="truncate font-medium">{mod.name ?? mod.username}</p>
-                  <p className="truncate text-xs text-muted-foreground">@{mod.username}</p>
+                  <p className="text-muted-foreground truncate text-xs">@{mod.username}</p>
                 </div>
               </td>
-              <td className={cn(adminTable.td, 'whitespace-nowrap')}>
-                <div className={adminTable.cellStart}>
+              <td className={cn(colRole.td, 'whitespace-nowrap')}>
+                <div className={colRole.cell}>
                   <span className="font-semibold">{t(`roles.${mod.role}`, mod.role)}</span>
                 </div>
               </td>
-              <td className={adminTable.td}>
-                <div className={adminTable.cellStart}>
-                  <span className="inline-flex items-center whitespace-nowrap rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground ring-1 ring-inset ring-border">
+              <td className={colPermissions.td}>
+                <div className={colPermissions.cell}>
+                  <span className="bg-muted text-muted-foreground ring-border inline-flex items-center whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset">
                     <PermissionLabel count={mod.permissionCount} />
                   </span>
                 </div>
               </td>
-              <td className={adminTable.tdRight}>
-                <div className={adminTable.cellEnd}>
+              <td className={colActions.td}>
+                <div className={colActions.cell}>
                   <Button
                     variant="ghost"
                     disabled={mod.role === 'SUPER_ADMIN'}
                     onClick={() => onEditPermissions(mod)}
-                    className="min-h-9 h-9 gap-1.5 px-3 text-xs leading-none text-primary hover:bg-primary hover:text-primary-foreground disabled:text-muted-foreground disabled:hover:bg-transparent"
+                    className="text-primary hover:bg-primary hover:text-primary-foreground disabled:text-muted-foreground h-9 min-h-9 gap-1.5 px-3 text-xs leading-none disabled:hover:bg-transparent"
                   >
-                    <Key className="size-3.5 shrink-0 text-primary" aria-hidden />
+                    <Key className="text-primary size-3.5 shrink-0" aria-hidden />
                     {t('moderators.editPermissions')}
                   </Button>
                 </div>

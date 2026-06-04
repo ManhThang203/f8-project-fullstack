@@ -1,33 +1,45 @@
 import { Skeleton } from '@/components/shared/skeleton';
-import { adminTable } from '@/lib/admin-table';
+import { adminCol, adminTable } from '@/lib/admin-table';
 import { cn } from '@/lib/utils';
 
 type Props = {
   rows?: number;
 };
 
+const colUser = adminCol('grow', 'start');
+const colRole = adminCol('grow', 'center');
+const colPermissions = adminCol('grow', 'center');
+const colActions = adminCol('actions', 'end');
+
+const headerCols = [
+  { col: colUser, skeleton: 'w-16' },
+  { col: colRole, skeleton: 'w-16' },
+  { col: colPermissions, skeleton: 'w-16' },
+  { col: colActions, skeleton: 'w-14' },
+] as const;
+
 function ModeratorsTableSkeletonRow() {
   return (
     <tr className={adminTable.row}>
-      <td className={adminTable.td}>
-        <div className={adminTable.cellColStart}>
-          <Skeleton className="h-4 w-32 rounded" />
-          <Skeleton className="mt-1 h-3 w-24 rounded" />
+      <td className={colUser.td}>
+        <div className={colUser.cell}>
+          <Skeleton className="mx-auto h-4 w-32 rounded" />
+          <Skeleton className="mx-auto mt-1 h-3 w-24 rounded" />
         </div>
       </td>
-      <td className={adminTable.td}>
-        <div className={adminTable.cellStart}>
-          <Skeleton className="h-4 w-24 rounded" />
+      <td className={colRole.td}>
+        <div className={colRole.cell}>
+          <Skeleton className="mx-auto h-4 w-24 rounded" />
         </div>
       </td>
-      <td className={adminTable.td}>
-        <div className={adminTable.cellStart}>
-          <Skeleton className="h-6 w-20 rounded-md" />
+      <td className={colPermissions.td}>
+        <div className={colPermissions.cell}>
+          <Skeleton className="mx-auto h-6 w-20 rounded-md" />
         </div>
       </td>
-      <td className={adminTable.tdRight}>
-        <div className={adminTable.cellEnd}>
-          <Skeleton className="h-9 w-28 rounded-lg" />
+      <td className={colActions.td}>
+        <div className={colActions.cell}>
+          <Skeleton className="mx-auto h-9 w-28 rounded-lg" />
         </div>
       </td>
     </tr>
@@ -41,21 +53,13 @@ export function ModeratorsTableSkeleton({ rows = 8 }: Props) {
         <table className={cn(adminTable.table, 'min-w-[480px]')}>
           <thead className={adminTable.thead}>
             <tr>
-              {[adminTable.thLeft, adminTable.thLeft, adminTable.thLeft, adminTable.thRight].map(
-                (align, i) => {
-                  const isRight = i === 3;
-                  const cell = isRight ? adminTable.cellEnd : adminTable.cellStart;
-                  return (
-                    <th key={i} className={cn(adminTable.th, align)}>
-                      <div className={cell}>
-                        <Skeleton
-                          className={cn('h-3 rounded', isRight ? 'ml-auto w-14' : 'w-16')}
-                        />
-                      </div>
-                    </th>
-                  );
-                },
-              )}
+              {headerCols.map(({ col, skeleton }, i) => (
+                <th key={i} className={col.th}>
+                  <div className={col.cell}>
+                    <Skeleton className={cn('mx-auto h-3 rounded', skeleton)} />
+                  </div>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
