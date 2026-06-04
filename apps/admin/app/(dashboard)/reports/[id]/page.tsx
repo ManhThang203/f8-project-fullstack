@@ -14,6 +14,7 @@ import {
   useReviewReport,
 } from '@/hooks/queries/use-admin-queries';
 import { AUDIT_ACTION_KEY_MAP, renderAuditMetadata } from '@/lib/display-labels';
+import { segmentedControl } from '@/components/admin/reports/segmented-control';
 
 type ActionType = 'DISMISS' | 'HIDE_POST' | 'DELETE_POST' | 'WARN_USER' | 'BAN_ACCOUNT';
 
@@ -313,15 +314,16 @@ export default function ReportDetailPage() {
         <div className="space-y-4 lg:col-span-2">
 
           {/* Tabs */}
-          <div className="flex gap-1 rounded-lg bg-muted/40 p-1">
+          <div className={segmentedControl.track}>
             {(['info', 'audit'] as const).map((tab) => (
               <button
                 key={tab}
+                type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 rounded py-1.5 text-xs font-medium transition-colors ${
+                className={`flex-1 justify-center py-1.5 ${segmentedControl.tab} ${
                   activeTab === tab
-                    ? 'bg-card shadow text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? segmentedControl.tabActive
+                    : segmentedControl.tabInactive
                 }`}
               >
                 {tab === 'info' ? 'Xử lý' : 'Audit Log'}

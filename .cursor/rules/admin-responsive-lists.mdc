@@ -1,0 +1,80 @@
+---
+description: Responsive cho trang admin dạng danh sách/bảng — tránh tablet scroll ngang, text gãy xấu, touch target nhỏ
+globs: apps/admin/app/(dashboard)/**/*.tsx,apps/admin/components/admin/**/*.tsx
+alwaysApply: false
+---
+
+# Admin — Responsive list / table pages
+
+Áp dụng khi làm responsive trang admin có **bảng hoặc danh sách dữ liệu** (Users, Reports, Moderators, Hashtags…).
+
+Tham chiếu đã chuẩn: `components/admin/reports/`, `components/admin/users/`, `components/admin/moderators/`.
+
+---
+
+## 1. Breakpoint — không dùng `md` cho table/card
+
+Admin có sidebar từ `md` (~256px). Content thực tế tablet chỉ ~464–700px.
+
+| Sai | Đúng |
+|-----|------|
+| Table `hidden md:block` + card `md:hidden` | Table `hidden lg:block` + card `lg:hidden` |
+| Chỉ `overflow-x-auto` trên table | **Card layout** cho `< lg`; table cho `≥ lg` |
+
+**Tablet (768–1023px) phải thấy card**, không ép scroll ngang cả bảng.
+
+---
+
+## 2. Cấu trúc file bắt buộc
+
+Không viết table + card inline trong `page.tsx`. Tách colocated:
+
+```
+components/admin/<feature>/
+  <feature>-table.tsx           # hidden lg:block
+  <feature>-card-list.tsx       # lg:hidden
+  <feature>-table-skeleton.tsx  # hidden lg:block
+  <feature>-card-skeleton.tsx    # lg:hidden
+```
+
+`page.tsx` chỉ orchestrate: fetch, filter, pagination, modal.
+
+Loading: render **cả hai skeleton** (table + card), không dùng `TableSkeleton` generic nếu layout dual-view.
+
+---
+
+## 3. Table desktop — cột và text
+
+- Đặt `min-w-[…]` hợp lý; nếu > 5 cột → **ẩn cột phụ** ở `lg–xl`, gộp meta vào cell chính (`hidden xl:table-cell` + dòng phụ `xl:hidden`).
+- Badge/chip/role: `whitespace-nowrap shrink-0`.
+- Email, username, preview: `truncate min-w-0`.
+- Nút action: `min-h-9` (≥ 44px touch target).
+- Header cột: `t('…')` — không hardcode EN/VI lẫn lộn.
+- `th`/`td`: dùng `align-middle` (token `adminTable` trong `lib/admin-table.ts`).
+- `th` `text-left` | `text-center` | `text-right` phải khớp `cellStart` | `cellCenter` | `cellEnd` của cột tương ứng.
+
+---
+
+## 4. Card mobile/tablet
+
+- Meta 2 cột: `grid grid-cols-[1fr_auto]` — **không** `flex justify-between flex-wrap` (tránh badge và số liệu gãy dòng lệch).
+- Action full width: `h-9 w-full`.
+- Filter tabs ngang: `min-h-11 shrink-0 whitespace-nowrap` + `overflow-x-auto` + fade cạnh phải nếu scroll.
+
+---
+
+## 5. Label dài & i18n
+
+- Compact UI (badge, select trigger): dùng key ngắn (`reportReasonShort.*`, `users.postsCount`).
+- Dropdown/modal: label đầy đủ (`reportReason.*`).
+- **Cấm** hardcode chuỗi hiển thị (`"N quyền"`, enum DB) — dùng `t()` theo `no-raw-db-display.mdc`.
+
+---
+
+## 6. Checklist trước khi xong
+
+1. 320px: không scroll ngang **trang**; nút ≥ 44px.
+2. 768px: **card** visible, table hidden.
+3. 1024px: table visible; cột không wrap text trong badge.
+4. Skeleton khớp breakpoint (`lg`).
+5. Modal/action hoạt động từ cả card và table.
