@@ -1,0 +1,22 @@
+/** Shared admin data-table layout tokens (th/td alignment). */
+export const adminTable = {
+  wrap: 'hidden w-full overflow-x-auto rounded-xl border border-border bg-card lg:block',
+  wrapRelative: 'relative hidden overflow-x-auto rounded-xl border border-border lg:block',
+  table: 'w-full text-sm',
+  thead: 'border-b border-border bg-muted/30',
+  theadAlt: 'border-b border-border bg-muted/50 text-muted-foreground',
+  th: 'px-4 py-3 align-middle text-xs font-medium text-muted-foreground',
+  thLeft: 'text-left',
+  thCenter: 'text-center',
+  thRight: 'text-right',
+  td: 'px-4 py-3 align-middle',
+  tdCenter: 'px-4 py-3 align-middle text-center',
+  tdRight: 'px-4 py-3 align-middle text-right',
+  cellStart: 'flex w-full min-w-0 items-center justify-start',
+  cellColStart: 'flex w-full min-w-0 flex-col items-start justify-center',
+  cellCenter: 'flex w-full min-w-0 items-center justify-center',
+  cellEnd: 'flex w-full min-w-0 items-center justify-end gap-2',
+  actionBtn: 'min-h-9 px-3 text-xs',
+  tbodyDivide: 'divide-y divide-border',
+  row: 'border-b border-border last:border-0 transition-colors hover:bg-muted/20',
+} as const;

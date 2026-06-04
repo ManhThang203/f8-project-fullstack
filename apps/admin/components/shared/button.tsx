@@ -20,7 +20,7 @@ export function Button({ variant = 'primary', className, children, ...props }: P
     <button
       type="button"
       className={cn(
-        'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg px-4 text-sm font-medium transition-all duration-200 ease-in-out active:scale-[0.98] active:duration-75 disabled:opacity-50 disabled:active:scale-100 disabled:pointer-events-none cursor-pointer select-none',
+        'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg px-4 text-sm font-medium leading-none transition-all duration-200 ease-in-out active:scale-[0.98] active:duration-75 disabled:opacity-50 disabled:active:scale-100 disabled:pointer-events-none cursor-pointer select-none',
         variants[variant],
         className,
       )}
