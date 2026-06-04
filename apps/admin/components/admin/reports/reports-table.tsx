@@ -12,7 +12,7 @@ import {
   type ReportStatus,
 } from '@/components/admin/reports/reports.constants';
 import { Button } from '@/components/shared/button';
-import { adminTable } from '@/lib/admin-table';
+import { adminCol, adminTable } from '@/lib/admin-table';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -21,6 +21,14 @@ type Props = {
   onDismiss: (id: string) => void;
   locale: string;
 };
+
+const colTarget = adminCol('grow', 'start');
+const colReason = adminCol('grow', 'center');
+const colReporter = adminCol('grow', 'center');
+const colReportCount = adminCol('grow', 'center');
+const colStatus = adminCol('grow', 'center');
+const colTime = adminCol('grow', 'center');
+const colActions = adminCol('actions', 'end');
 
 /** Định dạng ngày báo cáo theo locale hiện tại. */
 function formatReportDate(iso: string, locale: string) {
@@ -35,31 +43,17 @@ export function ReportsTable({ reports, isReviewPending, onDismiss, locale }: Pr
       <table className={cn(adminTable.table, 'min-w-[800px]')}>
         <thead className={adminTable.thead}>
           <tr>
-            <th className={cn(adminTable.th, adminTable.thLeft)}>
-              {t('reports.columns.target')}
-            </th>
-            <th className={cn(adminTable.th, adminTable.thLeft)}>
-              {t('reports.columns.reason')}
-            </th>
-            <th
-              className={cn(adminTable.th, adminTable.thLeft, 'hidden xl:table-cell')}
-            >
+            <th className={colTarget.th}>{t('reports.columns.target')}</th>
+            <th className={colReason.th}>{t('reports.columns.reason')}</th>
+            <th className={cn(colReporter.th, 'hidden xl:table-cell')}>
               {t('reports.columns.reporter')}
             </th>
-            <th className={cn(adminTable.th, adminTable.thCenter)}>
-              {t('reports.columns.reportCount')}
-            </th>
-            <th className={cn(adminTable.th, adminTable.thLeft)}>
-              {t('reports.columns.status')}
-            </th>
-            <th
-              className={cn(adminTable.th, adminTable.thLeft, 'hidden xl:table-cell')}
-            >
+            <th className={colReportCount.th}>{t('reports.columns.reportCount')}</th>
+            <th className={colStatus.th}>{t('reports.columns.status')}</th>
+            <th className={cn(colTime.th, 'hidden xl:table-cell')}>
               {t('reports.columns.time')}
             </th>
-            <th className={cn(adminTable.th, adminTable.thRight)}>
-              {t('reports.columns.actions')}
-            </th>
+            <th className={colActions.th}>{t('reports.columns.actions')}</th>
           </tr>
         </thead>
         <tbody className={adminTable.tbodyDivide}>
@@ -71,30 +65,27 @@ export function ReportsTable({ reports, isReviewPending, onDismiss, locale }: Pr
             const formattedDate = formatReportDate(report.createdAt, locale);
 
             return (
-              <tr
-                key={report.id}
-                className={cn(adminTable.row, isHighPriority && 'bg-red-500/5')}
-              >
-                <td className={adminTable.td}>
-                  <div className={adminTable.cellColStart}>
-                    <div className="flex min-w-0 items-center gap-2">
-                      <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+              <tr key={report.id} className={cn(adminTable.row, isHighPriority && 'bg-red-500/5')}>
+                <td className={colTarget.td}>
+                  <div className={colTarget.cell}>
+                    <div className="flex min-w-0 items-center justify-center gap-2">
+                      <span className="bg-muted text-muted-foreground shrink-0 rounded px-1.5 py-0.5 text-xs">
                         {t(`targetType.${report.targetType}`, report.targetType)}
                       </span>
                       {report.targetPreview ? (
-                        <span className="max-w-[180px] truncate text-xs text-muted-foreground">
+                        <span className="text-muted-foreground max-w-[180px] truncate text-xs">
                           {report.targetPreview}
                         </span>
                       ) : null}
                     </div>
-                    <p className="mt-0.5 truncate text-xs text-muted-foreground xl:hidden">
+                    <p className="text-muted-foreground mt-0.5 truncate text-xs xl:hidden">
                       @{reporterUsername} · {formattedDate}
                     </p>
                   </div>
                 </td>
 
-                <td className={adminTable.td}>
-                  <div className={adminTable.cellStart}>
+                <td className={colReason.td}>
+                  <div className={colReason.cell}>
                     <span
                       className={`inline-flex shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${REASON_COLORS[reason] ?? ''}`}
                     >
@@ -103,14 +94,14 @@ export function ReportsTable({ reports, isReviewPending, onDismiss, locale }: Pr
                   </div>
                 </td>
 
-                <td className={cn(adminTable.td, 'hidden xl:table-cell')}>
-                  <div className={adminTable.cellStart}>
-                    <span className="text-xs text-muted-foreground">@{reporterUsername}</span>
+                <td className={cn(colReporter.td, 'hidden xl:table-cell')}>
+                  <div className={colReporter.cell}>
+                    <span className="text-muted-foreground text-xs">@{reporterUsername}</span>
                   </div>
                 </td>
 
-                <td className={adminTable.tdCenter}>
-                  <div className={adminTable.cellCenter}>
+                <td className={colReportCount.td}>
+                  <div className={colReportCount.cell}>
                     {(report.reportCount ?? 0) > 1 ? (
                       <span
                         className={`inline-flex shrink-0 items-center justify-center rounded-full px-2 py-0.5 text-xs font-bold ${
@@ -122,13 +113,13 @@ export function ReportsTable({ reports, isReviewPending, onDismiss, locale }: Pr
                         {report.reportCount}
                       </span>
                     ) : (
-                      <span className="text-xs text-muted-foreground">1</span>
+                      <span className="text-muted-foreground text-xs">1</span>
                     )}
                   </div>
                 </td>
 
-                <td className={adminTable.td}>
-                  <div className={adminTable.cellStart}>
+                <td className={colStatus.td}>
+                  <div className={colStatus.cell}>
                     <span
                       className={`inline-flex shrink-0 whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[status] ?? ''}`}
                     >
@@ -137,12 +128,12 @@ export function ReportsTable({ reports, isReviewPending, onDismiss, locale }: Pr
                   </div>
                 </td>
 
-                <td className={cn(adminTable.td, 'hidden text-xs text-muted-foreground xl:table-cell')}>
-                  <div className={adminTable.cellStart}>{formattedDate}</div>
+                <td className={cn(colTime.td, 'text-muted-foreground hidden text-xs xl:table-cell')}>
+                  <div className={colTime.cell}>{formattedDate}</div>
                 </td>
 
-                <td className={adminTable.tdRight}>
-                  <div className={adminTable.cellEnd}>
+                <td className={colActions.td}>
+                  <div className={colActions.cell}>
                     {status === 'PENDING' || status === 'UNDER_REVIEW' ? (
                       <Button
                         variant="secondary"

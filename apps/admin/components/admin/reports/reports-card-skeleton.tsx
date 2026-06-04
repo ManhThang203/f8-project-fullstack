@@ -34,7 +34,7 @@ function ReportsCardSkeletonItem() {
 
 export function ReportsCardSkeleton({ rows = 5 }: Props) {
   return (
-    <div className="space-y-3 md:hidden">
+    <div className="space-y-3 lg:hidden">
       {Array.from({ length: rows }).map((_, i) => (
         <ReportsCardSkeletonItem key={i} />
       ))}

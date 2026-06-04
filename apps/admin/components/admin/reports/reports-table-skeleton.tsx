@@ -1,50 +1,69 @@
 import { Skeleton } from '@/components/shared/skeleton';
-import { adminTable } from '@/lib/admin-table';
+import { adminCol, adminTable } from '@/lib/admin-table';
 import { cn } from '@/lib/utils';
 
 type Props = {
   rows?: number;
 };
 
+const colTarget = adminCol('grow', 'start');
+const colReason = adminCol('grow', 'center');
+const colReporter = adminCol('grow', 'center');
+const colReportCount = adminCol('grow', 'center');
+const colStatus = adminCol('grow', 'center');
+const colTime = adminCol('grow', 'center');
+const colActions = adminCol('actions', 'end');
+
+const headerCols: { key: string; col: (typeof colTarget); className?: string; skeleton: string }[] =
+  [
+    { key: 'target', col: colTarget, skeleton: 'w-16' },
+    { key: 'reason', col: colReason, skeleton: 'w-16' },
+    { key: 'reporter', col: colReporter, className: 'hidden xl:table-cell', skeleton: 'w-16' },
+    { key: 'reportCount', col: colReportCount, skeleton: 'w-12' },
+    { key: 'status', col: colStatus, skeleton: 'w-16' },
+    { key: 'time', col: colTime, className: 'hidden xl:table-cell', skeleton: 'w-16' },
+    { key: 'actions', col: colActions, skeleton: 'w-14' },
+  ];
+
 function ReportsTableSkeletonRow() {
   return (
     <tr className={adminTable.row}>
-      <td className={adminTable.td}>
-        <div className={adminTable.cellColStart}>
-          <div className="flex min-w-0 items-center gap-2">
+      <td className={colTarget.td}>
+        <div className={colTarget.cell}>
+          <div className="flex min-w-0 items-center justify-center gap-2">
             <Skeleton className="h-5 w-14 shrink-0 rounded" />
             <Skeleton className="h-3 max-w-[180px] flex-1 rounded" />
           </div>
-          <Skeleton className="mt-1 h-3 w-32 rounded xl:hidden" />
+          <Skeleton className="mx-auto mt-1 h-3 w-32 rounded xl:hidden" />
         </div>
       </td>
-      <td className={adminTable.td}>
-        <div className={adminTable.cellStart}>
-          <Skeleton className="h-5 w-28 shrink-0 rounded-full" />
+      <td className={colReason.td}>
+        <div className={colReason.cell}>
+          <Skeleton className="mx-auto h-5 w-28 shrink-0 rounded-full" />
         </div>
       </td>
-      <td className={cn(adminTable.td, 'hidden xl:table-cell')}>
-        <div className={adminTable.cellStart}>
-          <Skeleton className="h-3 w-20 rounded" />
+      <td className={cn(colReporter.td, 'hidden xl:table-cell')}>
+        <div className={colReporter.cell}>
+          <Skeleton className="mx-auto h-3 w-20 rounded" />
         </div>
       </td>
-      <td className={adminTable.tdCenter}>
-        <div className={adminTable.cellCenter}>
-          <Skeleton className="h-5 w-6 rounded-full" />
+      <td className={colReportCount.td}>
+        <div className={colReportCount.cell}>
+          <Skeleton className="mx-auto h-5 w-6 rounded-full" />
         </div>
       </td>
-      <td className={adminTable.td}>
-        <div className={adminTable.cellStart}>
-          <Skeleton className="h-5 w-20 shrink-0 rounded-full" />
+      <td className={colStatus.td}>
+        <div className={colStatus.cell}>
+          <Skeleton className="mx-auto h-5 w-20 shrink-0 rounded-full" />
         </div>
       </td>
-      <td className={cn(adminTable.td, 'hidden xl:table-cell')}>
-        <div className={adminTable.cellStart}>
-          <Skeleton className="h-3 w-16 rounded" />
+      <td className={cn(colTime.td, 'hidden xl:table-cell')}>
+        <div className={colTime.cell}>
+          <Skeleton className="mx-auto h-3 w-16 rounded" />
         </div>
       </td>
-      <td className={adminTable.tdRight}>
-        <div className={adminTable.cellEnd}>
+      <td className={colActions.td}>
+        <div className={colActions.cell}>
           <Skeleton className="h-9 w-14 shrink-0 rounded-lg" />
           <Skeleton className="h-9 w-[4.5rem] shrink-0 rounded-lg" />
         </div>
@@ -60,35 +79,13 @@ export function ReportsTableSkeleton({ rows = 8 }: Props) {
         <table className={cn(adminTable.table, 'min-w-[800px]')}>
           <thead className={adminTable.thead}>
             <tr>
-              {[
-                { key: 'target', align: cn(adminTable.thLeft) },
-                { key: 'reason', align: cn(adminTable.thLeft) },
-                { key: 'reporter', align: cn(adminTable.thLeft, 'hidden xl:table-cell') },
-                { key: 'reportCount', align: cn(adminTable.thCenter) },
-                { key: 'status', align: cn(adminTable.thLeft) },
-                { key: 'time', align: cn(adminTable.thLeft, 'hidden xl:table-cell') },
-                { key: 'actions', align: cn(adminTable.thRight) },
-              ].map(({ key, align }) => {
-                const isCenter = align.includes('text-center');
-                const isRight = align.includes('text-right');
-                const cell = isCenter
-                  ? adminTable.cellCenter
-                  : isRight
-                    ? adminTable.cellEnd
-                    : adminTable.cellStart;
-                return (
-                  <th key={key} className={cn(adminTable.th, align)}>
-                    <div className={cell}>
-                      <Skeleton
-                        className={cn(
-                          'h-3 rounded',
-                          isCenter ? 'w-12' : isRight ? 'ml-auto w-14' : 'w-16',
-                        )}
-                      />
-                    </div>
-                  </th>
-                );
-              })}
+              {headerCols.map(({ key, col, className, skeleton }) => (
+                <th key={key} className={cn(col.th, className)}>
+                  <div className={col.cell}>
+                    <Skeleton className={cn('mx-auto h-3 rounded', skeleton)} />
+                  </div>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>

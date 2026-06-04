@@ -1,44 +1,60 @@
 import { Skeleton } from '@/components/shared/skeleton';
-import { adminTable } from '@/lib/admin-table';
+import { adminCol, adminTable } from '@/lib/admin-table';
 import { cn } from '@/lib/utils';
 
 type Props = {
   rows?: number;
 };
 
+const colUser = adminCol('grow', 'start');
+const colEmail = adminCol('grow', 'center');
+const colRole = adminCol('grow', 'center');
+const colStatus = adminCol('grow', 'center');
+const colPosts = adminCol('grow', 'center');
+const colActions = adminCol('actions', 'end');
+
+const headerCols: { col: (typeof colUser); className?: string; skeleton: string }[] = [
+  { col: colUser, skeleton: 'w-16' },
+  { col: colEmail, className: 'hidden xl:table-cell', skeleton: 'w-16' },
+  { col: colRole, skeleton: 'w-16' },
+  { col: colStatus, skeleton: 'w-16' },
+  { col: colPosts, className: 'hidden xl:table-cell', skeleton: 'w-8' },
+  { col: colActions, skeleton: 'w-14' },
+];
+
 function UsersTableSkeletonRow() {
   return (
     <tr className={adminTable.row}>
-      <td className={adminTable.td}>
-        <div className={adminTable.cellColStart}>
-          <Skeleton className="h-4 w-32 rounded" />
-          <Skeleton className="mt-1 h-3 w-24 rounded" />
-          <Skeleton className="mt-1 h-3 w-40 rounded xl:hidden" />
+      <td className={colUser.td}>
+        <div className={colUser.cell}>
+          <Skeleton className="mx-auto h-4 w-32 rounded" />
+          <Skeleton className="mx-auto mt-1 h-3 w-24 rounded" />
+          <Skeleton className="mx-auto mt-1 h-3 w-40 rounded xl:hidden" />
         </div>
       </td>
-      <td className={cn(adminTable.td, 'hidden xl:table-cell')}>
-        <div className={adminTable.cellStart}>
-          <Skeleton className="h-3 w-36 rounded" />
+      <td className={cn(colEmail.td, 'hidden xl:table-cell')}>
+        <div className={colEmail.cell}>
+          <Skeleton className="mx-auto h-3 w-36 rounded" />
         </div>
       </td>
-      <td className={adminTable.td}>
-        <div className={adminTable.cellStart}>
-          <Skeleton className="h-4 w-24 rounded" />
+      <td className={colRole.td}>
+        <div className={colRole.cell}>
+          <Skeleton className="mx-auto h-4 w-24 rounded" />
         </div>
       </td>
-      <td className={adminTable.td}>
-        <div className={adminTable.cellStart}>
-          <Skeleton className="h-6 w-20 rounded-md" />
+      <td className={colStatus.td}>
+        <div className={colStatus.cell}>
+          <Skeleton className="mx-auto h-6 w-20 rounded-md" />
         </div>
       </td>
-      <td className={cn(adminTable.tdCenter, 'hidden xl:table-cell')}>
-        <div className={adminTable.cellCenter}>
-          <Skeleton className="h-4 w-8 rounded" />
+      <td className={cn(colPosts.td, 'hidden xl:table-cell')}>
+        <div className={colPosts.cell}>
+          <Skeleton className="mx-auto h-4 w-8 rounded" />
         </div>
       </td>
-      <td className={adminTable.tdRight}>
-        <div className={adminTable.cellEnd}>
-          <Skeleton className="h-9 w-28 rounded-lg" />
+      <td className={colActions.td}>
+        <div className={colActions.cell}>
+          <Skeleton className="mx-auto h-9 w-28 rounded-lg" />
         </div>
       </td>
     </tr>
@@ -52,34 +68,13 @@ export function UsersTableSkeleton({ rows = 8 }: Props) {
         <table className={cn(adminTable.table, 'min-w-[640px]')}>
           <thead className={adminTable.thead}>
             <tr>
-              {[
-                adminTable.thLeft,
-                cn(adminTable.thLeft, 'hidden xl:table-cell'),
-                adminTable.thLeft,
-                adminTable.thLeft,
-                cn(adminTable.thCenter, 'hidden xl:table-cell'),
-                adminTable.thRight,
-              ].map((align, i) => {
-                const isCenter = align.includes('text-center');
-                const isRight = align.includes('text-right');
-                const cell = isCenter
-                  ? adminTable.cellCenter
-                  : isRight
-                    ? adminTable.cellEnd
-                    : adminTable.cellStart;
-                return (
-                  <th key={i} className={cn(adminTable.th, align)}>
-                    <div className={cell}>
-                      <Skeleton
-                        className={cn(
-                          'h-3 rounded',
-                          isCenter ? 'w-8' : isRight ? 'ml-auto w-14' : 'w-16',
-                        )}
-                      />
-                    </div>
-                  </th>
-                );
-              })}
+              {headerCols.map(({ col, className, skeleton }, i) => (
+                <th key={i} className={cn(col.th, className)}>
+                  <div className={col.cell}>
+                    <Skeleton className={cn('mx-auto h-3 rounded', skeleton)} />
+                  </div>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>

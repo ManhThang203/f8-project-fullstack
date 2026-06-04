@@ -5,6 +5,7 @@ import type {
   AdminModeratorDto,
   AdminPermissionDto,
   AdminPostsPerDayDto,
+  AdminReportDetailDto,
   AdminReportDto,
   AdminStatsMeta,
   AdminStatsOverviewDto,
@@ -87,17 +88,41 @@ export function useAdminUsers(filters: { q?: string; status?: string; cursor?: s
   });
 }
 
-export function useAdminReports(status = 'PENDING', cursor?: string, limit?: number) {
-  const base = new URLSearchParams({ status });
-  if (cursor) base.set('cursor', cursor);
-  if (limit) base.set('limit', String(limit));
+export function useAdminReports(
+  filters: {
+    status?: string;
+    reason?: string;
+    targetType?: string;
+    from?: string;
+    to?: string;
+    cursor?: string;
+    limit?: number;
+  } = {},
+) {
+  const base = new URLSearchParams();
+  if (filters.status) base.set('status', filters.status);
+  if (filters.reason) base.set('reason', filters.reason);
+  if (filters.targetType) base.set('targetType', filters.targetType);
+  if (filters.from) base.set('from', filters.from);
+  if (filters.to) base.set('to', filters.to);
+  if (filters.cursor) base.set('cursor', filters.cursor);
+  if (filters.limit) base.set('limit', String(filters.limit));
   const filterKey = base.toString();
 
   return useQuery({
     queryKey: queryKeys.admin.reports(filterKey),
     queryFn: () => {
-      return apiQuery<AdminReportDto[], CursorMeta>(`/admin/reports?${base}`);
+      const suffix = filterKey ? `?${filterKey}` : '';
+      return apiQuery<AdminReportDto[], CursorMeta>(`/admin/reports${suffix}`);
     },
+  });
+}
+
+export function useAdminReportDetail(reportId: string | null) {
+  return useQuery({
+    queryKey: ['admin', 'reports', reportId, 'detail'],
+    queryFn: () => apiQuery<AdminReportDetailDto>(`/admin/reports/${reportId}`),
+    enabled: Boolean(reportId),
   });
 }
 
@@ -175,9 +200,36 @@ export function useReviewReport() {
           resolutionNote: opts.resolutionNote,
         }),
       }),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       void qc.invalidateQueries({ queryKey: ['admin', 'reports'] });
+      void qc.invalidateQueries({ queryKey: ['admin', 'reports', variables.id, 'detail'] });
       void qc.invalidateQueries({ queryKey: ['admin', 'stats'] });
+    },
+  });
+}
+
+export function useReportAction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (opts: {
+      id: string;
+      action: string;
+      resolutionNote: string;
+      bannedUntil?: string;
+    }) =>
+      apiQuery(`/admin/reports/${opts.id}/action`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          action: opts.action,
+          resolutionNote: opts.resolutionNote,
+          bannedUntil: opts.bannedUntil,
+        }),
+      }),
+    onSuccess: (_data, variables) => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'reports'] });
+      void qc.invalidateQueries({ queryKey: ['admin', 'reports', variables.id, 'detail'] });
+      void qc.invalidateQueries({ queryKey: ['admin', 'stats'] });
+      void qc.invalidateQueries({ queryKey: ['admin', 'users'] });
     },
   });
 }
