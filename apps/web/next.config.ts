@@ -22,7 +22,7 @@ loadRootEnvFile('.env.local', true);
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['@costy/shared'],
+  transpilePackages: ['@costy/shared', '@costy/ui'],
   typedRoutes: true,
   experimental: {
     proxyClientMaxBodySize: '20mb', // giới hạn body request tối đa 20MB

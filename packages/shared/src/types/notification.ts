@@ -1,4 +1,5 @@
-export type NotificationType = 'POST_LIKED' | 'POST_REPLIED' | 'POST_COMMENTED_FOLLOWED' | 'USER_FOLLOWED' | 'MENTION' | 'SYSTEM';
+export type NotificationType = 'POST_LIKED' | 'POST_REPLIED' | 'POST_COMMENTED_FOLLOWED' | 'USER_FOLLOWED' | 'MENTION' | 'SYSTEM' | 'REPORT_RESOLVED';
+
 
 export interface NotificationDto {
   id: string;

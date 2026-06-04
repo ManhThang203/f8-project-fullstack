@@ -138,7 +138,7 @@ export function CommentItem({ comment, onReply, isReply = false }: Props) {
 
         {comment.media.length > 0 && (
           <div className="mt-2 max-w-[300px]">
-            <PostMediaCarousel mode="view" items={comment.media} />
+            <PostMediaCarousel mode="feed" postId={comment.id} items={comment.media} />
           </div>
         )}
 

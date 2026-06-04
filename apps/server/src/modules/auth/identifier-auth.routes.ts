@@ -2,7 +2,7 @@ import { loginBodySchema } from '@costy/shared';
 import { fromNodeHeaders } from 'better-auth/node';
 import type { RequestHandler } from 'express';
 
-import { auth } from '../../lib/auth.js';
+import { authWeb } from '../../lib/auth.js';
 
 /**
  * POST /api/auth/sign-in/identifier — body `{ identifier, password }`.
@@ -25,12 +25,12 @@ export const handleSignInIdentifier: RequestHandler = async (req, res) => {
 
   try {
     const upstream = useEmail
-      ? await auth.api.signInEmail({
+      ? await authWeb.api.signInEmail({
           body: { email: key, password },
           headers,
           asResponse: true,
         })
-      : await auth.api.signInUsername({
+      : await authWeb.api.signInUsername({
           body: { username: key, password },
           headers,
           asResponse: true,

@@ -12,6 +12,7 @@ import {
   adminUserListQuerySchema,
   adminUserPermissionsPutSchema,
   adminUserStatusPatchSchema,
+  cursorPageQuerySchema,
 } from '@costy/shared';
 
 import { requireAuth } from '../../middleware/auth.middleware.js';
@@ -184,6 +185,7 @@ adminRouter.get('/reports/:id', requirePermission('report:read'), async (req, re
   }
 });
 
+/** PATCH /admin/reports/:id — Admin cập nhật status (mark under_review / dismiss nhanh). */
 adminRouter.patch(
   '/reports/:id',
   requirePermission('report:review'),
@@ -198,8 +200,9 @@ adminRouter.patch(
   },
 );
 
-adminRouter.post(
-  '/reports/:id/actions',
+/** PATCH /admin/reports/:id/action — Admin thực thi hành động kiểm duyệt. */
+adminRouter.patch(
+  '/reports/:id/action',
   requirePermission('report:review'),
   async (req, res, next) => {
     try {
@@ -212,6 +215,7 @@ adminRouter.post(
   },
 );
 
+/** GET /admin/hashtags */
 adminRouter.get(
   '/hashtags',
   requirePermission('hashtag:read'),
@@ -240,14 +244,19 @@ adminRouter.patch(
   },
 );
 
-adminRouter.get('/moderators', requirePermission('moderator:manage'), async (_req, res, next) => {
-  try {
-    const data = await listModerators();
-    res.json(ok(data));
-  } catch (e) {
-    next(e);
-  }
-});
+adminRouter.get(
+  '/moderators',
+  requirePermission('moderator:manage'),
+  validate(cursorPageQuerySchema, 'query'),
+  async (req, res, next) => {
+    try {
+      const result = await listModerators(req.query as never);
+      res.json(ok(result.items, { nextCursor: result.nextCursor }));
+    } catch (e) {
+      next(e);
+    }
+  },
+);
 
 adminRouter.post('/moderators', requirePermission('moderator:manage'), async (req, res, next) => {
   try {

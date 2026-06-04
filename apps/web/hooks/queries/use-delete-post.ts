@@ -7,11 +7,11 @@ export function useDeletePost() {
 
   return useMutation({
     mutationFn: async (postId: string) => {
-      const res = await apiFetch(`/posts/${postId}`, { method: 'DELETE' });
-      if (!res.ok) {
-        throw new Error('Không thể xóa bài viết');
+      const res = await apiFetch<unknown>(`/posts/${postId}`, { method: 'DELETE' });
+      if (!res.success) {
+        throw new Error(res.error?.message || 'Không thể xóa bài viết');
       }
-      return res.json();
+      return res;
     },
     onSuccess: (_, postId) => {
       // Refresh feed

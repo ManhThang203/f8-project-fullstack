@@ -53,105 +53,137 @@ const authRateLimit = env.AUTH_RATE_LIMIT_DISABLED
       },
     };
 
+const trustedOrigins = [
+  env.WEB_URL,
+  env.ADMIN_URL,
+  env.BETTER_AUTH_URL,
+  env.SERVER_URL,
+];
+
+type CreateAppAuthOptions = {
+  baseURL: string;
+  /** Must match Express mount + client `basePath` (default `/api/auth`). */
+  basePath?: string;
+  cookiePrefix?: string;
+  /** Google OAuth — web only. */
+  enableGoogle?: boolean;
+};
+
 /**
- * Better Auth instance (Express + Prisma). Used by CLI: auth generate --config ...
- *
- * Env (see `.env.example`): BETTER_AUTH_SECRET, BETTER_AUTH_URL, WEB_URL (optional),
- * GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET (optional), SMTP_* for password reset emails.
+ * Shared Better Auth factory (Express + Prisma). Web and Admin use separate instances
+ * (same DB, different `baseURL` + `cookiePrefix`) so sessions do not collide.
  */
-export const auth = betterAuth({
-  appName: 'costy',
-  database: prismaAdapter(prisma, { provider: 'postgresql' }),
-  advanced: {
-    ipAddress: {
-      ipAddressHeaders: ['x-forwarded-for', 'cf-connecting-ip', 'x-real-ip'],
+export function createAppAuth({
+  baseURL,
+  basePath = '/api/auth',
+  cookiePrefix,
+  enableGoogle = false,
+}: CreateAppAuthOptions) {
+  return betterAuth({
+    appName: 'costy',
+    database: prismaAdapter(prisma, { provider: 'postgresql' }),
+    advanced: {
+      ipAddress: {
+        ipAddressHeaders: ['x-forwarded-for', 'cf-connecting-ip', 'x-real-ip'],
+      },
+      ...(cookiePrefix ? { cookiePrefix } : {}),
     },
-  },
-  rateLimit: authRateLimit,
-  /**
-   * Cho phép đăng nhập Google gắn vào user đã có (cùng email), thay vì báo "account not linked".
-   * Cần `trustedProviders` (mặc định Better Auth = []) và `requireLocalEmailVerified: false` nếu user
-   * đăng ký bằng email+mật khẩu mà chưa xác minh email cục bộ.
-   */
-  account: {
-    accountLinking: {
-      enabled: true,
-      trustedProviders: ['google'],
-      requireLocalEmailVerified: false,
+    rateLimit: authRateLimit,
+    account: {
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ['google'],
+        requireLocalEmailVerified: false,
+      },
     },
-  },
-  databaseHooks: {
-    user: {
-      create: {
-        before: async (user) => {
-          const u = user as Record<string, unknown>;
-          const existing = u.username;
-          if (typeof existing === 'string' && existing.length >= 3) {
-            return { data: user };
-          }
-          const email = u.email;
-          if (typeof email !== 'string' || !email.includes('@')) {
-            throw new APIError('BAD_REQUEST', { message: 'Không thể tạo tài khoản: thiếu email.' });
-          }
-          const base = slugFromEmail(email);
-          const usernameValue = await uniqueUsername(base);
-          const displayUsername =
-            typeof u.displayUsername === 'string' && u.displayUsername.length > 0
-              ? u.displayUsername
-              : base.replace(/\./g, ' ').slice(0, 30);
-          return {
-            data: {
-              ...user,
-              username: usernameValue,
-              displayUsername,
-            },
-          };
+    databaseHooks: {
+      user: {
+        create: {
+          before: async (user) => {
+            const u = user as Record<string, unknown>;
+            const existing = u.username;
+            if (typeof existing === 'string' && existing.length >= 3) {
+              return { data: user };
+            }
+            const email = u.email;
+            if (typeof email !== 'string' || !email.includes('@')) {
+              throw new APIError('BAD_REQUEST', { message: 'Không thể tạo tài khoản: thiếu email.' });
+            }
+            const base = slugFromEmail(email);
+            const usernameValue = await uniqueUsername(base);
+            const displayUsername =
+              typeof u.displayUsername === 'string' && u.displayUsername.length > 0
+                ? u.displayUsername
+                : base.replace(/\./g, ' ').slice(0, 30);
+            return {
+              data: {
+                ...user,
+                username: usernameValue,
+                displayUsername,
+              },
+            };
+          },
         },
       },
     },
-  },
-  emailAndPassword: {
-    enabled: true,
-    autoSignIn: true,
-    revokeSessionsOnPasswordReset: true,
-    sendResetPassword: async ({ user, url }) => {
-      if (!user.email) return;
-      void sendPasswordResetEmail(user.email, url).catch((err: unknown) => {
-        logger.error({ err }, 'sendResetPassword mail failed');
-      });
-    },
-  },
-  plugins: [username({ minUsernameLength: 3, maxUsernameLength: 30 })],
-  secret: process.env.BETTER_AUTH_SECRET ?? '',
-  baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3000',
-  trustedOrigins: [
-    process.env.WEB_URL ?? 'http://localhost:3000',
-    process.env.ADMIN_URL ?? 'http://localhost:3001',
-    process.env.BETTER_AUTH_URL ?? 'http://localhost:3000',
-    process.env.SERVER_URL ?? 'http://localhost:4000',
-  ],
-  session: {
-    expiresIn: 60 * 60 * 24 * 7,
-    updateAge: 60 * 60 * 24,
-    cookieCache: {
+    emailAndPassword: {
       enabled: true,
-      maxAge: 5 * 60,
-      strategy: 'jwt',
+      autoSignIn: true,
+      revokeSessionsOnPasswordReset: true,
+      sendResetPassword: async ({ user, url }) => {
+        if (!user.email) return;
+        void sendPasswordResetEmail(user.email, url).catch((err: unknown) => {
+          logger.error({ err }, 'sendResetPassword mail failed');
+        });
+      },
     },
-  },
-  ...(googleConfigured
-    ? {
-        socialProviders: {
-          google: {
-            clientId: env.GOOGLE_CLIENT_ID,
-            clientSecret: env.GOOGLE_CLIENT_SECRET,
-            prompt: 'select_account',
-            mapProfileToUser: (profile) => ({
-              name: profile.name,
-              image: profile.picture,
-            }),
+    plugins: [username({ minUsernameLength: 3, maxUsernameLength: 30 })],
+    secret: env.BETTER_AUTH_SECRET,
+    baseURL,
+    basePath,
+    trustedOrigins,
+    session: {
+      expiresIn: 60 * 60 * 24 * 7,
+      updateAge: 60 * 60 * 24,
+      cookieCache: {
+        enabled: true,
+        maxAge: 5 * 60,
+        strategy: 'jwt',
+      },
+    },
+    ...(enableGoogle && googleConfigured
+      ? {
+          socialProviders: {
+            google: {
+              clientId: env.GOOGLE_CLIENT_ID,
+              clientSecret: env.GOOGLE_CLIENT_SECRET,
+              prompt: 'select_account',
+              mapProfileToUser: (profile) => ({
+                name: profile.name,
+                image: profile.picture,
+              }),
+            },
           },
-        },
-      }
-    : {}),
+        }
+      : {}),
+  });
+}
+
+/** Web app session (default cookie prefix, Google OAuth). */
+export const authWeb = createAppAuth({
+  baseURL: env.WEB_URL ?? env.BETTER_AUTH_URL,
+  basePath: '/api/auth',
+  cookiePrefix: 'better-auth',
+  enableGoogle: true,
 });
+
+/** Admin app session — isolated cookies via `costy-admin` prefix. */
+export const authAdmin = createAppAuth({
+  baseURL: env.ADMIN_URL,
+  basePath: '/api/admin/auth',
+  cookiePrefix: env.AUTH_ADMIN_COOKIE_PREFIX,
+  enableGoogle: false,
+});
+
+/** Alias for socket, identifier login, and CLI until callers migrate to `authWeb`. */
+export const auth = authWeb;

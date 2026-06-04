@@ -1,5 +1,7 @@
 # Skill: Create Component
 
+Admin data table/list → dùng skill `create-admin-list` + rules `admin-table-layout.mdc`, `admin-responsive-lists.mdc`.
+
 Requirements:
 - Use existing tokens
 - Reuse shared patterns

@@ -56,6 +56,7 @@ model RolePermission {
   @@map("role_permissions")
 }
 
+
 model UserPermission {
   userId       String
   permissionId String
@@ -80,18 +81,23 @@ enum ReportTargetType {
 
 enum ReportReason {
   SPAM
-  HARASSMENT
-  NUDITY
+  BULLYING
+  MINOR_SAFETY
+  SELF_HARM
   VIOLENCE
-  HATE_SPEECH
-  OTHER
+  RESTRICTED_GOODS
+  ADULT_CONTENT
+  MISINFORMATION
+  IP_VIOLATION
+  NOT_INTERESTED
 }
 
 enum ReportStatus {
   PENDING
+  UNDER_REVIEW
   RESOLVED
-  REJECTED
-  ACTION_TAKEN
+  DISMISSED
+  AUTO_HIDDEN
 }
 
 model Report {
@@ -110,8 +116,10 @@ model Report {
   reporter User  @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
   reviewer User? @relation("ReportReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
 
+  @@unique([reporterId, targetType, targetId])
   @@index([status, createdAt])
   @@index([targetType, targetId, status])
+  @@index([reporterId, status, createdAt])
   @@map("reports")
 }
 
@@ -158,6 +166,7 @@ model AdminAuditLog {
 
   @@index([actorId, createdAt(sort: Desc)])
   @@index([createdAt(sort: Desc)])
+  @@index([targetType, targetId, createdAt(sort: Desc)])
   @@map("admin_audit_logs")
 }
 
@@ -443,6 +452,7 @@ enum NotificationType {
   USER_FOLLOWED
   MENTION
   SYSTEM
+  REPORT_RESOLVED
 }
 
 model Notification {

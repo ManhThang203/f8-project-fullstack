@@ -1,7 +1,7 @@
 # Profile Screen — Design Spec
 
 > **Status:** Design spec (UI/UX handoff to Dev)  
-> **App:** Cotsy (Threads/Instagram hybrid)  
+> **App:** Cotsy (Costy/Instagram hybrid)  
 > **Routes:** `/[username]` — own profile & other user's profile  
 > **Schema:** [`packages/db/prisma/schema.prisma`](../../packages/db/prisma/schema.prisma)
 

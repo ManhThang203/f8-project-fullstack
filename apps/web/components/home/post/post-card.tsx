@@ -71,6 +71,7 @@ export function PostCard({ post, onDismiss, disableCommentClick, onCommentClick 
                 postId={post.id}
                 hasVideo={post.media.some((m) => m.type === 'video')}
                 onHidePost={() => onDismiss(post.id)}
+                isOwnPost={me?.id === post.author.id}
               />
               <button
                 type="button"

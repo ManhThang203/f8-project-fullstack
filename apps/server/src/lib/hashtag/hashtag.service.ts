@@ -24,6 +24,7 @@ export async function syncPostHashtags(postId: string, content: string): Promise
       create: { tag },
       update: {},
     });
+    // nếu hashtag bị khóa thì không thêm vào bài viết
     if (hashtag.status === 'BLOCKED') continue;
     await prisma.postHashtag.upsert({
       where: { postId_hashtagId: { postId, hashtagId: hashtag.id } },

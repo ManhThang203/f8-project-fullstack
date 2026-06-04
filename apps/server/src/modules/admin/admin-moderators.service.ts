@@ -9,11 +9,20 @@ import {
   resolveEffectivePermissions,
 } from '../../lib/rbac/permissions.service.js';
 
-/** Danh sách moderator/admin trong hệ thống. */
-export async function listModerators(): Promise<AdminModeratorDto[]> {
+/** Danh sách moderator/admin trong hệ thống, phân trang cursor. */
+export async function listModerators(query: {
+  cursor?: string;
+  limit: number;
+}): Promise<{ items: AdminModeratorDto[]; nextCursor: string | null }> {
+  const take = query.limit + 1;
   const users = await prisma.user.findMany({
-    where: { role: { in: ['MODERATOR', 'ADMIN', 'SUPER_ADMIN'] }, deletedAt: null },
+    where: {
+      role: { in: ['MODERATOR', 'ADMIN', 'SUPER_ADMIN'] },
+      deletedAt: null,
+      ...(query.cursor ? { id: { lt: query.cursor } } : {}),
+    },
     orderBy: { createdAt: 'desc' },
+    take,
     include: {
       userPermissions: {
         orderBy: { createdAt: 'desc' },
@@ -23,7 +32,7 @@ export async function listModerators(): Promise<AdminModeratorDto[]> {
     },
   });
 
-  return Promise.all(
+  const all = await Promise.all(
     users.map(async (u) => {
       const perms = await resolveEffectivePermissions(u.id, u.role);
       const latest = u.userPermissions[0];
@@ -38,6 +47,11 @@ export async function listModerators(): Promise<AdminModeratorDto[]> {
       };
     }),
   );
+
+  const hasMore = all.length > query.limit;
+  const items = hasMore ? all.slice(0, query.limit) : all;
+  const nextCursor = hasMore && items.length ? items[items.length - 1]!.id : null;
+  return { items, nextCursor };
 }
 
 /** Promote user thường lên MODERATOR. */
@@ -142,7 +156,7 @@ export async function setUserPermissions(
   return getUserPermissions(userId);
 }
 
-/** Catalog permission toàn hệ thống. */
+/** Lấy danh sách quyền toàn hệ thống (cho admin UI). */
 export async function listAllPermissions(): Promise<AdminPermissionDto[]> {
   const all = await prisma.permission.findMany({ orderBy: [{ domain: 'asc' }, { key: 'asc' }] });
   return all.map((p) => ({

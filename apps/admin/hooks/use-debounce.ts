@@ -1,0 +1,15 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
+/** Trả về giá trị debounced sau delay ms. */
+export function useDebounce<T>(value: T, delay = 400): T {
+  const [debounced, setDebounced] = useState(value);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebounced(value), delay);
+    return () => window.clearTimeout(timer);
+  }, [value, delay]);
+
+  return debounced;
+}

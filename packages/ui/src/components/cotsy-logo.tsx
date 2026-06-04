@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import type { ComponentPropsWithoutRef } from 'react';
 
-import { cn } from '@/lib/utils';
+import { cn } from '../utils/cn';
 
 type CotsyLogoProps = Omit<ComponentPropsWithoutRef<typeof Image>, 'src' | 'alt' | 'width' | 'height'>;
 
@@ -14,6 +14,7 @@ export function CotsyLogo({ className, ...props }: CotsyLogoProps) {
       width={96}
       height={96}
       priority
+      unoptimized
       className={cn('h-24 w-24 shrink-0 object-contain', className)}
       {...props}
     />

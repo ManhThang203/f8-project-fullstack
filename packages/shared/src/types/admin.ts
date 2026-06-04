@@ -7,12 +7,16 @@ export type UserStatus = 'ACTIVE' | 'LOCKED' | 'BANNED';
 export type ReportTargetType = 'POST' | 'USER' | 'COMMENT';
 export type ReportReason =
   | 'SPAM'
-  | 'HARASSMENT'
-  | 'NUDITY'
+  | 'BULLYING'
+  | 'MINOR_SAFETY'
+  | 'SELF_HARM'
   | 'VIOLENCE'
-  | 'HATE_SPEECH'
-  | 'OTHER';
-export type ReportStatus = 'PENDING' | 'RESOLVED' | 'REJECTED' | 'ACTION_TAKEN';
+  | 'RESTRICTED_GOODS'
+  | 'ADULT_CONTENT'
+  | 'MISINFORMATION'
+  | 'IP_VIOLATION'
+  | 'NOT_INTERESTED';
+export type ReportStatus = 'PENDING' | 'UNDER_REVIEW' | 'RESOLVED' | 'DISMISSED' | 'AUTO_HIDDEN';
 
 export type HashtagStatus = 'ACTIVE' | 'HIDDEN' | 'BLOCKED';
 
@@ -51,6 +55,14 @@ export type AdminReportDto = {
   reporter?: { id: string; username: string; name: string | null; image: string | null };
   reportCount?: number;
   targetPreview?: string | null;
+};
+
+export type AdminReportDetailDto = AdminReportDto & {
+  targetContent: string | null;
+  targetAuthor: { id: string; username: string; name: string | null; image: string | null; status: string } | null;
+  targetMedia: { id: string; kind: string; publicUrl: string | null }[] | null;
+  relatedReports: AdminReportDto[];
+  auditLogs: AdminAuditLogDto[];
 };
 
 export type AdminHashtagDto = {

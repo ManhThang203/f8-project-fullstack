@@ -8,7 +8,12 @@ import animate from 'tailwindcss-animate';
  */
 const config: Config = {
   darkMode: ['class'],
-  content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}', './modules/**/*.{ts,tsx}'],
+  content: [
+    './app/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './modules/**/*.{ts,tsx}',
+    '../../packages/ui/src/**/*.{ts,tsx}',
+  ],
   theme: {
     container: { center: true, padding: '1rem', screens: { '2xl': '640px' } },
     extend: {

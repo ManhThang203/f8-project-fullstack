@@ -1,4 +1,4 @@
-import { CostySplash } from '@/components/shared/costy-splash';
+import { CostySplash } from '@costy/ui';
 
 export default function Loading() {
   return <CostySplash />;

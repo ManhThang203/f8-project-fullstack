@@ -1,6 +1,6 @@
-# Threads Clone
+# Costy
 
-A production-ready, full-stack Threads-like social media app built with a module-based architecture.
+A production-ready, full-stack Costy-like social media app built with a module-based architecture.
 
 ## 🛠 Tech Stack
 

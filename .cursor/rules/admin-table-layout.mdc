@@ -1,0 +1,88 @@
+---
+description: Chuẩn UI bảng admin — th/td căn giữa, cột theo nội dung, dùng adminTable/adminCol
+globs: apps/admin/lib/admin-table.ts,apps/admin/components/admin/**/*table*.tsx,apps/admin/components/admin/**/*-table*.tsx
+alwaysApply: false
+---
+
+# Admin — Table layout (desktop)
+
+Áp dụng khi tạo/sửa **`<table>` admin** (Users, Reports, Moderators, Hashtags…). Tham chiếu trực quan: mọi cột **căn giữa** — header và nội dung cùng trục (như ảnh Users / Báo cáo).
+
+Responsive card/table breakpoint: xem `admin-responsive-lists.mdc`.
+
+---
+
+## 1. Token bắt buộc — `lib/admin-table.ts`
+
+- Import `adminTable`, `adminCol` — **không** tự định nghĩa class `th`/`td` riêng.
+- Wrapper: `adminTable.wrap` hoặc `wrapRelative`.
+- Table: `adminTable.table` — **cấm** `min-w-[Npx]` trên `<table>`.
+
+---
+
+## 2. Căn giữa — `th` và `td`
+
+| Cấm | Dùng |
+|-----|------|
+| `text-left`, `text-right` trên `th`/`td` | `text-center` (đã có trong `adminTable.th`, `tdCenter`, `tdEnd`) |
+| `justify-start`, `justify-end`, `items-start` trong ô bảng | `justify-center`, `items-center` |
+| `flex w-full` + `justify-end` cho nút action | `adminTable.actionsGroup` |
+| `ml-auto` trên skeleton/nút trong ô | `mx-auto` hoặc bọc `actionsGroup` / `cellCenter` |
+
+**Mọi `th`:** `text-align: center` — qua `col*.th` từ `adminCol()` (đã map `thCenter`).
+
+**Mọi `td`:** căn giữa — bọc nội dung trong `div` với `col*.cell` từ `adminCol()`.
+
+---
+
+## 3. `adminCol(width, align)` — khai báo cột
+
+Đầu file table (và skeleton), khai báo constant **một lần**, `th`/`td`/`cell` dùng chung:
+
+```tsx
+const colUser = adminCol('grow', 'start');   // cell → stackCenter (2 dòng, căn giữa)
+const colRole = adminCol('grow', 'center'); // cell → cellCenter
+const colActions = adminCol('actions', 'end'); // cell → actionsGroup (nút giữa ô)
+
+<th className={colUser.th}>{t('common.user')}</th>
+<td className={colUser.td}>
+  <div className={colUser.cell}>…</div>
+</td>
+```
+
+| `width` | `cell` wrapper |
+|---------|----------------|
+| `'grow'` + `align: 'start'` | `stackCenter` — user/target nhiều dòng |
+| `'grow'` + `align: 'center'` | `cellCenter` — text, badge, số |
+| `'actions'` | `actionsGroup` — nhóm nút căn giữa |
+
+`align` **không** đổi `text-align` th/td (luôn center); chỉ chọn loại wrapper `cell`.
+
+---
+
+## 4. Nội dung ô
+
+- Badge/chip: `inline-flex shrink-0 whitespace-nowrap` bên trong `col*.cell`.
+- Text dài: `truncate` + `min-w-0` **bên trong** `stackCenter` / `cellCenter`, không `max-w-[200px]` trên `td`.
+- Nút: `adminTable.actionBtn` (`min-h-9`) trong `actionsGroup`.
+- Cột ẩn responsive: cùng class trên **cả** `th` và `td` — `cn(colEmail.th, 'hidden xl:table-cell')`.
+
+---
+
+## 5. Skeleton
+
+- Cùng `adminCol` constants như table thật.
+- Placeholder: `mx-auto` (không `ml-auto`) cho cột center/actions.
+- Không bọc `th` bằng flex khác layout với tbody.
+
+---
+
+## 6. Checklist trước khi xong
+
+1. Header và từng ô body **nhìn thẳng cột** (ảnh mẫu).
+2. Không còn `text-left` / `text-right` / `justify-end` / `items-start` trong file table.
+3. Không `min-w-[…]` trên `<table>`.
+4. Skeleton + loaded cùng số cột và `hidden xl:`.
+5. `t()` cho label cột — không hardcode EN/VI.
+
+Mẫu code: `components/admin/users/users-table.tsx`, `components/admin/reports/reports-table.tsx`.
