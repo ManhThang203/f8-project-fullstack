@@ -36,6 +36,7 @@ import { usersRouter } from './modules/users/users.routes.js';
 import { mediaRouter } from './modules/media/media.routes.js';
 import { notificationsRouter } from './modules/notifications/notifications.routes.js';
 import { adminRouter } from './modules/admin/admin.routes.js';
+import { meRouter } from './modules/me/me.routes.js';
 import { reportsRouter } from './modules/reports/reports.routes.js';
 import path from 'path';
 
@@ -100,6 +101,7 @@ export function buildApp(): Express {
   app.use('/api/v1/media', mediaRouter);
   app.use('/api/v1/notifications', notificationsRouter);
   app.use('/api/v1/reports', reportsRouter);
+  app.use('/api/v1/me', meRouter);
   app.use('/api/v1/admin', adminRouter);
 
   // Phục vụ tĩnh các file tải lên cho E2EE Chat

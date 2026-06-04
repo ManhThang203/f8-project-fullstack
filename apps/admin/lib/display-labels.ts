@@ -45,6 +45,9 @@ export const AUDIT_ACTION_KEY_MAP: Record<string, string> = {
   HASHTAG_HIDE: 'auditAction.HASHTAG_HIDE',
   HASHTAG_BLOCK: 'auditAction.HASHTAG_BLOCK',
   HASHTAG_ACTIVATE: 'auditAction.HASHTAG_ACTIVATE',
+
+  CASE_RESTORED: 'auditAction.CASE_RESTORED',
+  CASE_UPHELD: 'auditAction.CASE_UPHELD',
 };
 
 /**

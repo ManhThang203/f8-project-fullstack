@@ -13,4 +13,8 @@ export const queryKeys = {
     permissions: (userId: string) => ['admin', 'permissions', userId] as const,
     audit: (filters: string) => ['admin', 'audit', filters] as const,
   },
+  moderation: {
+    cases: (filterKey: string) => ['admin', 'moderation', 'cases', filterKey] as const,
+    case: (id: string) => ['admin', 'moderation', 'case', id] as const,
+  },
 };

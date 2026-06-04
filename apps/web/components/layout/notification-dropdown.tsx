@@ -28,9 +28,24 @@ function getRelativeTime(dateString: string) {
   return `${Math.floor(diffInSeconds / 31536000)} năm trước`;
 }
 
+function getSystemNotificationText(notif: NotificationDto): string | null {
+  if (notif.type !== 'SYSTEM') return null;
+  if (notif.entityType === 'CASE') {
+    return 'Bài viết của bạn tạm thời không hiển thị do nhiều báo cáo an toàn trẻ em. Đội ngũ đang xem xét.';
+  }
+  if (notif.entityType === 'POST') {
+    return 'Bài viết của bạn đã được khôi phục sau khi xem xét.';
+  }
+  if (notif.entityType === 'POST_UPHELD') {
+    return 'Sau khi xem xét, bài viết của bạn vẫn không được hiển thị.';
+  }
+  return null;
+}
+
 function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose: () => void }) {
   const { mutate: markRead } = useMarkNotificationReadMutation();
-  
+  const systemText = getSystemNotificationText(notif);
+
   const iconMap: Record<string, any> = {
     POST_LIKED: <Heart className="h-4 w-4 text-red-500 fill-current" />,
     POST_REPLIED: <MessageCircle className="h-4 w-4 text-blue-500" />,
@@ -50,9 +65,22 @@ function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose:
   };
 
   const getHref = () => {
+    if (notif.type === 'SYSTEM') {
+      if (notif.entityType === 'CASE') return '/restricted-posts';
+      if ((notif.entityType === 'POST' || notif.entityType === 'POST_UPHELD') && notif.entityId) {
+        if (notif.entityType === 'POST' && notif.actor?.username) {
+          return `/${notif.actor.username}/post/${notif.entityId}`;
+        }
+        return '/restricted-posts';
+      }
+    }
     if (notif.type === 'USER_FOLLOWED' && notif.actor) return `/${notif.actor.username}`;
-    // Fallback to / post route for likes and replies
-    if ((notif.type === 'POST_LIKED' || notif.type === 'POST_REPLIED' || notif.type === 'POST_COMMENTED_FOLLOWED') && notif.entityId) {
+    if (
+      (notif.type === 'POST_LIKED' ||
+        notif.type === 'POST_REPLIED' ||
+        notif.type === 'POST_COMMENTED_FOLLOWED') &&
+      notif.entityId
+    ) {
       return `/${notif.actor?.username || 'post'}/post/${notif.entityId}`;
     }
     return '#';
@@ -78,9 +106,21 @@ function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose:
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm">
-          <span className="font-semibold text-foreground">{notif.actor?.name || notif.actor?.username || 'Hệ thống'}</span>
-          {' '}
-          <span className="text-muted-foreground">{textMap[notif.type] || textMap['SYSTEM']}</span>
+          {systemText ? (
+            <>
+              <span className="font-semibold text-foreground">Hệ thống</span>
+              {' '}
+              <span className="text-muted-foreground">{systemText}</span>
+            </>
+          ) : (
+            <>
+              <span className="font-semibold text-foreground">
+                {notif.actor?.name || notif.actor?.username || 'Hệ thống'}
+              </span>
+              {' '}
+              <span className="text-muted-foreground">{textMap[notif.type] || textMap['SYSTEM']}</span>
+            </>
+          )}
         </p>
         <p className="text-xs text-muted-foreground mt-1">
           {getRelativeTime(notif.createdAt)}
