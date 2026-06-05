@@ -73,7 +73,9 @@ export function useUserPermissions(userId: string) {
 // ── paginated (cursor-based) queries ──────────────────────────────────
 type CursorMeta = { nextCursor: string | null };
 
-export function useAdminUsers(filters: { q?: string; status?: string; cursor?: string; limit?: number } = {}) {
+export function useAdminUsers(
+  filters: { q?: string; status?: string; cursor?: string; limit?: number } = {},
+) {
   const base = new URLSearchParams();
   if (filters.q) base.set('q', filters.q);
   if (filters.status) base.set('status', filters.status);
@@ -92,6 +94,7 @@ export function useAdminUsers(filters: { q?: string; status?: string; cursor?: s
 
 export function useAdminReports(
   filters: {
+    queue?: 'open';
     status?: string;
     reason?: string;
     targetType?: string;
@@ -102,6 +105,7 @@ export function useAdminReports(
   } = {},
 ) {
   const base = new URLSearchParams();
+  if (filters.queue) base.set('queue', filters.queue);
   if (filters.status) base.set('status', filters.status);
   if (filters.reason) base.set('reason', filters.reason);
   if (filters.targetType) base.set('targetType', filters.targetType);
@@ -130,23 +134,25 @@ export function useAdminReportDetail(reportId: string | null) {
 
 export function useModerationCases(
   filters: {
+    queue?: 'open';
     status?: string;
-    hasAppeal?: string;
-    slaBreached?: string;
+    label?: string;
+    targetType?: string;
     cursor?: string;
     limit?: number;
   } = {},
 ) {
   const base = new URLSearchParams();
+  if (filters.queue) base.set('queue', filters.queue);
   if (filters.status) base.set('status', filters.status);
-  if (filters.hasAppeal) base.set('hasAppeal', filters.hasAppeal);
-  if (filters.slaBreached) base.set('slaBreached', filters.slaBreached);
+  if (filters.label) base.set('label', filters.label);
+  if (filters.targetType) base.set('targetType', filters.targetType);
   if (filters.cursor) base.set('cursor', filters.cursor);
   if (filters.limit) base.set('limit', String(filters.limit));
   const filterKey = base.toString();
 
   return useQuery({
-    queryKey: queryKeys.moderation.cases(filterKey),
+    queryKey: ['admin', 'moderation', 'cases', filterKey],
     queryFn: () => {
       const suffix = filterKey ? `?${filterKey}` : '';
       return apiQuery<ModerationCaseDto[], CursorMeta>(`/admin/moderation/cases${suffix}`);
@@ -156,7 +162,7 @@ export function useModerationCases(
 
 export function useModerationCaseDetail(caseId: string | null) {
   return useQuery({
-    queryKey: queryKeys.moderation.case(caseId ?? ''),
+    queryKey: ['admin', 'moderation', 'cases', caseId, 'detail'],
     queryFn: () => apiQuery<ModerationCaseDetailDto>(`/admin/moderation/cases/${caseId}`),
     enabled: Boolean(caseId),
   });
@@ -165,23 +171,39 @@ export function useModerationCaseDetail(caseId: string | null) {
 export function useResolveModerationCase() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (opts: {
-      id: string;
-      decision: 'RESTORE' | 'UPHOLD';
-      resolutionNote: string;
-    }) =>
-      apiQuery(`/admin/moderation/cases/${opts.id}/resolve`, {
+    mutationFn: (opts: { id: string; action: string; resolutionNote: string }) =>
+      apiQuery(`/admin/moderation/cases/${opts.id}/action`, {
         method: 'PATCH',
         body: JSON.stringify({
-          decision: opts.decision,
+          action: opts.action,
           resolutionNote: opts.resolutionNote,
         }),
       }),
     onSuccess: (_data, variables) => {
       void qc.invalidateQueries({ queryKey: ['admin', 'moderation', 'cases'] });
-      void qc.invalidateQueries({ queryKey: queryKeys.moderation.case(variables.id) });
-      void qc.invalidateQueries({ queryKey: ['admin', 'reports'] });
-      void qc.invalidateQueries({ queryKey: ['admin', 'stats'] });
+      void qc.invalidateQueries({
+        queryKey: ['admin', 'moderation', 'cases', variables.id, 'detail'],
+      });
+    },
+  });
+}
+
+export function useReviewAppeal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (opts: { id: string; decision: string; decisionNote: string }) =>
+      apiQuery(`/admin/moderation/cases/${opts.id}/appeal`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          decision: opts.decision,
+          decisionNote: opts.decisionNote,
+        }),
+      }),
+    onSuccess: (_data, variables) => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'moderation', 'cases'] });
+      void qc.invalidateQueries({
+        queryKey: ['admin', 'moderation', 'cases', variables.id, 'detail'],
+      });
     },
   });
 }
@@ -326,4 +348,3 @@ export function useUpdateUserPermissions() {
     },
   });
 }
-

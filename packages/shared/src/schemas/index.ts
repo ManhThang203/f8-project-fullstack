@@ -3,3 +3,4 @@ export * from './pagination.schema.js';
 export * from './post.schema.js';
 export * from './profile.schema.js';
 export * from './admin.schema.js';
+export * from './moderation.schema.js';

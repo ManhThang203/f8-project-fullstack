@@ -9,9 +9,10 @@ import type {
 
 import { redis } from '../../lib/redis.js';
 
-const STATS_TTL_SEC = 30;
+const STATS_TTL_SEC = 30; // 30 seconds for cache
 const STATS_RANGES = ['24h', '7d', '30d', '90d'] as const;
 
+// Convert range to milliseconds
 function rangeToMs(range: string): number {
   switch (range) {
     case '24h':
@@ -66,6 +67,11 @@ export async function getStatsOverview(range = '30d'): Promise<{
       dismissedReports,
       autoHiddenReports,
       activeHashtags,
+      modPending,
+      modAutoHidden,
+      modResolvedKept,
+      modResolvedRemoved,
+      modDismissed,
     ] = await Promise.all([
       prisma.user.count({ where: { deletedAt: null } }),
       prisma.user.count({ where: { deletedAt: null, createdAt: { gte: todayStart } } }),
@@ -94,13 +100,18 @@ export async function getStatsOverview(range = '30d'): Promise<{
       prisma.report.count({ where: { status: 'DISMISSED' } }),
       prisma.report.count({ where: { status: 'AUTO_HIDDEN' } }),
       prisma.hashtag.count({ where: { status: 'ACTIVE' } }),
+      prisma.moderationCase.count({ where: { status: 'PENDING' } }),
+      prisma.moderationCase.count({ where: { status: 'AUTO_HIDDEN' } }),
+      prisma.moderationCase.count({ where: { status: 'RESOLVED_KEPT' } }),
+      prisma.moderationCase.count({ where: { status: 'RESOLVED_REMOVED' } }),
+      prisma.moderationCase.count({ where: { status: 'DISMISSED' } }),
     ]);
 
-    const pendingReports = pendingCount + underReviewCount;
+    const pendingReports = pendingCount + underReviewCount + autoHiddenReports;
     const reportResolutionRate =
       totalReports === 0
         ? 0
-        : Math.round(((resolvedReports + dismissedReports + autoHiddenReports) / totalReports) * 100);
+        : Math.round(((resolvedReports + dismissedReports) / totalReports) * 100);
 
     return {
       totalUsers,
@@ -116,7 +127,15 @@ export async function getStatsOverview(range = '30d'): Promise<{
         pending: pendingReports,
         resolved: resolvedReports,
         rejected: dismissedReports,
-        actionTaken: autoHiddenReports,
+        actionTaken: 0,
+      },
+      pendingModerationCases: modPending + modAutoHidden,
+      moderationStatusBreakdown: {
+        pending: modPending,
+        autoHidden: modAutoHidden,
+        resolvedKept: modResolvedKept,
+        resolvedRemoved: modResolvedRemoved,
+        dismissed: modDismissed,
       },
     };
   });

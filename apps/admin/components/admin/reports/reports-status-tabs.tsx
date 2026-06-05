@@ -2,7 +2,7 @@
 
 import { useTranslation } from 'react-i18next';
 
-import { ALL_STATUSES } from '@/components/admin/reports/reports.constants';
+import { ALL_STATUSES, STATUS_FILTER_I18N_KEYS } from '@/components/admin/reports/reports.constants';
 import { segmentedControl } from './segmented-control';
 import { cn } from '@/lib/utils';
 
@@ -48,7 +48,7 @@ export function ReportsStatusTabs({ statusFilter, onStatusChange, className }: P
                 : segmentedControl.tabInactive,
             )}
           >
-            {t(`reportStatus.${status}`, status)}
+            {t(STATUS_FILTER_I18N_KEYS[status])}
           </button>
         ))}
       </div>

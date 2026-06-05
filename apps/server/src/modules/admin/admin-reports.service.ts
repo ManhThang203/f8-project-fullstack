@@ -15,7 +15,6 @@ import { AppError } from '../../lib/errors.js';
 import { createNotification } from '../notifications/notifications.service.js';
 import { patchAdminUserStatus } from './admin-users.service.js';
 import { invalidateStatsCache } from './admin-stats.service.js';
-import { openCaseFromAutoHide } from './moderation-cases.service.js';
 
 // ─────────────────────────────────────────────
 // Mapper
@@ -59,7 +58,7 @@ function mapReport(r: {
 // Helpers
 // ─────────────────────────────────────────────
 
-/** Đếm số reports active trên một target (dùng cho priority / auto-hide). */
+/** Đếm số reports trên một target (dùng cho priority queue). */
 async function countTargetReports(
   targetType: ReportTargetType,
   targetId: string,
@@ -72,51 +71,6 @@ async function countTargetReports(
       ...(reason ? { reason } : {}),
     },
   });
-}
-
-/**
- * Sau khi tạo report → kiểm tra threshold auto-hide (MINOR_SAFETY).
- * Nếu đạt → ẩn bài, cập nhật tất cả reports liên quan thành AUTO_HIDDEN,
- * ghi audit log với actor = SYSTEM.
- */
-async function runAutoHideCheck(targetType: string, targetId: string): Promise<void> {
-  if (targetType !== 'POST') return;
-
-  const count = await countTargetReports(targetType, targetId, 'MINOR_SAFETY');
-  if (count < REPORT_CONFIG.autoHideThreshold) return;
-
-  // Kiểm tra bài chưa bị ẩn/xóa
-  const post = await prisma.post.findUnique({
-    where: { id: targetId },
-    select: { id: true, authorId: true, hiddenAt: true, deletedAt: true, moderationReviewedAt: true },
-  });
-  if (!post || post.hiddenAt || post.deletedAt || post.moderationReviewedAt) return;
-
-  await prisma.$transaction([
-    prisma.post.update({
-      where: { id: targetId },
-      data: { hiddenAt: new Date() },
-    }),
-    prisma.report.updateMany({
-      where: { targetType, targetId, status: { in: ['PENDING', 'UNDER_REVIEW'] } },
-      data: { status: 'AUTO_HIDDEN' },
-    }),
-  ]);
-
-  await writeAuditLog({
-    actorId: 'SYSTEM',
-    action: 'AUTO_HIDE_POST',
-    targetType: 'POST',
-    targetId,
-    metadata: {
-      reason: 'MINOR_SAFETY',
-      reportCount: count,
-      threshold: REPORT_CONFIG.autoHideThreshold,
-      trigger: 'auto_threshold',
-    },
-  });
-
-  await openCaseFromAutoHide(targetId, post.authorId, count);
 }
 
 /**
@@ -150,7 +104,7 @@ async function runAntiAbuseCheck(reporterId: string): Promise<void> {
 }
 
 /**
- * Batch-resolve tất cả reports PENDING/UNDER_REVIEW trên cùng target
+ * Batch-resolve tất cả reports đang mở trên cùng target
  * sau khi admin đã xử lý xong (giống Facebook — tránh xử lý lại).
  */
 async function batchResolveRelatedReports(
@@ -164,7 +118,7 @@ async function batchResolveRelatedReports(
     where: {
       targetType,
       targetId,
-      status: { in: ['PENDING', 'UNDER_REVIEW'] },
+      status: { in: ['PENDING', 'UNDER_REVIEW', 'AUTO_HIDDEN'] },
       id: { not: excludeReportId },
     },
     data: {
@@ -225,10 +179,7 @@ export async function createReport(
     },
   });
 
-  // 4. Auto-hide check (bất đồng bộ, không block response)
-  void runAutoHideCheck(body.targetType, body.targetId);
-
-  // 5. Đếm reportCount để trả về cho client
+  // 4. Đếm reportCount để trả về cho client
   const reportCount = await countTargetReports(body.targetType, body.targetId);
 
   return mapReport({ ...report, reportCount });
@@ -239,8 +190,13 @@ export async function listAdminReports(
   query: AdminReportListQuery,
 ): Promise<{ items: AdminReportDto[]; nextCursor: string | null }> {
   const take = query.limit + 1;
+  const openQueueStatuses = ['PENDING', 'UNDER_REVIEW', 'AUTO_HIDDEN'] as const;
   const where = {
-    ...(query.status ? { status: query.status } : {}),
+    ...(query.queue === 'open'
+      ? { status: { in: [...openQueueStatuses] } }
+      : query.status
+        ? { status: query.status }
+        : {}),
     ...(query.targetType ? { targetType: query.targetType } : {}),
     ...(query.reason ? { reason: query.reason } : {}),
     ...(query.cursor ? { id: { lt: query.cursor } } : {}),
@@ -603,7 +559,9 @@ export async function executeReportAction(
   return mapReport(updated);
 }
 
-/** Số báo cáo đang chờ duyệt. */
+/** Số báo cáo đang chờ admin xử lý (gồm AUTO_HIDDEN cũ). */
 export async function countPendingReports(): Promise<number> {
-  return prisma.report.count({ where: { status: { in: ['PENDING', 'UNDER_REVIEW'] } } });
+  return prisma.report.count({
+    where: { status: { in: ['PENDING', 'UNDER_REVIEW', 'AUTO_HIDDEN'] } },
+  });
 }

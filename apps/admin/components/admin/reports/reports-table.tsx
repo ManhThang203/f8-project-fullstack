@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 
 import {
+  isActionableReportStatus,
   REASON_COLORS,
   REPORT_ESCALATE_THRESHOLD,
   STATUS_COLORS,
@@ -134,7 +135,7 @@ export function ReportsTable({ reports, isReviewPending, onDismiss, locale }: Pr
 
                 <td className={colActions.td}>
                   <div className={colActions.cell}>
-                    {status === 'PENDING' || status === 'UNDER_REVIEW' ? (
+                    {isActionableReportStatus(status) ? (
                       <Button
                         variant="secondary"
                         className={adminTable.actionBtn}

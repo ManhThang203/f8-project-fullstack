@@ -123,61 +123,72 @@ model Report {
   @@map("reports")
 }
 
+enum ModerationLabel {
+  TOXIC
+  SPAM
+  HARASSMENT
+  HATE
+  SEXUAL
+  VIOLENCE
+  SELF_HARM
+  OTHER
+}
+
 enum ModerationCaseStatus {
-  OPEN
-  UNDER_REVIEW
-  UPHELD
-  RESTORED
-  EXPIRED
+  PENDING
+  AUTO_HIDDEN
+  RESOLVED_KEPT
+  RESOLVED_REMOVED
+  DISMISSED
 }
 
-enum ModerationTrigger {
-  AUTO_HIDE_MINOR_SAFETY
-  ADMIN_HIDE
+enum AppealStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
- 
+
 model ModerationCase {
-  id           String                @id @default(cuid())
-  targetType   ReportTargetType
-  targetId     String
-  authorId     String
-  trigger      ModerationTrigger
-  status       ModerationCaseStatus  @default(OPEN)
-  reportCount  Int                   @default(0)
-  openedAt     DateTime              @default(now())
-  closedAt     DateTime?
-  closedById   String?
-  resolution   String?
+  id             String               @id @default(cuid())
+  targetType     ReportTargetType
+  targetId       String
+  authorId       String
+  label          ModerationLabel
+  confidence     Float
+  scores         Json?
+  reason         String?
+  status         ModerationCaseStatus @default(PENDING)
+  autoHidden     Boolean              @default(false)
+  reviewedById   String?
+  reviewedAt     DateTime?
+  resolutionNote String?
+  createdAt      DateTime             @default(now())
 
-  author   User    @relation("ModerationCaseAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  closedBy User?   @relation("ModerationCaseClosedBy", fields: [closedById], references: [id], onDelete: SetNull)
-  appeals  Appeal[]
+  author   User  @relation("ModerationCaseAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  reviewer User? @relation("ModerationCaseReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  appeal   Appeal?
 
-  @@index([status, openedAt])
+  @@index([status, createdAt])
   @@index([targetType, targetId])
   @@index([authorId])
   @@map("moderation_cases")
 }
 
-enum AppealStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-}
-
 model Appeal {
-  id         String       @id @default(cuid())
-  caseId     String
-  authorId   String
-  message    String
-  status     AppealStatus @default(PENDING)
-  createdAt  DateTime     @default(now())
-  reviewedAt DateTime?
+  id           String       @id @default(cuid())
+  caseId       String       @unique
+  userId       String
+  message      String
+  status       AppealStatus @default(PENDING)
+  reviewedById String?
+  reviewedAt   DateTime?
+  decisionNote String?
+  createdAt    DateTime     @default(now())
 
-  case   ModerationCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  author User           @relation("AppealAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  moderationCase ModerationCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  user           User           @relation("AppealAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  reviewer       User?          @relation("AppealReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
 
-  @@index([caseId])
   @@index([status, createdAt])
   @@map("appeals")
 }
@@ -274,12 +285,13 @@ model User {
 
   reportsSubmitted       Report[]         @relation("ReportReporter")
   reportsReviewed        Report[]         @relation("ReportReviewer")
+  moderationCasesAuthored ModerationCase[] @relation("ModerationCaseAuthor")
+  moderationCasesReviewed ModerationCase[] @relation("ModerationCaseReviewer")
+  appealsSubmitted       Appeal[]         @relation("AppealAuthor")
+  appealsReviewed        Appeal[]         @relation("AppealReviewer")
   userPermissions        UserPermission[] @relation("UserPermissionTarget")
   permissionsGranted     UserPermission[] @relation("UserPermissionGrantedBy")
   adminAuditLogs         AdminAuditLog[]  @relation("AdminAuditActor")
-  moderationCasesAuthored ModerationCase[] @relation("ModerationCaseAuthor")
-  moderationCasesClosed  ModerationCase[] @relation("ModerationCaseClosedBy")
-  appeals                Appeal[]         @relation("AppealAuthor")
 
   @@index([deletedAt])
   @@index([role])
@@ -416,7 +428,6 @@ model Post {
   updatedAt DateTime  @updatedAt
   deletedAt              DateTime?
   hiddenAt               DateTime?
-  moderationReviewedAt   DateTime?
 
   author    User           @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   parent    Post?          @relation("PostReplies", fields: [parentId], references: [id], onDelete: SetNull)
@@ -516,6 +527,9 @@ enum NotificationType {
   MENTION
   SYSTEM
   REPORT_RESOLVED
+  MODERATION_ACTION
+  APPEAL_APPROVED
+  APPEAL_REJECTED
 }
 
 model Notification {

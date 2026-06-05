@@ -1,40 +1,75 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ModerationCasesCardList } from '@/components/admin/moderation/moderation-cases-card-list';
+import { ModerationCardSkeleton } from '@/components/admin/moderation/moderation-card-skeleton';
+import { ModerationCasesTable } from '@/components/admin/moderation/moderation-cases-table';
+import { ModerationStatusTabs } from '@/components/admin/moderation/moderation-status-tabs';
+import { ModerationTableSkeleton } from '@/components/admin/moderation/moderation-table-skeleton';
 import { ReportsCardList } from '@/components/admin/reports/reports-card-list';
 import { ReportsCardSkeleton } from '@/components/admin/reports/reports-card-skeleton';
 import { ReportsFilters } from '@/components/admin/reports/reports-filters';
+import { ReportsHubTabs, type ReportsHubTab } from '@/components/admin/reports/reports-hub-tabs';
 import { ReportsTable } from '@/components/admin/reports/reports-table';
 import { ReportsTableSkeleton } from '@/components/admin/reports/reports-table-skeleton';
 import { CursorPagination } from '@/components/shared/cursor-pagination';
-import { useAdminReports, useReviewReport } from '@/hooks/queries/use-admin-queries';
+import {
+  useAdminReports,
+  useModerationCases,
+  useReviewReport,
+  useStatsOverview,
+} from '@/hooks/queries/use-admin-queries';
 import { useCursorPagination } from '@/hooks/use-cursor-pagination';
 
 export default function ReportsPage() {
   const { t, i18n } = useTranslation();
+  const searchParams = useSearchParams();
 
-  const [statusFilter, setStatusFilter] = useState<string>('PENDING');
+  const [hubTab, setHubTab] = useState<ReportsHubTab>(
+    searchParams.get('tab') === 'ai-moderation' ? 'ai-moderation' : 'user-reports',
+  );
+
+  const [statusFilter, setStatusFilter] = useState<string>('OPEN');
   const [reasonFilter, setReasonFilter] = useState<string>('ALL');
   const [targetFilter, setTargetFilter] = useState<string>('ALL');
 
-  const { limit, setLimit, cursor, pageIndex, handleNext, handlePrev } = useCursorPagination(20);
-  const review = useReviewReport();
+  const [modStatusFilter, setModStatusFilter] = useState<string>('OPEN');
 
-  const { data, isLoading } = useAdminReports({
-    status: statusFilter || undefined,
+  const { limit, setLimit, cursor, pageIndex, handleNext, handlePrev, reset } =
+    useCursorPagination(20);
+  const review = useReviewReport();
+  const { data: overview } = useStatsOverview('30d');
+
+  const isOpenQueue = statusFilter === 'OPEN';
+  const isModOpenQueue = modStatusFilter === 'OPEN';
+
+  const { data: reportsData, isLoading: reportsLoading } = useAdminReports({
+    queue: isOpenQueue ? 'open' : undefined,
+    status: !statusFilter || isOpenQueue ? undefined : statusFilter,
     reason: reasonFilter === 'ALL' || !reasonFilter ? undefined : reasonFilter,
     targetType: targetFilter === 'ALL' || !targetFilter ? undefined : targetFilter,
-    cursor: cursor || undefined,
-    limit,
+    cursor: hubTab === 'user-reports' ? cursor || undefined : undefined,
+    limit: hubTab === 'user-reports' ? limit : undefined,
   });
 
-  const reports = data?.data ?? [];
-  const nextCursor = data?.meta?.nextCursor;
+  const { data: modData, isLoading: modLoading } = useModerationCases({
+    queue: isModOpenQueue ? 'open' : undefined,
+    status: !modStatusFilter || isModOpenQueue ? undefined : modStatusFilter,
+    cursor: hubTab === 'ai-moderation' ? cursor || undefined : undefined,
+    limit: hubTab === 'ai-moderation' ? limit : undefined,
+  });
+
+  const reports = reportsData?.data ?? [];
+  const modCases = modData?.data ?? [];
+  const nextCursor =
+    hubTab === 'user-reports' ? reportsData?.meta?.nextCursor : modData?.meta?.nextCursor;
+  const isLoading = hubTab === 'user-reports' ? reportsLoading : modLoading;
+  const items = hubTab === 'user-reports' ? reports : modCases;
   const skeletonRows = Math.min(limit, 8);
 
-  /** Bỏ qua báo cáo với ghi chú mặc định. */
   const handleDismiss = useCallback(
     (id: string) => {
       review.mutate({
@@ -46,38 +81,58 @@ export default function ReportsPage() {
     [review, t],
   );
 
+  const handleTabChange = (tab: ReportsHubTab) => {
+    setHubTab(tab);
+    reset();
+  };
+
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold">{t('reports.pageTitle')}</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground md:block">
-            {t('reports.pageSubtitle')}
-          </p>
-        </div>
+      <div>
+        <h2 className="text-xl font-semibold">{t('reports.hubTitle')}</h2>
+        <p className="mt-0.5 text-sm text-muted-foreground">{t('reports.hubSubtitle')}</p>
       </div>
 
-      <ReportsFilters
-        statusFilter={statusFilter}
-        reasonFilter={reasonFilter}
-        targetFilter={targetFilter}
-        onStatusChange={setStatusFilter}
-        onReasonChange={setReasonFilter}
-        onTargetChange={setTargetFilter}
+      <ReportsHubTabs
+        activeTab={hubTab}
+        onTabChange={handleTabChange}
+        aiPendingCount={overview?.data.pendingModerationCases}
       />
 
-      {isLoading && !data ? (
-        <>
-          <ReportsTableSkeleton rows={skeletonRows} />
-          <ReportsCardSkeleton rows={Math.min(limit, 5)} />
-        </>
+      {hubTab === 'user-reports' ? (
+        <ReportsFilters
+          statusFilter={statusFilter}
+          reasonFilter={reasonFilter}
+          targetFilter={targetFilter}
+          onStatusChange={setStatusFilter}
+          onReasonChange={setReasonFilter}
+          onTargetChange={setTargetFilter}
+        />
+      ) : (
+        <ModerationStatusTabs statusFilter={modStatusFilter} onStatusChange={setModStatusFilter} />
+      )}
+
+      {isLoading && !reportsData && !modData ? (
+        hubTab === 'user-reports' ? (
+          <>
+            <ReportsTableSkeleton rows={skeletonRows} />
+            <ReportsCardSkeleton rows={Math.min(limit, 5)} />
+          </>
+        ) : (
+          <>
+            <ModerationTableSkeleton rows={skeletonRows} />
+            <ModerationCardSkeleton rows={Math.min(limit, 5)} />
+          </>
+        )
       ) : (
         <>
-          {reports.length === 0 ? (
+          {items.length === 0 ? (
             <div className="rounded-xl border border-border bg-card p-10 text-center">
-              <p className="text-sm text-muted-foreground">{t('reports.empty')}</p>
+              <p className="text-sm text-muted-foreground">
+                {hubTab === 'user-reports' ? t('reports.empty') : t('moderation.empty')}
+              </p>
             </div>
-          ) : (
+          ) : hubTab === 'user-reports' ? (
             <>
               <ReportsTable
                 reports={reports}
@@ -92,9 +147,14 @@ export default function ReportsPage() {
                 locale={i18n.language}
               />
             </>
+          ) : (
+            <>
+              <ModerationCasesTable cases={modCases} locale={i18n.language} />
+              <ModerationCasesCardList cases={modCases} locale={i18n.language} />
+            </>
           )}
 
-          {reports.length > 0 && (
+          {items.length > 0 && (
             <CursorPagination
               limit={limit}
               onLimitChange={setLimit}

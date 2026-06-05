@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 
 import {
+  isActionableReportStatus,
   REASON_COLORS,
   REPORT_ESCALATE_THRESHOLD,
   STATUS_COLORS,
@@ -86,7 +87,7 @@ export function ReportsCardList({ reports, isReviewPending, onDismiss, locale }:
             </div>
 
             <div className="flex gap-2 pt-1">
-              {(status === 'PENDING' || status === 'UNDER_REVIEW') && (
+              {isActionableReportStatus(status) && (
                 <Button
                   className="h-9 flex-1 text-xs"
                   variant="secondary"

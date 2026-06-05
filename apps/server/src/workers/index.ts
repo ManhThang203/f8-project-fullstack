@@ -35,7 +35,7 @@ export function startWorkers(): Worker[] {
         const path = await import('path');
 
         logger.info({ jobId: job.id }, 'Bắt đầu dọn dẹp media E2EE hết hạn');
-        
+
         // Lấy tất cả media đã hết hạn (expiresAt < now)
         const expiredMedia = await prisma.media.findMany({
           where: {
@@ -64,11 +64,19 @@ export function startWorkers(): Worker[] {
     new Worker(
       QueueName.TrendingHashtags,
       async (job) => {
-        const { computeTrendingHashtags } = await import(
-          '../modules/admin/admin-stats.service.js'
-        );
+        const { computeTrendingHashtags } = await import('../modules/admin/admin-stats.service.js');
         logger.info({ jobId: job.id }, 'Tính trending hashtag');
         await computeTrendingHashtags();
+      },
+      baseOpts,
+    ),
+    new Worker(
+      QueueName.ContentModeration,
+      async (job) => {
+        const { postId } = job.data as { postId: string };
+        const { runModerationJob } = await import('../modules/moderation/moderation.service.js');
+        logger.info({ jobId: job.id, postId }, 'Chạy AI content moderation');
+        await runModerationJob(postId);
       },
       baseOpts,
     ),

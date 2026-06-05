@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Bell, Heart, MessageCircle, UserPlus, Info } from 'lucide-react';
+import { Bell, Heart, MessageCircle, UserPlus, Info, ShieldAlert, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 
 import { useNotifications, useUnreadNotificationCount, useMarkNotificationReadMutation } from '@/hooks/queries/use-notifications';
@@ -30,15 +30,6 @@ function getRelativeTime(dateString: string) {
 
 function getSystemNotificationText(notif: NotificationDto): string | null {
   if (notif.type !== 'SYSTEM') return null;
-  if (notif.entityType === 'CASE') {
-    return 'Bài viết của bạn tạm thời không hiển thị do nhiều báo cáo an toàn trẻ em. Đội ngũ đang xem xét.';
-  }
-  if (notif.entityType === 'POST') {
-    return 'Bài viết của bạn đã được khôi phục sau khi xem xét.';
-  }
-  if (notif.entityType === 'POST_UPHELD') {
-    return 'Sau khi xem xét, bài viết của bạn vẫn không được hiển thị.';
-  }
   return null;
 }
 
@@ -52,7 +43,11 @@ function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose:
     POST_COMMENTED_FOLLOWED: <MessageCircle className="h-4 w-4 text-blue-400" />,
     USER_FOLLOWED: <UserPlus className="h-4 w-4 text-green-500" />,
     MENTION: <Info className="h-4 w-4 text-yellow-500" />,
-    SYSTEM: <Info className="h-4 w-4 text-gray-500" />
+    SYSTEM: <Info className="h-4 w-4 text-gray-500" />,
+    MODERATION_ACTION: <ShieldAlert className="h-4 w-4 text-orange-500" />,
+    APPEAL_APPROVED: <CheckCircle className="h-4 w-4 text-green-500" />,
+    APPEAL_REJECTED: <XCircle className="h-4 w-4 text-red-500" />,
+    REPORT_RESOLVED: <Info className="h-4 w-4 text-blue-500" />,
   };
 
   const textMap: Record<string, string> = {
@@ -61,18 +56,26 @@ function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose:
     POST_COMMENTED_FOLLOWED: 'đã bình luận một bài viết mà bạn đang theo dõi',
     USER_FOLLOWED: 'đã bắt đầu theo dõi bạn',
     MENTION: 'đã nhắc đến bạn',
-    SYSTEM: 'thông báo hệ thống'
+    SYSTEM: 'thông báo hệ thống',
+    MODERATION_ACTION: 'đã xử lý nội dung của bạn',
+    APPEAL_APPROVED: 'kháng nghị của bạn đã được chấp nhận',
+    APPEAL_REJECTED: 'kháng nghị của bạn đã bị từ chối',
+    REPORT_RESOLVED: 'báo cáo của bạn đã được xử lý',
   };
 
+  const isSystemNotification =
+    notif.type === 'MODERATION_ACTION' ||
+    notif.type === 'APPEAL_APPROVED' ||
+    notif.type === 'APPEAL_REJECTED';
+
   const getHref = () => {
-    if (notif.type === 'SYSTEM') {
-      if (notif.entityType === 'CASE') return '/restricted-posts';
-      if ((notif.entityType === 'POST' || notif.entityType === 'POST_UPHELD') && notif.entityId) {
-        if (notif.entityType === 'POST' && notif.actor?.username) {
-          return `/${notif.actor.username}/post/${notif.entityId}`;
-        }
-        return '/restricted-posts';
-      }
+    if (
+      (notif.type === 'MODERATION_ACTION' ||
+        notif.type === 'APPEAL_APPROVED' ||
+        notif.type === 'APPEAL_REJECTED') &&
+      notif.entityId
+    ) {
+      return `/moderation/${notif.entityId}`;
     }
     if (notif.type === 'USER_FOLLOWED' && notif.actor) return `/${notif.actor.username}`;
     if (
@@ -106,11 +109,13 @@ function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose:
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm">
-          {systemText ? (
+          {systemText || isSystemNotification ? (
             <>
               <span className="font-semibold text-foreground">Hệ thống</span>
               {' '}
-              <span className="text-muted-foreground">{systemText}</span>
+              <span className="text-muted-foreground">
+                {systemText ?? textMap[notif.type] ?? textMap['SYSTEM']}
+              </span>
             </>
           ) : (
             <>
