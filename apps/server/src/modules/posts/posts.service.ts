@@ -10,9 +10,11 @@ import {
 import { AppError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
 
-import { mapPostToFeedItemDto, mapPostToReelsFeedItemDto, postFeedInclude, postReelInclude } from './posts.mapper.js';
-import { createNotification } from '../notifications/notifications.service.js';
+import { MODERATION_CONFIG } from '../../config/moderation.config.js';
 import { syncPostHashtags } from '../../lib/hashtag/hashtag.service.js';
+import { contentModerationQueue } from '../../queues/index.js';
+import { createNotification } from '../notifications/notifications.service.js';
+import { mapPostToFeedItemDto, mapPostToReelsFeedItemDto, postFeedInclude, postReelInclude } from './posts.mapper.js';
 
 const IMAGE_MAX_BYTES = 10 * 1024 * 1024; // 10MB
 const VIDEO_MAX_BYTES = 500 * 1024 * 1024; // 500MB
@@ -352,6 +354,16 @@ export async function listComments(
 }
 
 
+/** Đẩy job AI moderation vào BullMQ (không chặn response). */
+async function enqueueModerationJob(postId: string, content: string): Promise<void> {
+  if (!MODERATION_CONFIG.enabled || !content.trim()) return;
+  try {
+    await contentModerationQueue.add('moderate-post', { postId }, { jobId: `moderate-${postId}` });
+  } catch (err) {
+    logger.error({ err, postId }, 'Failed to enqueue moderation job');
+  }
+}
+
 // Tạo bài viết
 export async function createPost(opts: {
   authorId: string;
@@ -430,6 +442,8 @@ export async function createPost(opts: {
     if (!opts.body.parentId) {
       await syncPostHashtags(postId, content);
     }
+
+    void enqueueModerationJob(postId, content);
 
     if (opts.body.parentId) {
       const parentPost = await prisma.post.findUnique({

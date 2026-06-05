@@ -1,35 +1,39 @@
-import { createAppealBodySchema, ok } from '@costy/shared';
 import { Router } from 'express';
+import { appealSubmitSchema, ok } from '@costy/shared';
 
 import { requireAuth } from '../../middleware/auth.middleware.js';
-import {
-  createAppealForPost,
-  listRestrictedPostsForUser,
-} from '../admin/moderation-cases.service.js';
+import { requireActiveAccount } from '../../middleware/auth-context.middleware.js';
+import { validate } from '../../middleware/validate.middleware.js';
+import { getMyModerationCase, submitAppeal } from '../moderation/moderation.service.js';
 
 export const meRouter = Router();
 
-meRouter.use(requireAuth);
+function paramId(value: string | string[] | undefined): string {
+  return Array.isArray(value) ? value[0]! : value!;
+}
 
-/** GET /me/restricted-posts — bài bị ẩn của user hiện tại. */
-meRouter.get('/restricted-posts', async (req, res, next) => {
+meRouter.use(requireAuth, requireActiveAccount);
+
+/** GET /me/moderation/cases/:id — User xem chi tiết case kiểm duyệt của mình. */
+meRouter.get('/moderation/cases/:id', async (req, res, next) => {
   try {
-    const items = await listRestrictedPostsForUser(req.auth!.userId);
-    res.json(ok(items));
+    const data = await getMyModerationCase(req.auth!.userId, paramId(req.params.id));
+    res.json(ok(data));
   } catch (e) {
     next(e);
   }
 });
 
-/** POST /me/posts/:postId/appeal — gửi kháng nghị. */
-meRouter.post('/posts/:postId/appeal', async (req, res, next) => {
-  try {
-    const postId =
-      typeof req.params.postId === 'string' ? req.params.postId : (req.params.postId?.[0] ?? '');
-    const body = createAppealBodySchema.parse(req.body);
-    const appeal = await createAppealForPost(req.auth!.userId, postId, body.message);
-    res.json(ok(appeal));
-  } catch (e) {
-    next(e);
-  }
-});
+/** POST /me/moderation/cases/:id/appeal — User gửi kháng nghị. */
+meRouter.post(
+  '/moderation/cases/:id/appeal',
+  validate(appealSubmitSchema, 'body'),
+  async (req, res, next) => {
+    try {
+      const data = await submitAppeal(req.auth!.userId, paramId(req.params.id), req.body);
+      res.status(201).json(ok(data));
+    } catch (e) {
+      next(e);
+    }
+  },
+);

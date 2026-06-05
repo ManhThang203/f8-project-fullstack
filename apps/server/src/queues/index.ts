@@ -18,6 +18,7 @@ export const QueueName = {
   Notification: 'push-notification',
   MediaCleanup: 'media-cleanup',
   TrendingHashtags: 'trending-hashtags',
+  ContentModeration: 'content-moderation',
 } as const;
 export type QueueName = (typeof QueueName)[keyof typeof QueueName];
 
@@ -26,3 +27,4 @@ export const emailQueue = new Queue(QueueName.Email, defaults);
 export const notificationQueue = new Queue(QueueName.Notification, defaults);
 export const mediaCleanupQueue = new Queue(QueueName.MediaCleanup, defaults);
 export const trendingHashtagsQueue = new Queue(QueueName.TrendingHashtags, defaults);
+export const contentModerationQueue = new Queue(QueueName.ContentModeration, defaults);

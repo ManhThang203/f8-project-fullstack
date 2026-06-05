@@ -14,8 +14,10 @@
     "promote": "tsx src/scripts/promote.ts"
   },
   "dependencies": {
+    "@ai-sdk/gateway": "^1.0.0",
     "@costy/db": "workspace:*",
     "@costy/shared": "workspace:*",
+    "ai": "^5.0.0",
     "@types/uuid": "^11.0.0",
     "better-auth": "^1.6.11",
     "bullmq": "^5.34.0",

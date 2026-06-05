@@ -274,13 +274,6 @@ export function SiteHeader({ initialUser }: Props) {
                   <p className="border-b border-border px-4 py-3 text-xs text-muted-foreground">
                     @{me.username || me.name || me.id.slice(0, 8)}
                   </p>
-                  <Link
-                    href="/restricted-posts"
-                    className="block px-4 py-3 text-foreground transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
-                    role="menuitem"
-                  >
-                    Bài viết bị hạn chế
-                  </Link>
                   <button
                     type="button"
                     onClick={() => void onLogout()}

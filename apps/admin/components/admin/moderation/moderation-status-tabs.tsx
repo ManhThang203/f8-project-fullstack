@@ -2,7 +2,7 @@
 
 import { useTranslation } from 'react-i18next';
 
-import { ALL_CASE_STATUSES } from '@/components/admin/moderation/moderation-cases.constants';
+import { ALL_MODERATION_STATUSES } from '@/components/admin/moderation/moderation.constants';
 import { segmentedControl } from '@/components/admin/reports/segmented-control';
 import { cn } from '@/lib/utils';
 
@@ -12,43 +12,44 @@ type Props = {
   className?: string;
 };
 
+const STATUS_I18N: Record<string, string> = {
+  OPEN: 'moderation.statusFilter.open',
+  PENDING: 'moderation.statusFilter.pending',
+  AUTO_HIDDEN: 'moderation.statusFilter.autoHidden',
+  RESOLVED_KEPT: 'moderation.statusFilter.resolvedKept',
+  RESOLVED_REMOVED: 'moderation.statusFilter.resolvedRemoved',
+  DISMISSED: 'moderation.statusFilter.dismissed',
+};
+
 export function ModerationStatusTabs({ statusFilter, onStatusChange, className }: Props) {
   const { t } = useTranslation();
 
   return (
     <div className={cn('relative max-w-full w-fit min-w-0', className)}>
-      <div
-        role="tablist"
-        aria-label={t('moderation.filterByStatus')}
-        className={cn(segmentedControl.track, 'inline-flex w-max max-w-full')}
-      >
+      <div className={cn(segmentedControl.track, 'inline-flex w-max max-w-full')}>
         <button
           type="button"
-          role="tab"
-          aria-selected={statusFilter === ''}
-          onClick={() => onStatusChange('')}
           className={cn(
             segmentedControl.tab,
             statusFilter === '' ? segmentedControl.tabActive : segmentedControl.tabInactive,
           )}
+          onClick={() => onStatusChange('')}
         >
           {t('moderation.allStatuses')}
         </button>
-        {ALL_CASE_STATUSES.map((status) => (
+        {ALL_MODERATION_STATUSES.map((status) => (
           <button
             key={status}
             type="button"
-            role="tab"
-            aria-selected={statusFilter === status}
-            onClick={() => onStatusChange(status)}
             className={cn(
               segmentedControl.tab,
               statusFilter === status
                 ? segmentedControl.tabActive
                 : segmentedControl.tabInactive,
             )}
+            onClick={() => onStatusChange(status)}
           >
-            {t(`caseStatus.${status}`, status)}
+            {t(STATUS_I18N[status] ?? status, status)}
           </button>
         ))}
       </div>

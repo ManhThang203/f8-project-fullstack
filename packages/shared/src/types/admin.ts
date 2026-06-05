@@ -59,66 +59,16 @@ export type AdminReportDto = {
 
 export type AdminReportDetailDto = AdminReportDto & {
   targetContent: string | null;
-  targetAuthor: { id: string; username: string; name: string | null; image: string | null; status: string } | null;
+  targetAuthor: {
+    id: string;
+    username: string;
+    name: string | null;
+    image: string | null;
+    status: string;
+  } | null;
   targetMedia: { id: string; kind: string; publicUrl: string | null }[] | null;
   relatedReports: AdminReportDto[];
   auditLogs: AdminAuditLogDto[];
-};
-
-export type ModerationCaseStatus =
-  | 'OPEN'
-  | 'UNDER_REVIEW'
-  | 'UPHELD'
-  | 'RESTORED'
-  | 'EXPIRED';
-
-export type ModerationTrigger = 'AUTO_HIDE_MINOR_SAFETY' | 'ADMIN_HIDE';
-
-export type AppealStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
-
-export type ModerationCaseDto = {
-  id: string;
-  targetType: ReportTargetType;
-  targetId: string;
-  authorId: string;
-  trigger: ModerationTrigger;
-  status: ModerationCaseStatus;
-  reportCount: number;
-  openedAt: string;
-  closedAt: string | null;
-  resolution: string | null;
-  slaBreached?: boolean;
-  hasPendingAppeal?: boolean;
-  targetPreview?: string | null;
-  author?: { id: string; username: string; name: string | null; image: string | null };
-};
-
-export type AppealDto = {
-  id: string;
-  caseId: string;
-  authorId: string;
-  message: string;
-  status: AppealStatus;
-  createdAt: string;
-  reviewedAt: string | null;
-};
-
-export type RestrictedPostDto = {
-  id: string;
-  content: string;
-  hiddenAt: string;
-  caseId: string | null;
-  caseStatus: ModerationCaseStatus | null;
-  appealStatus: AppealStatus | null;
-};
-
-export type ModerationCaseDetailDto = ModerationCaseDto & {
-  targetContent: string | null;
-  targetAuthor: { id: string; username: string; name: string | null; image: string | null; status: string } | null;
-  targetMedia: { id: string; kind: string; publicUrl: string | null }[] | null;
-  relatedReports: AdminReportDto[];
-  auditLogs: AdminAuditLogDto[];
-  appeals: AppealDto[];
 };
 
 export type AdminHashtagDto = {
@@ -176,6 +126,14 @@ export type AdminStatsOverviewDto = {
     resolved: number;
     rejected: number;
     actionTaken: number;
+  };
+  pendingModerationCases: number;
+  moderationStatusBreakdown: {
+    pending: number;
+    autoHidden: number;
+    resolvedKept: number;
+    resolvedRemoved: number;
+    dismissed: number;
   };
 };
 

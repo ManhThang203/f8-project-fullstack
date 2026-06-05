@@ -132,7 +132,7 @@ export default function ReportDetailPage() {
     );
   }
 
-  const isResolved = report.status === 'RESOLVED' || report.status === 'DISMISSED' || report.status === 'AUTO_HIDDEN';
+  const isResolved = report.status === 'RESOLVED' || report.status === 'DISMISSED';
 
   return (
     <div className="space-y-5">
@@ -352,7 +352,7 @@ export default function ReportDetailPage() {
               ) : (
                 <>
                   {/* Mark under review */}
-                  {report.status === 'PENDING' && (
+                  {(report.status === 'PENDING' || report.status === 'AUTO_HIDDEN') && (
                     <Button
                       variant="secondary"
                       className="w-full text-xs"

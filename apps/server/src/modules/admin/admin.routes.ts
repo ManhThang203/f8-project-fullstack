@@ -9,12 +9,13 @@ import {
   adminReportActionSchema,
   adminReportListQuerySchema,
   adminReportReviewSchema,
-  moderationCaseListQuerySchema,
-  moderationCaseResolveSchema,
   adminUserListQuerySchema,
   adminUserPermissionsPutSchema,
   adminUserStatusPatchSchema,
+  appealReviewSchema,
   cursorPageQuerySchema,
+  moderationCaseActionSchema,
+  moderationCaseListQuerySchema,
 } from '@costy/shared';
 
 import { requireAuth } from '../../middleware/auth.middleware.js';
@@ -42,17 +43,18 @@ import {
   reviewReport,
 } from './admin-reports.service.js';
 import {
-  getModerationCase,
-  listModerationCases,
-  resolveModerationCase,
-} from './moderation-cases.service.js';
-import {
   getActiveUsersPerDay,
   getPostsPerDay,
   getStatsOverview,
   getTopHashtags,
 } from './admin-stats.service.js';
 import { getAdminUserDetail, listAdminUsers, patchAdminUserStatus } from './admin-users.service.js';
+import {
+  getModerationCase,
+  listModerationCases,
+  resolveModerationCase,
+  reviewAppeal,
+} from '../moderation/moderation.service.js';
 
 export const adminRouter = Router();
 
@@ -155,19 +157,15 @@ adminRouter.get('/users/:id', requirePermission('user:read'), async (req, res, n
   }
 });
 
-adminRouter.patch(
-  '/users/:id/status',
-  requirePermission('user:lock'),
-  async (req, res, next) => {
-    try {
-      const body = adminUserStatusPatchSchema.parse(req.body);
-      const data = await patchAdminUserStatus(req.auth!.userId, paramId(req.params.id), body);
-      res.json(ok(data));
-    } catch (e) {
-      next(e);
-    }
-  },
-);
+adminRouter.patch('/users/:id/status', requirePermission('user:lock'), async (req, res, next) => {
+  try {
+    const body = adminUserStatusPatchSchema.parse(req.body);
+    const data = await patchAdminUserStatus(req.auth!.userId, paramId(req.params.id), body);
+    res.json(ok(data));
+  } catch (e) {
+    next(e);
+  }
+});
 
 adminRouter.get(
   '/reports',
@@ -193,19 +191,15 @@ adminRouter.get('/reports/:id', requirePermission('report:read'), async (req, re
 });
 
 /** PATCH /admin/reports/:id — Admin cập nhật status (mark under_review / dismiss nhanh). */
-adminRouter.patch(
-  '/reports/:id',
-  requirePermission('report:review'),
-  async (req, res, next) => {
-    try {
-      const body = adminReportReviewSchema.parse(req.body);
-      const data = await reviewReport(req.auth!.userId, paramId(req.params.id), body);
-      res.json(ok(data));
-    } catch (e) {
-      next(e);
-    }
-  },
-);
+adminRouter.patch('/reports/:id', requirePermission('report:review'), async (req, res, next) => {
+  try {
+    const body = adminReportReviewSchema.parse(req.body);
+    const data = await reviewReport(req.auth!.userId, paramId(req.params.id), body);
+    res.json(ok(data));
+  } catch (e) {
+    next(e);
+  }
+});
 
 /** PATCH /admin/reports/:id/action — Admin thực thi hành động kiểm duyệt. */
 adminRouter.patch(
@@ -222,6 +216,7 @@ adminRouter.patch(
   },
 );
 
+/** GET /admin/moderation/cases — Danh sách case AI phát hiện. */
 adminRouter.get(
   '/moderation/cases',
   requirePermission('report:read'),
@@ -246,12 +241,26 @@ adminRouter.get('/moderation/cases/:id', requirePermission('report:read'), async
 });
 
 adminRouter.patch(
-  '/moderation/cases/:id/resolve',
+  '/moderation/cases/:id/action',
   requirePermission('report:review'),
   async (req, res, next) => {
     try {
-      const body = moderationCaseResolveSchema.parse(req.body);
+      const body = moderationCaseActionSchema.parse(req.body);
       const data = await resolveModerationCase(req.auth!.userId, paramId(req.params.id), body);
+      res.json(ok(data));
+    } catch (e) {
+      next(e);
+    }
+  },
+);
+
+adminRouter.patch(
+  '/moderation/cases/:id/appeal',
+  requirePermission('report:review'),
+  async (req, res, next) => {
+    try {
+      const body = appealReviewSchema.parse(req.body);
+      const data = await reviewAppeal(req.auth!.userId, paramId(req.params.id), body);
       res.json(ok(data));
     } catch (e) {
       next(e);
@@ -274,19 +283,15 @@ adminRouter.get(
   },
 );
 
-adminRouter.patch(
-  '/hashtags/:id',
-  requirePermission('hashtag:manage'),
-  async (req, res, next) => {
-    try {
-      const { action } = adminHashtagPatchSchema.parse(req.body);
-      const data = await patchAdminHashtag(req.auth!.userId, paramId(req.params.id), action);
-      res.json(ok(data));
-    } catch (e) {
-      next(e);
-    }
-  },
-);
+adminRouter.patch('/hashtags/:id', requirePermission('hashtag:manage'), async (req, res, next) => {
+  try {
+    const { action } = adminHashtagPatchSchema.parse(req.body);
+    const data = await patchAdminHashtag(req.auth!.userId, paramId(req.params.id), action);
+    res.json(ok(data));
+  } catch (e) {
+    next(e);
+  }
+});
 
 adminRouter.get(
   '/moderators',
@@ -340,7 +345,12 @@ adminRouter.put(
   async (req, res, next) => {
     try {
       const { grants, revokes } = adminUserPermissionsPutSchema.parse(req.body);
-      const data = await setUserPermissions(req.auth!.userId, paramId(req.params.id), grants, revokes);
+      const data = await setUserPermissions(
+        req.auth!.userId,
+        paramId(req.params.id),
+        grants,
+        revokes,
+      );
       res.json(ok(data));
     } catch (e) {
       next(e);
