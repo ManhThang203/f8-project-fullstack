@@ -7,3 +7,4 @@ coverage
 pnpm-lock.yaml
 packages/db/prisma/migrations
 packages/db/generated
+apps/*/next-env.d.ts
