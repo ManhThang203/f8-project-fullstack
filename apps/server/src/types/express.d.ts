@@ -1,10 +1,12 @@
+import type { Role, UserStatus } from '@costy/db';
+
 declare global {
   namespace Express {
     interface Request {
       auth?: {
         userId: string;
-        role?: import('@costy/db').Role;
-        status?: import('@costy/db').UserStatus;
+        role?: Role;
+        status?: UserStatus;
         bannedUntil?: Date | null;
         permissions?: string[];
       };

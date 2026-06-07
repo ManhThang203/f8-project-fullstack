@@ -30,7 +30,6 @@ export function useUsersSearch(
       return apiQueryData<UserSearchRow[]>(`/users${qs}`);
     },
     enabled,
-    select: (data) =>
-      excludeUserId ? data.filter((u) => u.id !== excludeUserId) : data,
+    select: (data) => (excludeUserId ? data.filter((u) => u.id !== excludeUserId) : data),
   });
 }

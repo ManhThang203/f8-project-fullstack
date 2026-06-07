@@ -4,7 +4,13 @@ declare module 'sonner' {
 
   export interface ToasterProps {
     richColors?: boolean;
-    position?: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
+    position?:
+      | 'top-left'
+      | 'top-center'
+      | 'top-right'
+      | 'bottom-left'
+      | 'bottom-center'
+      | 'bottom-right';
     closeButton?: boolean;
   }
 

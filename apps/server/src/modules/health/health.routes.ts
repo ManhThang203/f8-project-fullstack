@@ -21,9 +21,17 @@ router.get('/', async (_req, res, next) => {
   try {
     const [dbOk, redisOk] = await Promise.all([
       prisma.$queryRaw`SELECT 1`.then(() => true).catch(() => false),
-      redis.ping().then((r: string) => r === 'PONG').catch(() => false),
+      redis
+        .ping()
+        .then((r: string) => r === 'PONG')
+        .catch(() => false),
     ]);
-    const data = { status: 'ok', uptimeSec: Math.round(process.uptime()), db: dbOk, redis: redisOk };
+    const data = {
+      status: 'ok',
+      uptimeSec: Math.round(process.uptime()),
+      db: dbOk,
+      redis: redisOk,
+    };
     res.status(dbOk && redisOk ? 200 : 503).json(ok(data));
   } catch (e) {
     next(e);

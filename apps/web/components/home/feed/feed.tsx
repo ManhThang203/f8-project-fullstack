@@ -7,12 +7,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CreatePostModal } from '../compose/create-post-modal';
 import { CreatePostTrigger } from '../compose/create-post-trigger';
 import { PostCard } from '../post/post-card';
+
 import { FeedSkeletonList } from './feed-skeleton-list';
+
 import { flattenPostsFeedPages, usePostsFeed } from '@/hooks/queries/use-posts-feed';
 import { authClient } from '@/lib/auth-client';
-import { getSocket } from '@/lib/socket';
 import type { ServerAuthUser } from '@/lib/auth-user.types';
 import { queryKeys } from '@/lib/query-keys';
+import { getSocket } from '@/lib/socket';
 
 type FeedUser = {
   id: string;
@@ -115,7 +117,7 @@ export function HomeFeed({ initialUser }: Props) {
           pages: old.pages.map((page) => ({
             ...page,
             data: page.data.map((p) =>
-              p.id === payload.postId ? { ...p, likeCount: payload.likeCount } : p
+              p.id === payload.postId ? { ...p, likeCount: payload.likeCount } : p,
             ),
           })),
         };

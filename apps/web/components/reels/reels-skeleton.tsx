@@ -2,9 +2,9 @@
 
 import { useReducedMotion } from 'motion/react';
 
-import { cn } from '@/lib/utils';
-
 import { useReelsLayoutMode } from './reels-layout.utils';
+
+import { cn } from '@/lib/utils';
 
 function SkeletonPulse({
   className,
@@ -24,12 +24,24 @@ function ImmersiveSkeleton({ reduceMotion }: { reduceMotion: boolean | null }) {
 
       <div className="reels-immersive-meta absolute bottom-14 left-3 right-16 z-20 flex flex-col gap-3 pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-center gap-3">
-          <SkeletonPulse className="h-10 w-10 rounded-full bg-neutral-700" reduceMotion={reduceMotion} />
+          <SkeletonPulse
+            className="h-10 w-10 rounded-full bg-neutral-700"
+            reduceMotion={reduceMotion}
+          />
           <div className="flex flex-1 flex-col gap-1.5">
-            <SkeletonPulse className="h-3 w-32 rounded bg-neutral-700" reduceMotion={reduceMotion} />
-            <SkeletonPulse className="h-2.5 w-20 rounded bg-neutral-700" reduceMotion={reduceMotion} />
+            <SkeletonPulse
+              className="h-3 w-32 rounded bg-neutral-700"
+              reduceMotion={reduceMotion}
+            />
+            <SkeletonPulse
+              className="h-2.5 w-20 rounded bg-neutral-700"
+              reduceMotion={reduceMotion}
+            />
           </div>
-          <SkeletonPulse className="h-8 w-20 rounded-lg bg-neutral-700" reduceMotion={reduceMotion} />
+          <SkeletonPulse
+            className="h-8 w-20 rounded-lg bg-neutral-700"
+            reduceMotion={reduceMotion}
+          />
         </div>
         <SkeletonPulse className="h-3 w-full rounded bg-neutral-700" reduceMotion={reduceMotion} />
       </div>
@@ -59,14 +71,29 @@ function StageSkeleton({ reduceMotion }: { reduceMotion: boolean | null }) {
 
           <div className="absolute bottom-10 left-3 right-14 z-20 flex flex-col gap-3">
             <div className="flex items-center gap-3">
-              <SkeletonPulse className="h-10 w-10 rounded-full bg-neutral-700" reduceMotion={reduceMotion} />
+              <SkeletonPulse
+                className="h-10 w-10 rounded-full bg-neutral-700"
+                reduceMotion={reduceMotion}
+              />
               <div className="flex flex-1 flex-col gap-1.5">
-                <SkeletonPulse className="h-3 w-32 rounded bg-neutral-700" reduceMotion={reduceMotion} />
-                <SkeletonPulse className="h-2.5 w-20 rounded bg-neutral-700" reduceMotion={reduceMotion} />
+                <SkeletonPulse
+                  className="h-3 w-32 rounded bg-neutral-700"
+                  reduceMotion={reduceMotion}
+                />
+                <SkeletonPulse
+                  className="h-2.5 w-20 rounded bg-neutral-700"
+                  reduceMotion={reduceMotion}
+                />
               </div>
-              <SkeletonPulse className="h-8 w-20 rounded-lg bg-neutral-700" reduceMotion={reduceMotion} />
+              <SkeletonPulse
+                className="h-8 w-20 rounded-lg bg-neutral-700"
+                reduceMotion={reduceMotion}
+              />
             </div>
-            <SkeletonPulse className="h-3 w-full rounded bg-neutral-700" reduceMotion={reduceMotion} />
+            <SkeletonPulse
+              className="h-3 w-full rounded bg-neutral-700"
+              reduceMotion={reduceMotion}
+            />
           </div>
 
           <div className="absolute bottom-0 left-0 right-0 z-30 h-0.5 bg-neutral-700" />
@@ -84,8 +111,14 @@ function StageSkeleton({ reduceMotion }: { reduceMotion: boolean | null }) {
       </div>
 
       <div className="fixed right-6 top-1/2 z-30 hidden -translate-y-1/2 flex-col gap-3 lg:flex">
-        <SkeletonPulse className="h-11 w-11 rounded-full bg-neutral-700" reduceMotion={reduceMotion} />
-        <SkeletonPulse className="h-11 w-11 rounded-full bg-neutral-700" reduceMotion={reduceMotion} />
+        <SkeletonPulse
+          className="h-11 w-11 rounded-full bg-neutral-700"
+          reduceMotion={reduceMotion}
+        />
+        <SkeletonPulse
+          className="h-11 w-11 rounded-full bg-neutral-700"
+          reduceMotion={reduceMotion}
+        />
       </div>
     </div>
   );

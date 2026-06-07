@@ -38,12 +38,12 @@ export function ModerationCasesCardList({ cases, locale }: Props) {
           <div
             key={item.id}
             className={cn(
-              'space-y-3 rounded-xl border border-border bg-card p-4',
+              'border-border bg-card space-y-3 rounded-xl border p-4',
               item.autoHidden && 'border-orange-500/20 bg-orange-500/5',
             )}
           >
             <div className="grid grid-cols-[1fr_auto] items-center gap-2">
-              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs font-semibold text-muted-foreground">
+              <span className="bg-muted text-muted-foreground shrink-0 rounded px-1.5 py-0.5 text-xs font-semibold">
                 {t(`targetType.${item.targetType}`, item.targetType)}
               </span>
               <span
@@ -57,7 +57,7 @@ export function ModerationCasesCardList({ cases, locale }: Props) {
             </div>
 
             {item.targetPreview ? (
-              <p className="line-clamp-2 rounded-lg bg-muted/30 p-2 text-xs italic text-muted-foreground">
+              <p className="bg-muted/30 text-muted-foreground line-clamp-2 rounded-lg p-2 text-xs italic">
                 &ldquo;{item.targetPreview}&rdquo;
               </p>
             ) : null}
@@ -81,8 +81,9 @@ export function ModerationCasesCardList({ cases, locale }: Props) {
               </span>
             </div>
 
-            <p className="text-center text-xs text-muted-foreground">
-              {item.author?.username ?? t('common.unknownUser')} · {formatDate(item.createdAt, locale)}
+            <p className="text-muted-foreground text-center text-xs">
+              {item.author?.username ?? t('common.unknownUser')} ·{' '}
+              {formatDate(item.createdAt, locale)}
             </p>
 
             <Link href={`/reports/moderation/${item.id}`} className="block">

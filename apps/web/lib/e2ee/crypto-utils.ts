@@ -70,7 +70,7 @@ export async function encryptRoomKeyWithRSA(
 ): Promise<string> {
   // Export AES key ra raw bytes
   const rawAesKey = await window.crypto.subtle.exportKey('raw', roomKey);
-  
+
   // Mã hóa bằng RSA
   const encrypted = await window.crypto.subtle.encrypt(
     { name: 'RSA-OAEP' },
@@ -87,20 +87,17 @@ export async function decryptRoomKeyWithRSA(
   userPrivateKey: CryptoKey,
 ): Promise<CryptoKey> {
   const encryptedBytes = Uint8Array.from(atob(encryptedRoomKeyBase64), (c) => c.charCodeAt(0));
-  
+
   const rawAesKey = await window.crypto.subtle.decrypt(
     { name: 'RSA-OAEP' },
     userPrivateKey,
     encryptedBytes,
   );
 
-  return await window.crypto.subtle.importKey(
-    'raw',
-    rawAesKey,
-    { name: 'AES-GCM' },
-    true,
-    ['encrypt', 'decrypt'],
-  );
+  return await window.crypto.subtle.importKey('raw', rawAesKey, { name: 'AES-GCM' }, true, [
+    'encrypt',
+    'decrypt',
+  ]);
 }
 
 /**
@@ -121,7 +118,9 @@ export async function encryptPayloadWithAES(
   );
 
   const ivBase64 = btoa(String.fromCharCode.apply(null, Array.from(iv)));
-  const cipherBase64 = btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(ciphertext))));
+  const cipherBase64 = btoa(
+    String.fromCharCode.apply(null, Array.from(new Uint8Array(ciphertext))),
+  );
 
   return `${ivBase64}:${cipherBase64}`;
 }
@@ -152,11 +151,7 @@ export async function encryptBufferWithAES(
   roomKey: CryptoKey,
 ): Promise<{ iv: string; ciphertext: ArrayBuffer }> {
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
-  const ciphertext = await window.crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
-    roomKey,
-    buffer,
-  );
+  const ciphertext = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, roomKey, buffer);
   const ivBase64 = btoa(String.fromCharCode.apply(null, Array.from(iv)));
   return { iv: ivBase64, ciphertext };
 }
@@ -168,9 +163,5 @@ export async function decryptBufferWithAES(
   roomKey: CryptoKey,
 ): Promise<ArrayBuffer> {
   const iv = Uint8Array.from(atob(ivBase64), (c) => c.charCodeAt(0));
-  return await window.crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv },
-    roomKey,
-    ciphertext,
-  );
+  return await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv }, roomKey, ciphertext);
 }

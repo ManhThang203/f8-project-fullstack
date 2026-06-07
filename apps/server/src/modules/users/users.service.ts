@@ -1,4 +1,4 @@
-import { MediaStatus, NotificationType, prisma } from '@costy/db';
+import { MediaStatus, prisma } from '@costy/db';
 import type {
   FollowStateDto,
   ProfileDto,
@@ -54,9 +54,7 @@ function paginate<TRow>(
   const page = hasMore ? rows.slice(0, limit) : rows;
   const tail = page[page.length - 1];
   const nextCursor =
-    hasMore && tail
-      ? encodeCursor(getCursorParts(tail).createdAt, getCursorParts(tail).id)
-      : null;
+    hasMore && tail ? encodeCursor(getCursorParts(tail).createdAt, getCursorParts(tail).id) : null;
   return { page, nextCursor };
 }
 
@@ -202,7 +200,10 @@ export async function listProfileLikes(
         OR: [
           { createdAt: { lt: cursorData.createdAt } },
           {
-            AND: [{ createdAt: { equals: cursorData.createdAt } }, { postId: { lt: cursorData.id } }],
+            AND: [
+              { createdAt: { equals: cursorData.createdAt } },
+              { postId: { lt: cursorData.id } },
+            ],
           },
         ],
       }
@@ -291,7 +292,10 @@ async function listFollowUsers(
 
   const rows = await prisma.follow.findMany({
     where,
-    orderBy: [{ createdAt: 'desc' }, mode === 'followers' ? { followerId: 'desc' } : { followingId: 'desc' }],
+    orderBy: [
+      { createdAt: 'desc' },
+      mode === 'followers' ? { followerId: 'desc' } : { followingId: 'desc' },
+    ],
     take: query.limit + 1,
     include: {
       follower: { select: { id: true, username: true, name: true, image: true } },

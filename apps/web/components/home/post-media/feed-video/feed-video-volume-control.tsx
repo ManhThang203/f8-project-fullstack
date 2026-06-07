@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -18,12 +18,7 @@ const iconBtn =
 const SLIDER_CLOSE_DELAY_MS = 150;
 
 /** Volume feed: icon + slider dọc popover phía trên; hover/touch mở slider, pb-2 lấp gap. */
-export function FeedVideoVolumeControl({
-  volume,
-  muted,
-  onVolumeChange,
-  onToggleMute,
-}: Props) {
+export function FeedVideoVolumeControl({ volume, muted, onVolumeChange, onToggleMute }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const canHoverRef = useRef(true);

@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  Bookmark,
-  MessageCircle,
-  MoreHorizontal,
-  Share2,
-  ThumbsUp,
-} from 'lucide-react';
+import { Bookmark, MessageCircle, MoreHorizontal, Share2, ThumbsUp } from 'lucide-react';
 import { useReducedMotion } from 'motion/react';
 import { useState } from 'react';
 
@@ -58,10 +52,7 @@ export function ReelsActionRail({
             'transition-transform duration-150',
           )}
         >
-          <ThumbsUp
-            className={cn('h-7 w-7 stroke-[1.5]', isLiked && 'fill-white')}
-            aria-hidden
-          />
+          <ThumbsUp className={cn('h-7 w-7 stroke-[1.5]', isLiked && 'fill-white')} aria-hidden />
         </span>
       </button>
 

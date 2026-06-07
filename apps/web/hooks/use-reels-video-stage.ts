@@ -67,9 +67,7 @@ export function useReelsVideoStage(src: string, options?: UseReelsVideoStageOpti
   const placeholderVideoSize = options?.placeholderVideoSize;
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [videoSize, setVideoSize] = useState<VideoNaturalSize | null>(
-    placeholderVideoSize ?? null,
-  );
+  const [videoSize, setVideoSize] = useState<VideoNaturalSize | null>(placeholderVideoSize ?? null);
   const [containerSize, setContainerSize] = useState<ContainerSize>({ width: 0, height: 0 });
 
   useEffect(() => {

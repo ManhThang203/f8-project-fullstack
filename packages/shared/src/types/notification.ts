@@ -10,7 +10,6 @@ export type NotificationType =
   | 'APPEAL_APPROVED'
   | 'APPEAL_REJECTED';
 
-
 export interface NotificationDto {
   id: string;
   recipientId: string;

@@ -1,6 +1,7 @@
 # Button
 
 ## Variants
+
 - primary
 - secondary
 - ghost
@@ -8,6 +9,7 @@
 - link
 
 ## Sizes
+
 - sm
 - md
 - lg
@@ -15,6 +17,7 @@
 - icon-md
 
 ## Rules
+
 - No uppercase labels
 - Loading replaces content
 - Focus ring required

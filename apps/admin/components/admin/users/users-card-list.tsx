@@ -17,28 +17,25 @@ export function UsersCardList({ users, onManageStatus }: Props) {
   return (
     <div className="space-y-3 lg:hidden">
       {users.map((user) => (
-        <div
-          key={user.id}
-          className="space-y-3 rounded-xl border border-border bg-card p-4"
-        >
+        <div key={user.id} className="border-border bg-card space-y-3 rounded-xl border p-4">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium">{user.name ?? user.username}</p>
-              <p className="truncate text-xs text-muted-foreground">@{user.username}</p>
+              <p className="text-muted-foreground truncate text-xs">@{user.username}</p>
             </div>
             <StatusBadge status={user.status} className="shrink-0" />
           </div>
 
           <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 text-xs">
-            <span className="truncate whitespace-nowrap text-foreground">
+            <span className="text-foreground truncate whitespace-nowrap">
               {t(`roles.${user.role}`, user.role)}
             </span>
-            <span className="shrink-0 text-muted-foreground">
+            <span className="text-muted-foreground shrink-0">
               {t('users.postsCount', { count: user.postCount })}
             </span>
           </div>
 
-          <p className="truncate text-xs text-muted-foreground">{user.email ?? '—'}</p>
+          <p className="text-muted-foreground truncate text-xs">{user.email ?? '—'}</p>
 
           <Button
             variant="secondary"

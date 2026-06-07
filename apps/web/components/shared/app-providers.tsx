@@ -2,9 +2,7 @@
 
 import type { ReactNode } from 'react';
 
-
 import { AppToaster } from '@/components/shared/app-toaster';
-import { ClientOnly } from '@/components/shared/client-only';
 import { QueryProvider } from '@/components/shared/query-provider';
 
 /**

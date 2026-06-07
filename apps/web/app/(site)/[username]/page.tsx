@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
-import { ProfileView } from '@/components/profile/profile-view';
 import { ProfileSkeleton } from '@/components/profile/profile-skeleton';
+import { ProfileView } from '@/components/profile/profile-view';
 import { ClientOnly } from '@/components/shared/client-only';
 import { getServerSession } from '@/lib/auth-session.server';
 
@@ -22,7 +22,7 @@ export default async function ProfilePage({ params }: Props) {
   const serverSession = await getServerSession();
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="bg-background min-h-screen">
       <ClientOnly fallback={<ProfileSkeleton />}>
         <ProfileView username={username} initialUser={serverSession?.user ?? null} />
       </ClientOnly>

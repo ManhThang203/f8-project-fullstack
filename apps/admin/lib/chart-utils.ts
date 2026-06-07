@@ -4,10 +4,7 @@ export type DateSeriesPoint = {
 };
 
 /** Pad chuỗi ngày thiếu với count = 0 để line chart hiển thị đủ range. */
-export function fillDateSeries(
-  points: DateSeriesPoint[],
-  days: number,
-): DateSeriesPoint[] {
+export function fillDateSeries(points: DateSeriesPoint[], days: number): DateSeriesPoint[] {
   const map = new Map(points.map((p) => [p.date, p.count]));
   const result: DateSeriesPoint[] = [];
   const end = new Date();

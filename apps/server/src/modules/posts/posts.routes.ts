@@ -73,7 +73,10 @@ router.get('/reels', validate(reelsFeedQuerySchema, 'query'), async (req, res, n
 router.get('/', validate(cursorPageQuerySchema, 'query'), async (req, res, next) => {
   try {
     const viewerId = req.auth?.userId ?? null;
-    const { items, nextCursor } = await postsService.listFeed(req.query as unknown as CursorPageQuery, viewerId);
+    const { items, nextCursor } = await postsService.listFeed(
+      req.query as unknown as CursorPageQuery,
+      viewerId,
+    );
     res.json(ok(items, { nextCursor }));
   } catch (e) {
     next(e);
@@ -103,23 +106,29 @@ router.get('/', validate(cursorPageQuerySchema, 'query'), async (req, res, next)
  *       201:
  *         description: Created post
  */
-router.post('/', requireAuth, uploadPostMedia, realtimeBroadcast({
-  namespace: '/feed',
-  event: 'post:created'
-}), async (req, res, next) => {
-  try {
-    const body = createPostBodySchema.parse(req.body);
-    const files = (req.files as Express.Multer.File[] | undefined) ?? [];
-    const post = await postsService.createPost({
-      authorId: req.auth!.userId,
-      body,
-      files,
-    });
-    res.status(201).json(ok(post));
-  } catch (e) {
-    next(e);
-  }
-});
+router.post(
+  '/',
+  requireAuth,
+  uploadPostMedia,
+  realtimeBroadcast({
+    namespace: '/feed',
+    event: 'post:created',
+  }),
+  async (req, res, next) => {
+    try {
+      const body = createPostBodySchema.parse(req.body);
+      const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+      const post = await postsService.createPost({
+        authorId: req.auth!.userId,
+        body,
+        files,
+      });
+      res.status(201).json(ok(post));
+    } catch (e) {
+      next(e);
+    }
+  },
+);
 
 import { z } from 'zod';
 
@@ -152,18 +161,27 @@ const reactionBodySchema = z.object({
  *       200:
  *         description: OK
  */
-router.put('/:postId/reactions', requireAuth, realtimeBroadcast({
-  namespace: '/feed',
-  event: 'post:reacted',
-}), async (req, res, next) => {
-  try {
-    const { type } = reactionBodySchema.parse(req.body);
-    const result = await postsService.setPostReaction(req.params.postId as string, req.auth!.userId, type);
-    res.json(ok(result));
-  } catch (e) {
-    next(e);
-  }
-});
+router.put(
+  '/:postId/reactions',
+  requireAuth,
+  realtimeBroadcast({
+    namespace: '/feed',
+    event: 'post:reacted',
+  }),
+  async (req, res, next) => {
+    try {
+      const { type } = reactionBodySchema.parse(req.body);
+      const result = await postsService.setPostReaction(
+        req.params.postId as string,
+        req.auth!.userId,
+        type,
+      );
+      res.json(ok(result));
+    } catch (e) {
+      next(e);
+    }
+  },
+);
 
 /**
  * @openapi
@@ -272,16 +290,21 @@ router.get('/:postId/comments', validate(commentQuerySchema, 'query'), async (re
  *       200:
  *         description: OK
  */
-router.delete('/:postId', requireAuth, realtimeBroadcast({
-  namespace: '/feed',
-  event: 'post:deleted',
-}), async (req, res, next) => {
-  try {
-    const result = await postsService.deletePost(req.params.postId as string, req.auth!.userId);
-    res.json(ok(result));
-  } catch (e) {
-    next(e);
-  }
-});
+router.delete(
+  '/:postId',
+  requireAuth,
+  realtimeBroadcast({
+    namespace: '/feed',
+    event: 'post:deleted',
+  }),
+  async (req, res, next) => {
+    try {
+      const result = await postsService.deletePost(req.params.postId as string, req.auth!.userId);
+      res.json(ok(result));
+    } catch (e) {
+      next(e);
+    }
+  },
+);
 
 export { router as postsRouter };

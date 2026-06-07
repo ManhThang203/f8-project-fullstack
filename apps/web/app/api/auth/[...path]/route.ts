@@ -10,8 +10,8 @@
  */
 import { type NextRequest } from 'next/server';
 
-import { applyUpstreamProxyHeaders } from '@/lib/upstream-client-ip';
 import { HOP_BY_HOP_HEADERS, nextResponseFromUpstream } from '@/lib/proxy-to-upstream';
+import { applyUpstreamProxyHeaders } from '@/lib/upstream-client-ip';
 
 /**
  * Bắt buộc runtime Node: Edge runtime chưa có `Response#getSetCookie()`, mà

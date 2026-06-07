@@ -70,11 +70,11 @@ export function ModerationCasesTable({ cases, locale }: Props) {
                 <td className={colContent.td}>
                   <div className={colContent.cell}>
                     <div className="flex min-w-0 items-center justify-center gap-2">
-                      <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                      <span className="bg-muted text-muted-foreground shrink-0 rounded px-1.5 py-0.5 text-xs">
                         {t(`targetType.${item.targetType}`, item.targetType)}
                       </span>
                       {item.targetPreview ? (
-                        <span className="max-w-[180px] truncate text-xs text-muted-foreground">
+                        <span className="text-muted-foreground max-w-[180px] truncate text-xs">
                           {item.targetPreview}
                         </span>
                       ) : null}
@@ -124,7 +124,7 @@ export function ModerationCasesTable({ cases, locale }: Props) {
                 </td>
                 <td className={cn(colTime.td, 'hidden xl:table-cell')}>
                   <div className={colTime.cell}>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       {formatDate(item.createdAt, locale)}
                     </span>
                   </div>

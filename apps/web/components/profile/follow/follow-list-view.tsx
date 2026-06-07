@@ -8,10 +8,7 @@ import { toast } from 'sonner';
 
 import { Avatar } from '@/components/shared/avatar';
 import { Button } from '@/components/shared/button';
-import {
-  flattenFollowListPages,
-  useFollowList,
-} from '@/hooks/queries/use-follow-list';
+import { flattenFollowListPages, useFollowList } from '@/hooks/queries/use-follow-list';
 import { useFollowMutation } from '@/hooks/queries/use-follow-mutation';
 import { useDebounced } from '@/hooks/use-debounced';
 import { cn } from '@/lib/utils';
@@ -31,15 +28,8 @@ export function FollowListView({ username, title, mode, onClose, asModal }: Prop
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const debouncedQ = useDebounced(query, 300);
 
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useFollowList(username, mode, debouncedQ);
+  const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useFollowList(username, mode, debouncedQ);
 
   const followMutation = useFollowMutation({
     onError: (err) => toast.error(err.message),
@@ -122,7 +112,7 @@ export function FollowListView({ username, title, mode, onClose, asModal }: Prop
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Tìm kiếm"
           aria-label="Tìm kiếm người dùng"
-          className="bg-muted text-foreground placeholder:text-muted-foreground w-full rounded-lg px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="bg-muted text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-lg px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
         />
       </div>
 

@@ -200,7 +200,11 @@ async function seedBulkUsers() {
   const createdPosts =
     bulkPosts.length > 0 ? await prisma.post.createMany({ data: bulkPosts }) : { count: 0 };
 
-  return { userCount: seeds.length, removedPosts: removedPosts.count, createdPosts: createdPosts.count };
+  return {
+    userCount: seeds.length,
+    removedPosts: removedPosts.count,
+    createdPosts: createdPosts.count,
+  };
 }
 
 async function main() {

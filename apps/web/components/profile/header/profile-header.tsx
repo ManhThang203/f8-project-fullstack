@@ -2,8 +2,8 @@
 
 import type { ProfileDto } from '@costy/shared';
 
-import { Avatar } from '@/components/shared/avatar';
 import { formatJoinedDate } from '@/components/profile/profile-utils';
+import { Avatar } from '@/components/shared/avatar';
 import { cn } from '@/lib/utils';
 
 type Props = {

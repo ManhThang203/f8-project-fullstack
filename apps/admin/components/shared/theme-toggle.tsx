@@ -19,7 +19,7 @@ export function ThemeToggle({ className }: Props) {
       type="button"
       onClick={toggleTheme}
       className={cn(
-        'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
+        'text-muted-foreground hover:bg-muted hover:text-foreground inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors',
         className,
       )}
       aria-label={theme === 'dark' ? t('theme.switchToLight') : t('theme.switchToDark')}

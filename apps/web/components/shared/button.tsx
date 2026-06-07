@@ -15,10 +15,8 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variantClasses: Record<Variant, string> = {
-  primary:
-    'bg-primary text-primary-foreground hover:bg-primary/90 border border-transparent',
-  secondary:
-    'bg-transparent text-foreground border border-border hover:bg-muted',
+  primary: 'bg-primary text-primary-foreground hover:bg-primary/90 border border-transparent',
+  secondary: 'bg-transparent text-foreground border border-border hover:bg-muted',
   ghost: 'bg-transparent text-foreground hover:bg-muted border border-transparent',
 };
 
@@ -47,7 +45,7 @@ export function Button({
       disabled={disabled || loading}
       className={cn(
         'inline-flex items-center justify-center gap-2 font-medium transition-colors duration-150',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+        'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
         'active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50',
         variantClasses[variant],
         sizeClasses[size],
@@ -58,7 +56,7 @@ export function Button({
     >
       {loading ? (
         <span
-          className="border-current h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"
+          className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
           aria-hidden
         />
       ) : (

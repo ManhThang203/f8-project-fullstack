@@ -55,7 +55,10 @@ export async function listModerators(query: {
 }
 
 /** Promote user thường lên MODERATOR. */
-export async function promoteToModerator(actorId: string, userId: string): Promise<AdminModeratorDto> {
+export async function promoteToModerator(
+  actorId: string,
+  userId: string,
+): Promise<AdminModeratorDto> {
   const user = await prisma.user.findFirst({ where: { id: userId, deletedAt: null } });
   if (!user) throw AppError.notFound('Không tìm thấy user');
   if (user.role !== 'USER') throw AppError.badRequest('User đã có role admin/moderator');

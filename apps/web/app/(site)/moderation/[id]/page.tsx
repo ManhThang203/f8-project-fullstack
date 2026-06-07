@@ -37,19 +37,19 @@ export default function ModerationDetailPage() {
 
   if (isLoading) {
     return (
-      <main className="mx-auto min-h-screen max-w-lg bg-background px-4 py-8">
-        <p className="text-sm text-muted-foreground">Đang tải...</p>
+      <main className="bg-background mx-auto min-h-screen max-w-lg px-4 py-8">
+        <p className="text-muted-foreground text-sm">Đang tải...</p>
       </main>
     );
   }
 
   if (error || !caseData) {
     return (
-      <main className="mx-auto min-h-screen max-w-lg bg-background px-4 py-8">
-        <p className="text-sm text-muted-foreground">Không tìm thấy thông tin kiểm duyệt.</p>
+      <main className="bg-background mx-auto min-h-screen max-w-lg px-4 py-8">
+        <p className="text-muted-foreground text-sm">Không tìm thấy thông tin kiểm duyệt.</p>
         <Link
           href="/"
-          className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-border bg-transparent px-4 text-sm font-medium text-foreground transition-colors duration-150 hover:bg-muted active:scale-[0.97]"
+          className="border-border text-foreground hover:bg-muted mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg border bg-transparent px-4 text-sm font-medium transition-colors duration-150 active:scale-[0.97]"
         >
           Về trang chủ
         </Link>
@@ -69,22 +69,22 @@ export default function ModerationDetailPage() {
   };
 
   return (
-    <main className="mx-auto min-h-screen max-w-lg bg-background px-4 py-8">
+    <main className="bg-background mx-auto min-h-screen max-w-lg px-4 py-8">
       <div className="mb-6 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500/10">
           <ShieldAlert className="h-5 w-5 text-orange-600" />
         </div>
         <div>
-          <h1 className="text-lg font-semibold text-foreground">Thông báo kiểm duyệt</h1>
-          <p className="text-xs text-muted-foreground">
+          <h1 className="text-foreground text-lg font-semibold">Thông báo kiểm duyệt</h1>
+          <p className="text-muted-foreground text-xs">
             {new Date(caseData.createdAt).toLocaleDateString('vi-VN')}
           </p>
         </div>
       </div>
 
-      <div className="space-y-4 rounded-xl border border-border bg-card p-5">
+      <div className="border-border bg-card space-y-4 rounded-xl border p-5">
         <div className="flex flex-wrap gap-2">
-          <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+          <span className="bg-muted text-muted-foreground rounded-full px-2.5 py-0.5 text-xs font-medium">
             {LABEL_LABELS[caseData.label] ?? caseData.label}
           </span>
           <span
@@ -100,34 +100,34 @@ export default function ModerationDetailPage() {
         </div>
 
         {caseData.reason ? (
-          <p className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">Lý do: </span>
+          <p className="text-muted-foreground text-sm">
+            <span className="text-foreground font-medium">Lý do: </span>
             {caseData.reason}
           </p>
         ) : null}
 
         {caseData.resolutionNote ? (
-          <p className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">Ghi chú từ admin: </span>
+          <p className="text-muted-foreground text-sm">
+            <span className="text-foreground font-medium">Ghi chú từ admin: </span>
             {caseData.resolutionNote}
           </p>
         ) : null}
 
         {caseData.targetContent ? (
-          <div className="rounded-lg bg-muted/40 p-3">
-            <p className="mb-1 text-xs font-medium text-muted-foreground">Nội dung của bạn</p>
-            <p className="text-sm whitespace-pre-wrap text-foreground">{caseData.targetContent}</p>
+          <div className="bg-muted/40 rounded-lg p-3">
+            <p className="text-muted-foreground mb-1 text-xs font-medium">Nội dung của bạn</p>
+            <p className="text-foreground whitespace-pre-wrap text-sm">{caseData.targetContent}</p>
           </div>
         ) : null}
       </div>
 
       {caseData.appeal ? (
-        <div className="mt-4 rounded-xl border border-border bg-card p-5 space-y-2">
+        <div className="border-border bg-card mt-4 space-y-2 rounded-xl border p-5">
           <h2 className="text-sm font-semibold">Kháng nghị của bạn</h2>
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+          <p className="text-muted-foreground whitespace-pre-wrap text-sm">
             {caseData.appeal.message}
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Trạng thái:{' '}
             {caseData.appeal.status === 'PENDING'
               ? 'Đang chờ admin duyệt'
@@ -136,19 +136,19 @@ export default function ModerationDetailPage() {
                 : 'Đã bị từ chối'}
           </p>
           {caseData.appeal.decisionNote ? (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Phản hồi admin: {caseData.appeal.decisionNote}
             </p>
           ) : null}
         </div>
       ) : canAppeal ? (
-        <div className="mt-4 rounded-xl border border-border bg-card p-5 space-y-3">
+        <div className="border-border bg-card mt-4 space-y-3 rounded-xl border p-5">
           <h2 className="text-sm font-semibold">Gửi kháng nghị</h2>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Nếu bạn cho rằng đây là nhầm lẫn, hãy giải thích lý do (tối thiểu 10 ký tự).
           </p>
           <textarea
-            className="w-full rounded-lg border border-border bg-background p-3 text-sm"
+            className="border-border bg-background w-full rounded-lg border p-3 text-sm"
             rows={4}
             value={appealMessage}
             onChange={(e) => setAppealMessage(e.target.value)}
@@ -166,7 +166,7 @@ export default function ModerationDetailPage() {
 
       <Link
         href="/"
-        className="mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-border bg-transparent px-4 text-sm font-medium text-foreground transition-colors duration-150 hover:bg-muted active:scale-[0.97]"
+        className="border-border text-foreground hover:bg-muted mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-lg border bg-transparent px-4 text-sm font-medium transition-colors duration-150 active:scale-[0.97]"
       >
         Về trang chủ
       </Link>

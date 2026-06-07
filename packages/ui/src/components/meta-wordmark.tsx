@@ -5,7 +5,12 @@ import { cn } from '../utils/cn';
 type MetaWordmarkProps = Omit<SVGAttributes<SVGSVGElement>, 'xmlns' | 'viewBox'>;
 
 /** Meta wordmark (infinity + type). Monochrome via `currentColor`. */
-export function MetaWordmark({ className, fill = 'currentColor', role = 'img', ...props }: MetaWordmarkProps) {
+export function MetaWordmark({
+  className,
+  fill = 'currentColor',
+  role = 'img',
+  ...props
+}: MetaWordmarkProps) {
   return (
     <svg
       aria-label="Logo Meta"

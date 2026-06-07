@@ -1,12 +1,14 @@
 'use client';
 
+import { Check, CheckCheck, Reply, Forward, SmilePlus, Trash2, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { cn } from '@/lib/utils';
-import { decryptPayloadWithAES } from '@/lib/e2ee/crypto-utils';
-import type { ChatMessageDto } from '@/types/chat';
+
 import { ChatMediaViewer } from './chat-media-viewer';
 import { MOCK_STICKERS } from './emoji-sticker-picker';
-import { Check, CheckCheck, Reply, Forward, SmilePlus, Trash2, XCircle } from 'lucide-react';
+
+import { decryptPayloadWithAES } from '@/lib/e2ee/crypto-utils';
+import { cn } from '@/lib/utils';
+import type { ChatMessageDto } from '@/types/chat';
 
 export type DecryptedPayload = {
   text?: string;
@@ -112,128 +114,171 @@ export function ChatMessageItem({
 
   const renderStatus = () => {
     if (!isMine) return null;
-    if (readStatus === 'read') return <CheckCheck className="w-3 h-3 text-blue-500 ml-1 inline" />;
-    if (readStatus === 'delivered') return <CheckCheck className="w-3 h-3 text-muted-foreground ml-1 inline opacity-70" />;
-    return <Check className="w-3 h-3 text-muted-foreground ml-1 inline opacity-70" />;
+    if (readStatus === 'read') return <CheckCheck className="ml-1 inline h-3 w-3 text-blue-500" />;
+    if (readStatus === 'delivered')
+      return <CheckCheck className="text-muted-foreground ml-1 inline h-3 w-3 opacity-70" />;
+    return <Check className="text-muted-foreground ml-1 inline h-3 w-3 opacity-70" />;
   };
 
   return (
-    <div id={`msg-${message.id}`} className={cn('flex w-full mb-4 min-w-0', isMine ? 'justify-end' : 'justify-start gap-2')}>
+    <div
+      id={`msg-${message.id}`}
+      className={cn('mb-4 flex w-full min-w-0', isMine ? 'justify-end' : 'justify-start gap-2')}
+    >
       {!isMine && (
-        <div className="flex-shrink-0 mt-auto" title={senderInfo?.name || senderInfo?.username || 'Unknown'}>
-           {senderInfo?.image ? (
-             <img src={senderInfo.image} alt="avatar" className="w-8 h-8 rounded-full object-cover" />
-           ) : (
-             <div className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center text-xs font-semibold text-muted-foreground">
-               {(senderInfo?.name?.[0] || senderInfo?.username?.[0] || '?').toUpperCase()}
-             </div>
-           )}
+        <div
+          className="mt-auto flex-shrink-0"
+          title={senderInfo?.name || senderInfo?.username || 'Unknown'}
+        >
+          {senderInfo?.image ? (
+            <img
+              src={senderInfo.image}
+              alt="avatar"
+              className="h-8 w-8 rounded-full object-cover"
+            />
+          ) : (
+            <div className="bg-muted border-border text-muted-foreground flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold">
+              {(senderInfo?.name?.[0] || senderInfo?.username?.[0] || '?').toUpperCase()}
+            </div>
+          )}
         </div>
       )}
-      <div className={cn("relative group/bubble max-w-[75%] min-w-0", isMine && "mr-6 lg:mr-8")}>
+      <div className={cn('group/bubble relative min-w-0 max-w-[75%]', isMine && 'mr-6 lg:mr-8')}>
         <div
           className={cn(
-            'rounded-2xl px-3 py-2 text-sm break-words break-all min-w-0 transition-colors duration-500',
+            'min-w-0 break-words break-all rounded-2xl px-3 py-2 text-sm transition-colors duration-500',
             isMine ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground',
             error && 'bg-destructive text-destructive-foreground opacity-50',
-            isPulsing && (isMine ? 'ring-2 ring-white/50 bg-primary/80 animate-pulse' : 'ring-2 ring-primary bg-primary/20 animate-pulse')
+            isPulsing &&
+              (isMine
+                ? 'bg-primary/80 animate-pulse ring-2 ring-white/50'
+                : 'ring-primary bg-primary/20 animate-pulse ring-2'),
           )}
         >
-        {message.replyToMessage && (
-          <div 
-            onClick={() => onScrollToMessage?.(message.replyToMessage!.id)}
-            className={cn(
-              "text-xs mb-1 pl-2 border-l-2 opacity-80 truncate max-w-[200px] cursor-pointer hover:underline flex flex-col",
-              isMine ? "border-primary-foreground/50" : "border-primary/50"
-            )}
-          >
-             <span className="font-semibold mb-0.5">Trả lời:</span>
-             <span className="truncate">
-               {message.replyToMessage.isUnsent 
-                 ? 'Đã thu hồi' 
-                 : (replyPayload?.text || (replyPayload?.mediaId ? '[Hình ảnh/Tệp đính kèm]' : (replyPayload?.stickerId ? '[Nhãn dán]' : 'Tin nhắn')))}
-             </span>
+          {message.replyToMessage && (
+            <div
+              onClick={() => onScrollToMessage?.(message.replyToMessage!.id)}
+              className={cn(
+                'mb-1 flex max-w-[200px] cursor-pointer flex-col truncate border-l-2 pl-2 text-xs opacity-80 hover:underline',
+                isMine ? 'border-primary-foreground/50' : 'border-primary/50',
+              )}
+            >
+              <span className="mb-0.5 font-semibold">Trả lời:</span>
+              <span className="truncate">
+                {message.replyToMessage.isUnsent
+                  ? 'Đã thu hồi'
+                  : replyPayload?.text ||
+                    (replyPayload?.mediaId
+                      ? '[Hình ảnh/Tệp đính kèm]'
+                      : replyPayload?.stickerId
+                        ? '[Nhãn dán]'
+                        : 'Tin nhắn')}
+              </span>
+            </div>
+          )}
+          {message.isUnsent ? (
+            <p className="flex items-center gap-1 italic opacity-60">Tin nhắn đã bị thu hồi</p>
+          ) : !roomKey ? (
+            <p className="italic opacity-50">Đang giải mã khóa...</p>
+          ) : error ? (
+            <p className="italic">Không thể giải mã tin nhắn</p>
+          ) : !payload ? (
+            <p className="italic opacity-50">Đang giải mã...</p>
+          ) : (
+            <>
+              {payload.text ? (
+                <p className="whitespace-pre-wrap break-words break-all">{payload.text}</p>
+              ) : null}
+              {payload.stickerId ? (
+                MOCK_STICKERS.find((s) => s.id === payload.stickerId) ? (
+                  <img
+                    src={MOCK_STICKERS.find((s) => s.id === payload.stickerId)!.url}
+                    alt="Sticker"
+                    className="h-24 w-24 object-contain"
+                  />
+                ) : (
+                  <p className="italic opacity-80">[Nhãn dán: {payload.stickerId}]</p>
+                )
+              ) : null}
+              {payload.mediaId ? (
+                payload.mediaUrl && payload.iv ? (
+                  <ChatMediaViewer
+                    mediaUrl={payload.mediaUrl}
+                    blurDataUrl={payload.blurDataUrl}
+                    width={payload.width}
+                    height={payload.height}
+                    iv={payload.iv}
+                    roomKey={roomKey}
+                    fileName={payload.fileName}
+                    fileType={payload.fileType}
+                  />
+                ) : (
+                  <p className="italic opacity-80">[Tệp đính kèm: {payload.mediaId}]</p>
+                )
+              ) : null}
+            </>
+          )}
+          <div className="mt-1 flex items-center justify-between">
+            <p
+              className={cn(
+                'text-[10px] opacity-80',
+                isMine ? 'text-primary-foreground' : 'text-muted-foreground',
+              )}
+            >
+              {timeStr}
+            </p>
+            {renderStatus()}
           </div>
-        )}
-        {message.isUnsent ? (
-          <p className="italic opacity-60 flex items-center gap-1">Tin nhắn đã bị thu hồi</p>
-        ) : !roomKey ? (
-          <p className="opacity-50 italic">Đang giải mã khóa...</p>
-        ) : error ? (
-          <p className="italic">Không thể giải mã tin nhắn</p>
-        ) : !payload ? (
-          <p className="opacity-50 italic">Đang giải mã...</p>
-        ) : (
-          <>
-            {payload.text ? <p className="whitespace-pre-wrap break-words break-all">{payload.text}</p> : null}
-            {payload.stickerId ? (
-              MOCK_STICKERS.find(s => s.id === payload.stickerId) ? (
-                <img src={MOCK_STICKERS.find(s => s.id === payload.stickerId)!.url} alt="Sticker" className="w-24 h-24 object-contain" />
-              ) : (
-                <p className="italic opacity-80">[Nhãn dán: {payload.stickerId}]</p>
-              )
-            ) : null}
-            {payload.mediaId ? (
-              payload.mediaUrl && payload.iv ? (
-                <ChatMediaViewer 
-                  mediaUrl={payload.mediaUrl}
-                  blurDataUrl={payload.blurDataUrl}
-                  width={payload.width}
-                  height={payload.height}
-                  iv={payload.iv}
-                  roomKey={roomKey}
-                  fileName={payload.fileName}
-                  fileType={payload.fileType}
-                />
-              ) : (
-                <p className="italic opacity-80">[Tệp đính kèm: {payload.mediaId}]</p>
-              )
-            ) : null}
-          </>
-        )}
-        <div className="flex items-center justify-between mt-1">
-          <p
-            className={cn(
-              'text-[10px] opacity-80',
-              isMine ? 'text-primary-foreground' : 'text-muted-foreground',
-            )}
-          >
-            {timeStr}
-          </p>
-          {renderStatus()}
-        </div>
-        
-        {/* Reactions */}
-        {message.reactions && message.reactions.length > 0 && (
-          <div className="absolute -bottom-3 flex gap-1 bg-background border border-border rounded-full px-1.5 py-0.5 shadow-sm text-xs z-10" style={isMine ? { right: 10 } : { left: 10 }}>
-            {Array.from(new Set(message.reactions.map(r => r.emoji))).map(emoji => {
-              const count = message.reactions!.filter(r => r.emoji === emoji).length;
-              return (
-                <span key={emoji} className="flex items-center space-x-0.5 cursor-pointer hover:bg-muted rounded-full px-1" onClick={() => onReact?.(emoji)}>
-                  <span>{emoji}</span>
-                  {count > 1 && <span className="text-[10px] font-medium text-foreground">{count}</span>}
-                </span>
-              );
-            })}
-          </div>
-        )}
+
+          {/* Reactions */}
+          {message.reactions && message.reactions.length > 0 && (
+            <div
+              className="bg-background border-border absolute -bottom-3 z-10 flex gap-1 rounded-full border px-1.5 py-0.5 text-xs shadow-sm"
+              style={isMine ? { right: 10 } : { left: 10 }}
+            >
+              {Array.from(new Set(message.reactions.map((r) => r.emoji))).map((emoji) => {
+                const count = message.reactions!.filter((r) => r.emoji === emoji).length;
+                return (
+                  <span
+                    key={emoji}
+                    className="hover:bg-muted flex cursor-pointer items-center space-x-0.5 rounded-full px-1"
+                    onClick={() => onReact?.(emoji)}
+                  >
+                    <span>{emoji}</span>
+                    {count > 1 && (
+                      <span className="text-foreground text-[10px] font-medium">{count}</span>
+                    )}
+                  </span>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Hover Action Menu */}
         {!message.isUnsent && (
-          <div className={cn(
-            "absolute top-0 opacity-0 group-hover/bubble:opacity-100 transition-opacity flex items-center gap-1 bg-background border border-border rounded-lg shadow-sm p-1 z-20 text-foreground",
-            isMine ? "right-full mr-2" : "left-full ml-2"
-          )}>
+          <div
+            className={cn(
+              'bg-background border-border text-foreground absolute top-0 z-20 flex items-center gap-1 rounded-lg border p-1 opacity-0 shadow-sm transition-opacity group-hover/bubble:opacity-100',
+              isMine ? 'right-full mr-2' : 'left-full ml-2',
+            )}
+          >
             {onReact && (
-              <div className="relative group/emoji">
-                <button className="p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground rounded-md transition-colors" title="Bày tỏ cảm xúc">
-                  <SmilePlus className="w-4 h-4" />
+              <div className="group/emoji relative">
+                <button
+                  className="text-muted-foreground hover:bg-muted hover:text-foreground rounded-md p-1.5 transition-colors"
+                  title="Bày tỏ cảm xúc"
+                >
+                  <SmilePlus className="h-4 w-4" />
                 </button>
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 pb-1 hidden group-hover/emoji:block">
-                  <div className="bg-background border border-border rounded-full shadow-md p-1 gap-1 flex">
-                    {['👍', '❤️', '😂', '😮', '😢', '🙏'].map(emoji => (
-                      <button key={emoji} onClick={() => onReact(emoji)} className="w-8 h-8 hover:bg-muted rounded-full flex items-center justify-center text-lg transition-transform hover:scale-110">
+                <div className="absolute bottom-full left-1/2 hidden -translate-x-1/2 pb-1 group-hover/emoji:block">
+                  <div className="bg-background border-border flex gap-1 rounded-full border p-1 shadow-md">
+                    {['👍', '❤️', '😂', '😮', '😢', '🙏'].map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => onReact(emoji)}
+                        className="hover:bg-muted flex h-8 w-8 items-center justify-center rounded-full text-lg transition-transform hover:scale-110"
+                      >
                         {emoji}
                       </button>
                     ))}
@@ -242,23 +287,39 @@ export function ChatMessageItem({
               </div>
             )}
             {onReply && (
-              <button onClick={onReply} className="p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground rounded-md transition-colors" title="Trả lời">
-                <Reply className="w-4 h-4" />
+              <button
+                onClick={onReply}
+                className="text-muted-foreground hover:bg-muted hover:text-foreground rounded-md p-1.5 transition-colors"
+                title="Trả lời"
+              >
+                <Reply className="h-4 w-4" />
               </button>
             )}
             {onForward && (
-              <button onClick={onForward} className="p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground rounded-md transition-colors" title="Chuyển tiếp">
-                <Forward className="w-4 h-4" />
+              <button
+                onClick={onForward}
+                className="text-muted-foreground hover:bg-muted hover:text-foreground rounded-md p-1.5 transition-colors"
+                title="Chuyển tiếp"
+              >
+                <Forward className="h-4 w-4" />
               </button>
             )}
             {isMine && onUnsend && (
-              <button onClick={onUnsend} className="p-1.5 text-destructive hover:bg-destructive/10 rounded-md transition-colors" title="Thu hồi">
-                <XCircle className="w-4 h-4" />
+              <button
+                onClick={onUnsend}
+                className="text-destructive hover:bg-destructive/10 rounded-md p-1.5 transition-colors"
+                title="Thu hồi"
+              >
+                <XCircle className="h-4 w-4" />
               </button>
             )}
             {onDelete && (
-              <button onClick={onDelete} className="p-1.5 text-destructive hover:bg-destructive/10 rounded-md transition-colors" title="Xoá (chỉ mình tôi)">
-                <Trash2 className="w-4 h-4" />
+              <button
+                onClick={onDelete}
+                className="text-destructive hover:bg-destructive/10 rounded-md p-1.5 transition-colors"
+                title="Xoá (chỉ mình tôi)"
+              >
+                <Trash2 className="h-4 w-4" />
               </button>
             )}
           </div>

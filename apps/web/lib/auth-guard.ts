@@ -1,5 +1,5 @@
-import type { NextRequest } from 'next/server';
 import { getSessionCookie } from 'better-auth/cookies';
+import type { NextRequest } from 'next/server';
 
 /**
  * Edge-safe check: chỉ cookie **session token** (`better-auth.session_token` hoặc
@@ -19,11 +19,7 @@ export function hasBetterAuthSessionCookie(request: NextRequest): boolean {
  */
 export function isPathPublic(pathname: string): boolean {
   if (pathname.startsWith('/api')) return true;
-  if (
-    pathname === '/favicon.ico' ||
-    pathname === '/robots.txt' ||
-    pathname === '/manifest.json'
-  ) {
+  if (pathname === '/favicon.ico' || pathname === '/robots.txt' || pathname === '/manifest.json') {
     return true;
   }
   if (

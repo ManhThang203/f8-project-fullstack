@@ -32,9 +32,9 @@ Không viết `<table>` inline trong `page.tsx`. Không dùng `TableSkeleton` ge
 1. Khai báo cột đầu file:
 
 ```tsx
-const colMain = adminCol('grow', 'start');      // nhiều dòng → stackCenter
-const colMeta = adminCol('grow', 'center');     // badge, số, text
-const colActions = adminCol('actions', 'end');  // actionsGroup
+const colMain = adminCol('grow', 'start'); // nhiều dòng → stackCenter
+const colMeta = adminCol('grow', 'center'); // badge, số, text
+const colActions = adminCol('actions', 'end'); // actionsGroup
 ```
 
 2. `<table className={adminTable.table}>` — không `min-w-[Npx]`.

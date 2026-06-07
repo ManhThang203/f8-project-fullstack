@@ -42,11 +42,7 @@ export default function HashtagsPage() {
         <HashtagsTableSkeleton rows={limit} />
       ) : (
         <>
-          <HashtagsTable
-            hashtags={hashtags}
-            isPending={patch.isPending}
-            onAction={handleAction}
-          />
+          <HashtagsTable hashtags={hashtags} isPending={patch.isPending} onAction={handleAction} />
           <CursorPagination
             limit={limit}
             onLimitChange={setLimit}

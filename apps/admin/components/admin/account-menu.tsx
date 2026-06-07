@@ -63,7 +63,7 @@ export function AccountMenu({ role, permissions, onLogout }: Props) {
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full bg-muted text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+        className="bg-muted text-foreground hover:bg-accent inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-sm font-semibold transition-colors"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={t('account.openMenu')}
@@ -74,36 +74,36 @@ export function AccountMenu({ role, permissions, onLogout }: Props) {
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-border bg-card p-2 shadow-lg"
+          className="border-border bg-card absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border p-2 shadow-lg"
         >
-          <p className="border-b border-border px-3 py-2 text-sm text-muted-foreground">
+          <p className="border-border text-muted-foreground border-b px-3 py-2 text-sm">
             @{username}
           </p>
 
-           <div className="space-y-2 px-3 py-3">
+          <div className="space-y-2 px-3 py-3">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs text-muted-foreground">{t('account.role')}</span>
+              <span className="text-muted-foreground text-xs">{t('account.role')}</span>
               {role ? (
-                <span className="rounded-md border border-border bg-muted px-2 py-0.5 text-xs font-medium">
+                <span className="border-border bg-muted rounded-md border px-2 py-0.5 text-xs font-medium">
                   {t(`roles.${role}`, role)}
                 </span>
               ) : (
-                <span className="text-xs text-muted-foreground">—</span>
+                <span className="text-muted-foreground text-xs">—</span>
               )}
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">{t('account.permissions')}</p>
+              <p className="text-muted-foreground text-xs">{t('account.permissions')}</p>
               {hasAllPermissions ? (
-                <p className="text-xs font-medium text-foreground">{t('account.allPermissions')}</p>
+                <p className="text-foreground text-xs font-medium">{t('account.allPermissions')}</p>
               ) : permissions.length === 0 ? (
-                <p className="text-xs text-muted-foreground">{t('account.noPermissions')}</p>
+                <p className="text-muted-foreground text-xs">{t('account.noPermissions')}</p>
               ) : (
                 <ul className="flex max-h-24 flex-wrap gap-1 overflow-y-auto">
                   {permissions.map((permission) => (
                     <li
                       key={permission}
                       className={cn(
-                        'rounded-md border border-border bg-muted px-2 py-0.5 text-xs text-foreground',
+                        'border-border bg-muted text-foreground rounded-md border px-2 py-0.5 text-xs',
                       )}
                     >
                       {t(`permissions.${permission}`, permission)}

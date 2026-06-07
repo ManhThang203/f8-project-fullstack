@@ -90,7 +90,7 @@ export default function ReportsPage() {
     <div className="space-y-5">
       <div>
         <h2 className="text-xl font-semibold">{t('reports.hubTitle')}</h2>
-        <p className="mt-0.5 text-sm text-muted-foreground">{t('reports.hubSubtitle')}</p>
+        <p className="text-muted-foreground mt-0.5 text-sm">{t('reports.hubSubtitle')}</p>
       </div>
 
       <ReportsHubTabs
@@ -127,8 +127,8 @@ export default function ReportsPage() {
       ) : (
         <>
           {items.length === 0 ? (
-            <div className="rounded-xl border border-border bg-card p-10 text-center">
-              <p className="text-sm text-muted-foreground">
+            <div className="border-border bg-card rounded-xl border p-10 text-center">
+              <p className="text-muted-foreground text-sm">
                 {hubTab === 'user-reports' ? t('reports.empty') : t('moderation.empty')}
               </p>
             </div>

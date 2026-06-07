@@ -1,25 +1,25 @@
 'use client';
 
 import { ErrorCode, type ProfileDto, type ProfileGridItemDto } from '@costy/shared';
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { ProfileSkeleton } from '@/components/profile/profile-skeleton';
-import { AvatarLightbox } from '@/components/profile/header/avatar-lightbox';
 import { CreatePostModal } from '@/components/home/compose/create-post-modal';
 import { MediaLightbox } from '@/components/profile/grid/media-lightbox';
+import { ProfileMediaGrid } from '@/components/profile/grid/profile-media-grid';
+import { AvatarLightbox } from '@/components/profile/header/avatar-lightbox';
 import { ProfileActions } from '@/components/profile/header/profile-actions';
 import { ProfileHeader } from '@/components/profile/header/profile-header';
-import { ProfileMediaGrid } from '@/components/profile/grid/profile-media-grid';
 import { ProfileStats } from '@/components/profile/header/profile-stats';
-import { ProfileTabs } from '@/components/profile/tabs/profile-tabs';
+import { ProfileSkeleton } from '@/components/profile/profile-skeleton';
 import { parseProfileTab } from '@/components/profile/profile-utils';
+import { ProfileTabs } from '@/components/profile/tabs/profile-tabs';
 import { Button } from '@/components/shared/button';
 import { useProfile } from '@/hooks/queries/use-profile';
+import { isApiQueryError } from '@/lib/api-query';
 import { authClient } from '@/lib/auth-client';
 import type { ServerAuthUser } from '@/lib/auth-user.types';
-import { isApiQueryError } from '@/lib/api-query';
 import { queryKeys } from '@/lib/query-keys';
 
 type Props = {
@@ -92,9 +92,7 @@ function ProfileViewInner({ username, initialUser }: Props) {
   );
 
   const notFound =
-    profileIsError &&
-    isApiQueryError(profileError) &&
-    profileError.code === ErrorCode.NOT_FOUND;
+    profileIsError && isApiQueryError(profileError) && profileError.code === ErrorCode.NOT_FOUND;
 
   if (profileLoading) {
     return <ProfileSkeleton />;
@@ -144,7 +142,11 @@ function ProfileViewInner({ username, initialUser }: Props) {
 
       {!isDeleted ? (
         <>
-          <ProfileTabs username={profile.username} isOwner={profile.isOwner} activeTab={activeTab} />
+          <ProfileTabs
+            username={profile.username}
+            isOwner={profile.isOwner}
+            activeTab={activeTab}
+          />
           <div
             role="tabpanel"
             id="profile-grid-panel"

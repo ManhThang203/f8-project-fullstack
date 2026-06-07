@@ -108,7 +108,14 @@ export async function runModerationJob(postId: string): Promise<void> {
 
   const post = await prisma.post.findUnique({
     where: { id: postId },
-    select: { id: true, content: true, authorId: true, parentId: true, deletedAt: true, hiddenAt: true },
+    select: {
+      id: true,
+      content: true,
+      authorId: true,
+      parentId: true,
+      deletedAt: true,
+      hiddenAt: true,
+    },
   });
 
   if (!post || post.deletedAt) return;
@@ -166,7 +173,8 @@ export async function listModerationCases(
   query: ModerationCaseListQuery,
 ): Promise<{ items: ModerationCaseDto[]; nextCursor: string | null }> {
   const limit = query.limit ?? 20;
-  const statusFilter = query.queue === 'open' ? [...openQueueStatuses] : query.status ? [query.status] : undefined;
+  const statusFilter =
+    query.queue === 'open' ? [...openQueueStatuses] : query.status ? [query.status] : undefined;
 
   const rows = await prisma.moderationCase.findMany({
     where: {

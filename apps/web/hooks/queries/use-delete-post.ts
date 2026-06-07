@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { apiFetch } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
 
@@ -13,7 +14,7 @@ export function useDeletePost() {
       }
       return res;
     },
-    onSuccess: (_, postId) => {
+    onSuccess: () => {
       // Refresh feed
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.feed });
       // Invalidate comments as well if this was a comment

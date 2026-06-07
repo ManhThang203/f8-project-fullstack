@@ -57,18 +57,21 @@ export function ResetPasswordForm() {
 
   if (tokenInvalid) {
     return (
-      <main className="min-h-screen bg-background px-4 py-12">
-        <div className="mx-auto w-full max-w-md rounded-[var(--radius)] border border-border bg-card p-6 shadow-sm">
+      <main className="bg-background min-h-screen px-4 py-12">
+        <div className="border-border bg-card mx-auto w-full max-w-md rounded-[var(--radius)] border p-6 shadow-sm">
           <h1 className="text-xl font-semibold tracking-tight">Liên kết không hợp lệ</h1>
-          <p className="mt-2 text-sm text-muted-foreground" role="alert">
+          <p className="text-muted-foreground mt-2 text-sm" role="alert">
             Liên kết đặt lại mật khẩu đã hết hạn hoặc không đúng. Hãy yêu cầu gửi lại email.
           </p>
           <p className="mt-6 text-center text-sm">
-            <Link href="/forgot-password" className="font-medium text-foreground underline underline-offset-4">
+            <Link
+              href="/forgot-password"
+              className="text-foreground font-medium underline underline-offset-4"
+            >
               Gửi lại liên kết
             </Link>
           </p>
-          <p className="mt-4 text-center text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-4 text-center text-xs">
             <Link href="/" className="underline underline-offset-4">
               ← Về trang chủ
             </Link>
@@ -80,14 +83,17 @@ export function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <main className="min-h-screen bg-background px-4 py-12">
-        <div className="mx-auto w-full max-w-md rounded-[var(--radius)] border border-border bg-card p-6 shadow-sm">
+      <main className="bg-background min-h-screen px-4 py-12">
+        <div className="border-border bg-card mx-auto w-full max-w-md rounded-[var(--radius)] border p-6 shadow-sm">
           <h1 className="text-xl font-semibold tracking-tight">Đặt lại mật khẩu</h1>
-          <p className="mt-2 text-sm text-muted-foreground" role="alert">
+          <p className="text-muted-foreground mt-2 text-sm" role="alert">
             Thiếu mã xác thực. Mở liên kết đầy đủ từ email hoặc yêu cầu gửi lại.
           </p>
           <p className="mt-6 text-center text-sm">
-            <Link href="/forgot-password" className="font-medium text-foreground underline underline-offset-4">
+            <Link
+              href="/forgot-password"
+              className="text-foreground font-medium underline underline-offset-4"
+            >
               Quên mật khẩu
             </Link>
           </p>
@@ -97,10 +103,12 @@ export function ResetPasswordForm() {
   }
 
   return (
-    <main className="min-h-screen bg-background px-4 py-12">
-      <div className="mx-auto w-full max-w-md rounded-[var(--radius)] border border-border bg-card p-6 shadow-sm">
+    <main className="bg-background min-h-screen px-4 py-12">
+      <div className="border-border bg-card mx-auto w-full max-w-md rounded-[var(--radius)] border p-6 shadow-sm">
         <h1 className="text-xl font-semibold tracking-tight">Đặt lại mật khẩu</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Nhập mật khẩu mới cho tài khoản của bạn.</p>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Nhập mật khẩu mới cho tài khoản của bạn.
+        </p>
 
         <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
           {errors.root ? (
@@ -110,7 +118,7 @@ export function ResetPasswordForm() {
           ) : null}
 
           <div>
-            <label className="text-xs font-medium text-muted-foreground" htmlFor="new-password">
+            <label className="text-muted-foreground text-xs font-medium" htmlFor="new-password">
               Mật khẩu mới
             </label>
             <input
@@ -127,7 +135,7 @@ export function ResetPasswordForm() {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-muted-foreground" htmlFor="confirm-password">
+            <label className="text-muted-foreground text-xs font-medium" htmlFor="confirm-password">
               Nhập lại mật khẩu
             </label>
             <input
@@ -146,18 +154,21 @@ export function ResetPasswordForm() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="min-h-11 rounded-full bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-opacity disabled:opacity-40"
+            className="bg-primary text-primary-foreground min-h-11 rounded-full py-2.5 text-sm font-semibold transition-opacity disabled:opacity-40"
           >
             {isSubmitting ? 'Đang lưu…' : 'Lưu mật khẩu mới'}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          <Link href={loginHref} className="font-medium text-foreground underline underline-offset-4">
+        <p className="text-muted-foreground mt-6 text-center text-sm">
+          <Link
+            href={loginHref}
+            className="text-foreground font-medium underline underline-offset-4"
+          >
             Đăng nhập
           </Link>
         </p>
-        <p className="mt-4 text-center text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-4 text-center text-xs">
           <Link href="/" className="underline underline-offset-4">
             ← Về trang chủ
           </Link>

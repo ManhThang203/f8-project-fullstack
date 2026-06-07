@@ -90,7 +90,7 @@ export function ReportStatusDonutChart({ breakdown, isLoading }: Props) {
                 />
                 <span className="text-muted-foreground">
                   {chartConfig[row.status].label}{' '}
-                  <span className="font-medium text-foreground">({row.value})</span>
+                  <span className="text-foreground font-medium">({row.value})</span>
                 </span>
               </li>
             ))}

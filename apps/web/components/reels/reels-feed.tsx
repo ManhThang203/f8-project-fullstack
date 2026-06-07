@@ -4,14 +4,14 @@ import { ErrorCode } from '@costy/shared';
 import { notFound } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { Button } from '@/components/shared/button';
-import { flattenReelsFeedPages, useReelsFeed } from '@/hooks/queries/use-reels-feed';
-import { isApiQueryError } from '@/lib/api-query';
-
 import { ReelsNavControls } from './controls/reels-nav-controls';
 import { ReelsAudioProvider } from './reels-audio-context';
 import { ReelsSkeleton } from './reels-skeleton';
 import { ReelsSlide } from './reels-slide';
+
+import { Button } from '@/components/shared/button';
+import { flattenReelsFeedPages, useReelsFeed } from '@/hooks/queries/use-reels-feed';
+import { isApiQueryError } from '@/lib/api-query';
 
 const SLIDE_HEIGHT = 'h-[calc(100dvh-3.5rem)]';
 

@@ -5,8 +5,8 @@ import { toast } from 'sonner';
 
 import { PostFooter } from './post-footer';
 import { ReactionFace, type PostReactionId } from './reaction-face';
-import { useReactPost } from '@/hooks/use-react-post';
 
+import { useReactPost } from '@/hooks/use-react-post';
 import { cn } from '@/lib/utils';
 
 export type { PostReactionId };
@@ -42,7 +42,13 @@ function reactionSummaryStack(
   return [primary, secondary];
 }
 
-export function PostActionBar({ postId, replyCount, initialLikeCount, initialReaction, onCommentClick }: Props) {
+export function PostActionBar({
+  postId,
+  replyCount,
+  initialLikeCount,
+  initialReaction,
+  onCommentClick,
+}: Props) {
   const [shareCount, setShareCount] = useState(0);
   const [showPicker, setShowPicker] = useState(false);
 
@@ -71,11 +77,14 @@ export function PostActionBar({ postId, replyCount, initialLikeCount, initialRea
   useEffect(() => () => clearHideTimer(), [clearHideTimer]);
 
   function submitReaction(newReaction: PostReactionId | null) {
-    reactMutation.mutate({ postId, type: newReaction }, {
-      onError: () => {
-        toast.error('Có lỗi xảy ra, vui lòng thử lại');
-      }
-    });
+    reactMutation.mutate(
+      { postId, type: newReaction },
+      {
+        onError: () => {
+          toast.error('Có lỗi xảy ra, vui lòng thử lại');
+        },
+      },
+    );
   }
 
   function selectReaction(id: PostReactionId) {
@@ -186,7 +195,6 @@ export function PostActionBar({ postId, replyCount, initialLikeCount, initialRea
         }}
         currentReaction={initialReaction}
       />
-
     </div>
   );
 }

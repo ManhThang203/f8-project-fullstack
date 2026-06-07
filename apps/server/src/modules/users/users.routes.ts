@@ -115,26 +115,36 @@ router.get(
 );
 
 // POST /users/:id/follow — follow một user (yêu cầu auth).
-router.post('/:id/follow', requireAuth, validate(userIdParamSchema, 'params'), async (req, res, next) => {
-  try {
-    const { id } = req.params as z.infer<typeof userIdParamSchema>;
-    const result = await usersService.followUser(req.auth!.userId, id);
-    res.json(ok(result));
-  } catch (e) {
-    next(e);
-  }
-});
+router.post(
+  '/:id/follow',
+  requireAuth,
+  validate(userIdParamSchema, 'params'),
+  async (req, res, next) => {
+    try {
+      const { id } = req.params as z.infer<typeof userIdParamSchema>;
+      const result = await usersService.followUser(req.auth!.userId, id);
+      res.json(ok(result));
+    } catch (e) {
+      next(e);
+    }
+  },
+);
 
 // DELETE /users/:id/follow — hủy follow một user (yêu cầu auth).
-router.delete('/:id/follow', requireAuth, validate(userIdParamSchema, 'params'), async (req, res, next) => {
-  try {
-    const { id } = req.params as z.infer<typeof userIdParamSchema>;
-    const result = await usersService.unfollowUser(req.auth!.userId, id);
-    res.json(ok(result));
-  } catch (e) {
-    next(e);
-  }
-});
+router.delete(
+  '/:id/follow',
+  requireAuth,
+  validate(userIdParamSchema, 'params'),
+  async (req, res, next) => {
+    try {
+      const { id } = req.params as z.infer<typeof userIdParamSchema>;
+      const result = await usersService.unfollowUser(req.auth!.userId, id);
+      res.json(ok(result));
+    } catch (e) {
+      next(e);
+    }
+  },
+);
 
 // GET /users/:username — profile công khai của một user.
 router.get('/:username', validate(usernameParamSchema, 'params'), async (req, res, next) => {

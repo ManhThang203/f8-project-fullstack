@@ -1,17 +1,17 @@
 'use client';
 
-import { Bell, Clapperboard, Home, Menu, MessageCircle, Search, UsersRound } from 'lucide-react';
+import { CotsyLogo } from '@costy/ui';
+import { Clapperboard, Home, Menu, MessageCircle, Search, UsersRound } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 
-import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
+import { NotificationDropdown } from './notification-dropdown';
 
+import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 import { Avatar } from '@/components/shared/avatar';
-import { CotsyLogo } from '@costy/ui';
 import { iconButtonClass } from '@/components/shared/icon-button';
 import { NotificationBadge } from '@/components/shared/notification-badge';
-import { NotificationDropdown } from './notification-dropdown';
 import { authClient } from '@/lib/auth-client';
 import type { ServerAuthUser } from '@/lib/auth-user.types';
 import { resetChatSocket } from '@/lib/chat-socket';
@@ -54,13 +54,13 @@ function NavTab({
       title={label}
       className={cn(
         'relative flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+        'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
         isActive ? 'text-primary' : 'text-muted-foreground hover:bg-muted',
       )}
     >
       {isActive ? (
         <span
-          className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-primary"
+          className="bg-primary absolute bottom-0 left-2 right-2 h-0.5 rounded-full"
           aria-hidden
         />
       ) : null}
@@ -78,10 +78,7 @@ function ChatTrigger({
   chatDock: { toggleHub: () => void } | null;
 }) {
   const label = unreadCount > 0 ? `Tin nhắn, ${unreadCount} chưa đọc` : 'Tin nhắn';
-  const sharedClass = cn(
-    'relative',
-    iconButtonClass({ shape: 'circle' }),
-  );
+  const sharedClass = cn('relative', iconButtonClass({ shape: 'circle' }));
 
   if (chatDock) {
     return (
@@ -166,24 +163,24 @@ export function SiteHeader({ initialUser }: Props) {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/80">
+    <header className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-50 border-b backdrop-blur-sm">
       <div className="mx-auto flex h-14 max-w-screen-2xl items-center gap-2 px-3 sm:gap-4 sm:px-4">
         {/* Trái: logo + tìm kiếm */}
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <Link
             href="/"
             aria-label="Cotsy — Trang chủ"
-            className="flex shrink-0 min-h-11 items-center gap-2 rounded-lg px-1 text-base font-semibold tracking-tight text-foreground transition-colors hover:text-foreground/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="text-foreground hover:text-foreground/90 focus-visible:ring-ring focus-visible:ring-offset-background flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-1 text-base font-semibold tracking-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
           >
             <CotsyLogo className="h-8 w-8" priority />
             Cotsy
           </Link>
-          <div className="relative min-h-10 min-w-0 flex-1 max-w-xs">
+          <div className="relative min-h-10 min-w-0 max-w-xs flex-1">
             <label htmlFor="site-header-search" className="sr-only">
               Tìm kiếm
             </label>
             <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
               aria-hidden
             />
             <input
@@ -191,7 +188,7 @@ export function SiteHeader({ initialUser }: Props) {
               type="search"
               placeholder="Tìm kiếm…"
               autoComplete="off"
-              className="h-10 w-full rounded-full border border-border bg-muted/60 py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground transition-[box-shadow,background-color] hover:bg-muted focus-visible:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="border-border bg-muted/60 text-foreground placeholder:text-muted-foreground hover:bg-muted focus-visible:bg-background focus-visible:ring-ring h-10 w-full rounded-full border py-2 pl-9 pr-3 text-sm transition-[box-shadow,background-color] focus-visible:outline-none focus-visible:ring-2"
             />
           </div>
         </div>
@@ -235,17 +232,17 @@ export function SiteHeader({ initialUser }: Props) {
                   <Menu className="h-6 w-6" strokeWidth={2} aria-hidden />
                 </summary>
                 <div
-                  className="absolute right-0 top-full z-[60] mt-2 w-52 rounded-xl border border-border bg-card py-2 text-sm shadow-md"
+                  className="border-border bg-card absolute right-0 top-full z-[60] mt-2 w-52 rounded-xl border py-2 text-sm shadow-md"
                   role="menu"
                 >
                   <Link
                     href="/"
-                    className="block px-4 py-3 text-card-foreground transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+                    className="text-card-foreground hover:bg-muted focus-visible:bg-muted block px-4 py-3 transition-colors focus-visible:outline-none"
                     role="menuitem"
                   >
                     Trang chủ
                   </Link>
-                  <p className="px-4 py-2 text-xs text-muted-foreground" role="presentation">
+                  <p className="text-muted-foreground px-4 py-2 text-xs" role="presentation">
                     Cài đặt — sắp có
                   </p>
                 </div>
@@ -268,17 +265,17 @@ export function SiteHeader({ initialUser }: Props) {
                   <Avatar as="span" size="md" name={me.name} username={me.username} />
                 </summary>
                 <div
-                  className="absolute right-0 top-full z-[60] mt-2 w-56 rounded-xl border border-border bg-card py-2 text-sm shadow-md"
+                  className="border-border bg-card absolute right-0 top-full z-[60] mt-2 w-56 rounded-xl border py-2 text-sm shadow-md"
                   role="menu"
                 >
-                  <p className="border-b border-border px-4 py-3 text-xs text-muted-foreground">
+                  <p className="border-border text-muted-foreground border-b px-4 py-3 text-xs">
                     @{me.username || me.name || me.id.slice(0, 8)}
                   </p>
                   <button
                     type="button"
                     onClick={() => void onLogout()}
                     disabled={loggingOut}
-                    className="w-full px-4 py-3 text-left font-medium text-foreground transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none disabled:opacity-40"
+                    className="text-foreground hover:bg-muted focus-visible:bg-muted w-full px-4 py-3 text-left font-medium transition-colors focus-visible:outline-none disabled:opacity-40"
                     role="menuitem"
                   >
                     {loggingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}
@@ -298,13 +295,13 @@ export function SiteHeader({ initialUser }: Props) {
               ) : null}
               <Link
                 href="/login"
-                className="flex min-h-11 items-center justify-center rounded-full border border-border px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="border-border text-foreground hover:bg-muted focus-visible:ring-ring focus-visible:ring-offset-background flex min-h-11 items-center justify-center rounded-full border px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
               >
                 Đăng nhập
               </Link>
               <Link
                 href="/register"
-                className="flex min-h-11 items-center justify-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="bg-primary text-primary-foreground focus-visible:ring-ring focus-visible:ring-offset-background flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
               >
                 Đăng ký
               </Link>
@@ -314,7 +311,7 @@ export function SiteHeader({ initialUser }: Props) {
       </div>
       {logoutError ? (
         <p
-          className="border-t border-border bg-background px-4 py-2 text-sm text-red-600 dark:text-red-400"
+          className="border-border bg-background border-t px-4 py-2 text-sm text-red-600 dark:text-red-400"
           role="alert"
         >
           {logoutError}

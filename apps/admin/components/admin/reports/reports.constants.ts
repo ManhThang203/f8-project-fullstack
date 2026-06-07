@@ -15,12 +15,7 @@ export type ReportReason =
   | 'NOT_INTERESTED';
 export type TargetType = 'POST' | 'USER' | 'COMMENT';
 
-export const ALL_STATUSES: ReportStatusFilter[] = [
-  'OPEN',
-  'UNDER_REVIEW',
-  'RESOLVED',
-  'DISMISSED',
-];
+export const ALL_STATUSES: ReportStatusFilter[] = ['OPEN', 'UNDER_REVIEW', 'RESOLVED', 'DISMISSED'];
 
 /** Key i18n cho nhãn tab lọc trạng thái (OPEN chỉ là giá trị nội bộ, không hiển thị ra UI). */
 export const STATUS_FILTER_I18N_KEYS: Record<ReportStatusFilter, string> = {

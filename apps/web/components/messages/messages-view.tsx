@@ -4,9 +4,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Plus, Send, Users, X, ImagePlus, Paperclip, Smile } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
-import type { Socket } from 'socket.io-client';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
+import type { Socket } from 'socket.io-client';
+
+import { ChatMessageItem } from './chat-message-item';
+import { EmojiStickerPicker } from './emoji-sticker-picker';
 
 import {
   EMPTY_CONVERSATIONS,
@@ -16,19 +19,18 @@ import {
   useInvalidateChatConversations,
   useCreateChatRoomMutation,
 } from '@/hooks/queries/use-chat-queries';
-import {
-  EMPTY_USER_SEARCH,
-  useUsersSearch,
-} from '@/hooks/queries/use-users-search';
+import { EMPTY_USER_SEARCH, useUsersSearch } from '@/hooks/queries/use-users-search';
 import { useDebounced } from '@/hooks/use-debounced';
 import { authClient } from '@/lib/auth-client';
 import { getChatSocket } from '@/lib/chat-socket';
+import {
+  decryptRoomKeyWithRSA,
+  encryptPayloadWithAES,
+  decryptPayloadWithAES,
+} from '@/lib/e2ee/crypto-utils';
+import { getCachedRoomKey, setCachedRoomKey } from '@/lib/e2ee/key-storage';
 import { queryKeys } from '@/lib/query-keys';
 import { cn } from '@/lib/utils';
-import { ChatMessageItem } from './chat-message-item';
-import { EmojiStickerPicker } from './emoji-sticker-picker';
-import { decryptRoomKeyWithRSA, encryptPayloadWithAES, decryptPayloadWithAES } from '@/lib/e2ee/crypto-utils';
-import { getPrivateKey, getCachedRoomKey, setCachedRoomKey } from '@/lib/e2ee/key-storage';
 import type { ChatMessageDto, ChatPeerDto, Conversation } from '@/types/chat';
 
 function peerLabel(p: ChatPeerDto) {
@@ -133,37 +135,51 @@ function NewChatModal({
   );
 }
 
-function DecryptedLastMessage({ conversation, privateKey }: { conversation: Conversation; privateKey: CryptoKey | null }) {
+function DecryptedLastMessage({
+  conversation,
+  privateKey,
+}: {
+  conversation: Conversation;
+  privateKey: CryptoKey | null;
+}) {
   const [text, setText] = useState<string>('Tin nhắn E2EE...');
-  
+
   useEffect(() => {
     if (!conversation.lastMessage || !conversation.encryptedRoomKey || !privateKey) return;
     let cancelled = false;
 
     const cachedRoomKey = getCachedRoomKey(conversation.id);
-    const getRoomKey = cachedRoomKey 
-      ? Promise.resolve(cachedRoomKey) 
-      : decryptRoomKeyWithRSA(conversation.encryptedRoomKey, privateKey).then(k => { setCachedRoomKey(conversation.id, k); return k; });
+    const getRoomKey = cachedRoomKey
+      ? Promise.resolve(cachedRoomKey)
+      : decryptRoomKeyWithRSA(conversation.encryptedRoomKey, privateKey).then((k) => {
+          setCachedRoomKey(conversation.id, k);
+          return k;
+        });
 
-    getRoomKey.then(roomKey => {
-      if (cancelled) return;
-      return decryptPayloadWithAES(conversation.lastMessage!.encryptedPayload, roomKey);
-    }).then(str => {
-      if (cancelled || !str) return;
-      try {
-        const parsed = JSON.parse(str);
-        if (parsed.text) setText(parsed.text);
-        else if (parsed.mediaId) setText('[Hình ảnh/Tệp đính kèm]');
-        else if (parsed.stickerId) setText('[Nhãn dán]');
-        else setText('Tin nhắn');
-      } catch {
-        setText(str);
-      }
-    }).catch(err => {
-      if (!cancelled) setText('Không thể giải mã');
-    });
+    getRoomKey
+      .then((roomKey) => {
+        if (cancelled) return;
+        return decryptPayloadWithAES(conversation.lastMessage!.encryptedPayload, roomKey);
+      })
+      .then((str) => {
+        if (cancelled || !str) return;
+        try {
+          const parsed = JSON.parse(str);
+          if (parsed.text) setText(parsed.text);
+          else if (parsed.mediaId) setText('[Hình ảnh/Tệp đính kèm]');
+          else if (parsed.stickerId) setText('[Nhãn dán]');
+          else setText('Tin nhắn');
+        } catch {
+          setText(str);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setText('Không thể giải mã');
+      });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [conversation.lastMessage, conversation.encryptedRoomKey, privateKey]);
 
   return <>{text}</>;
@@ -199,30 +215,38 @@ export function MessagesView() {
 
   useEffect(() => {
     if (!meId) return;
-    
-    let cancelled = false;
-    import('@/lib/e2ee/key-storage').then(({ initializeUserKeys }) => {
-      return initializeUserKeys();
-    }).then(async (keys) => {
-      if (cancelled) return;
-      setPrivateKey(keys.privateKey);
-      
-      // We must make sure the server has our public key. Let's export it and upload it just in case.
-      // (This should ideally be done only once or checked via another endpoint, but it's idempotent)
-      const { exportKeyToBase64 } = await import('@/lib/e2ee/crypto-utils');
-      const publicKeyBase64 = await exportKeyToBase64(keys.publicKey);
-      
-      fetch('/api/v1/chat/keys', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ publicKey: publicKeyBase64 })
-      }).catch(err => console.error('Lỗi upload public key:', err));
-    }).catch(err => console.error('Lỗi khởi tạo E2EE keys:', err));
 
-    return () => { cancelled = true; };
+    let cancelled = false;
+    import('@/lib/e2ee/key-storage')
+      .then(({ initializeUserKeys }) => {
+        return initializeUserKeys();
+      })
+      .then(async (keys) => {
+        if (cancelled) return;
+        setPrivateKey(keys.privateKey);
+
+        // We must make sure the server has our public key. Let's export it and upload it just in case.
+        // (This should ideally be done only once or checked via another endpoint, but it's idempotent)
+        const { exportKeyToBase64 } = await import('@/lib/e2ee/crypto-utils');
+        const publicKeyBase64 = await exportKeyToBase64(keys.publicKey);
+
+        fetch('/api/v1/chat/keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ publicKey: publicKeyBase64 }),
+        }).catch((err) => console.error('Lỗi upload public key:', err));
+      })
+      .catch((err) => console.error('Lỗi khởi tạo E2EE keys:', err));
+
+    return () => {
+      cancelled = true;
+    };
   }, [meId]);
 
-  const activeConv = useMemo(() => conversations.find(c => c.id === roomId), [conversations, roomId]);
+  const activeConv = useMemo(
+    () => conversations.find((c) => c.id === roomId),
+    [conversations, roomId],
+  );
 
   useEffect(() => {
     if (!activeConv?.encryptedRoomKey || !privateKey) {
@@ -287,7 +311,9 @@ export function MessagesView() {
     };
 
     chatSocket.on('chat:message', onMessage);
-    chatSocket.on('chat:reaction', (p) => { if (roomId) queryClient.invalidateQueries({ queryKey: queryKeys.chat.roomMessages(roomId) }); });
+    chatSocket.on('chat:reaction', () => {
+      if (roomId) queryClient.invalidateQueries({ queryKey: queryKeys.chat.roomMessages(roomId) });
+    });
     chatSocket.on('chat:unsent', invalidateRoom);
     chatSocket.on('chat:deleted', invalidateRoom);
     chatSocket.on('chat:delivered', invalidateRoom);
@@ -320,7 +346,7 @@ export function MessagesView() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
-  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>, mode: 'image' | 'file') {
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>, _mode: 'image' | 'file') {
     const file = e.target.files?.[0];
     if (!file || !roomId || !roomKey || !meId || sending) return;
 
@@ -355,10 +381,10 @@ export function MessagesView() {
       });
       const data = await res.json();
       console.log('Upload response:', res.status, data);
-      if (!res.ok || (data.success === false)) {
+      if (!res.ok || data.success === false) {
         throw new Error(data.error?.message || data.message || 'Upload failed');
       }
-      
+
       const mediaRecords = data.data as { mediaId: string; url: string; expiresAt: string }[];
       if (!mediaRecords || mediaRecords.length === 0 || !mediaRecords[0]) {
         throw new Error('Upload returned empty media records');
@@ -367,15 +393,15 @@ export function MessagesView() {
       const mediaUrl = mediaRecords[0].url;
 
       const s = await getChatSocket();
-      const payloadStr = JSON.stringify({ 
-        mediaId, 
+      const payloadStr = JSON.stringify({
+        mediaId,
         mediaUrl, // we store the VPS URL in the payload
-        width, 
-        height, 
-        blurDataUrl, 
+        width,
+        height,
+        blurDataUrl,
         iv,
         fileName: file.name,
-        fileType: file.type || 'application/octet-stream'
+        fileType: file.type || 'application/octet-stream',
       });
       const encryptedPayload = await encryptPayloadWithAES(payloadStr, roomKey);
 
@@ -395,7 +421,15 @@ export function MessagesView() {
               );
               invalidateConversations();
               setReplyingTo(null);
-              setTimeout(() => virtuosoRef.current?.scrollToIndex({ index: 999999, align: 'end', behavior: 'smooth' }), 50);
+              setTimeout(
+                () =>
+                  virtuosoRef.current?.scrollToIndex({
+                    index: 999999,
+                    align: 'end',
+                    behavior: 'smooth',
+                  }),
+                50,
+              );
               resolve();
             } else {
               reject(new Error(ack?.error || 'Send failed'));
@@ -440,7 +474,15 @@ export function MessagesView() {
               setDraft('');
               setReplyingTo(null);
               invalidateConversations();
-              setTimeout(() => virtuosoRef.current?.scrollToIndex({ index: 999999, align: 'end', behavior: 'smooth' }), 50);
+              setTimeout(
+                () =>
+                  virtuosoRef.current?.scrollToIndex({
+                    index: 999999,
+                    align: 'end',
+                    behavior: 'smooth',
+                  }),
+                50,
+              );
               resolve();
             } else {
               reject(new Error(ack?.error || 'Send failed'));
@@ -480,7 +522,15 @@ export function MessagesView() {
               );
               invalidateConversations();
               setReplyingTo(null);
-              setTimeout(() => virtuosoRef.current?.scrollToIndex({ index: 999999, align: 'end', behavior: 'smooth' }), 50);
+              setTimeout(
+                () =>
+                  virtuosoRef.current?.scrollToIndex({
+                    index: 999999,
+                    align: 'end',
+                    behavior: 'smooth',
+                  }),
+                50,
+              );
               resolve();
             } else {
               reject(new Error(ack?.error || 'Send failed'));
@@ -500,7 +550,9 @@ export function MessagesView() {
   const createRoomMutation = useCreateChatRoomMutation();
 
   const handlePickNewChat = async (userId: string) => {
-    const existing = conversations.find(c => !c.isGroup && c.peers.some((p: ChatPeerDto) => p.id === userId));
+    const existing = conversations.find(
+      (c) => !c.isGroup && c.peers.some((p: ChatPeerDto) => p.id === userId),
+    );
     if (existing) {
       router.replace(`/messages?roomId=${existing.id}`);
       return;
@@ -510,8 +562,9 @@ export function MessagesView() {
     setSending(true);
 
     try {
-      const { importKeyFromBase64, generateRoomAESKey, encryptRoomKeyWithRSA } = await import('@/lib/e2ee/crypto-utils');
-      
+      const { importKeyFromBase64, generateRoomAESKey, encryptRoomKeyWithRSA } =
+        await import('@/lib/e2ee/crypto-utils');
+
       // Fetch public keys from server
       const keysRes = await fetch('/api/v1/chat/keys/fetch', {
         method: 'POST',
@@ -522,13 +575,18 @@ export function MessagesView() {
       if (!keysData.success) throw new Error('Không thể lấy khóa công khai');
 
       const keysArray = keysData.data as { userId: string; publicKey: string }[];
-      const pubKeys = keysArray.reduce((acc, curr) => {
-        acc[curr.userId] = curr.publicKey;
-        return acc;
-      }, {} as Record<string, string>);
+      const pubKeys = keysArray.reduce(
+        (acc, curr) => {
+          acc[curr.userId] = curr.publicKey;
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
 
       if (!pubKeys[meId] || !pubKeys[userId]) {
-        throw new Error('Một trong hai người dùng chưa khởi tạo khóa E2EE (vui lòng refresh để tạo khóa)');
+        throw new Error(
+          'Một trong hai người dùng chưa khởi tạo khóa E2EE (vui lòng refresh để tạo khóa)',
+        );
       }
 
       const myPubKey = await importKeyFromBase64(pubKeys[meId], 'public');
@@ -554,7 +612,7 @@ export function MessagesView() {
 
       // Cache the key so we don't need to decrypt it immediately
       setCachedRoomKey(room.id, newRoomKey);
-      
+
       router.replace(`/messages?roomId=${room.id}`);
     } catch (err) {
       console.error('Lỗi tạo phòng:', err);
@@ -582,9 +640,9 @@ export function MessagesView() {
 
   return (
     <>
-      <div className="md:border-border mx-auto flex h-full w-full max-w-7xl flex-col gap-0 md:flex-row md:border-x overflow-hidden">
-        <aside className="border-border md:border-border flex w-full flex-col border-b md:w-72 md:border-b-0 md:border-r md:pt-0 overflow-hidden">
-          <div className="border-border flex items-center justify-between gap-2 border-b p-3 shrink-0">
+      <div className="md:border-border mx-auto flex h-full w-full max-w-7xl flex-col gap-0 overflow-hidden md:flex-row md:border-x">
+        <aside className="border-border md:border-border flex w-full flex-col overflow-hidden border-b md:w-72 md:border-b-0 md:border-r md:pt-0">
+          <div className="border-border flex shrink-0 items-center justify-between gap-2 border-b p-3">
             <h1 className="text-foreground text-sm font-semibold">Hội thoại</h1>
             <button
               type="button"
@@ -595,7 +653,7 @@ export function MessagesView() {
               <Plus className="h-5 w-5" />
             </button>
           </div>
-          <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto">
             {convLoading ? (
               <div className="text-muted-foreground flex justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
@@ -622,12 +680,16 @@ export function MessagesView() {
                           {c.isGroup ? (
                             <Users className="h-5 w-5" aria-hidden />
                           ) : (
-                            (c.peers[0]?.name?.[0] || c.peers[0]?.username?.[0] || '?').toUpperCase()
+                            (
+                              c.peers[0]?.name?.[0] ||
+                              c.peers[0]?.username?.[0] ||
+                              '?'
+                            ).toUpperCase()
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-foreground truncate font-medium">
-                            {c.isGroup ? c.name : (c.peers[0] ? peerLabel(c.peers[0]) : 'Unknown')}
+                            {c.isGroup ? c.name : c.peers[0] ? peerLabel(c.peers[0]) : 'Unknown'}
                           </p>
                           <p className="text-muted-foreground truncate text-xs">
                             {c.lastMessage ? (
@@ -651,8 +713,8 @@ export function MessagesView() {
           </div>
         </aside>
 
-        <section className="bg-background flex flex-1 flex-col min-w-0 overflow-hidden">
-          <div className="border-border border-b px-4 py-3 min-w-0 shrink-0">
+        <section className="bg-background flex min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="border-border min-w-0 shrink-0 border-b px-4 py-3">
             <h2 className="text-foreground text-sm font-semibold">{title}</h2>
             {!roomId ? (
               <p className="text-muted-foreground mt-1 text-xs">
@@ -671,19 +733,24 @@ export function MessagesView() {
                 Chưa có tin nhắn. Gửi lời chào!
               </p>
             ) : roomId ? (
-              <div className="flex-1 overflow-hidden min-w-0 relative">
+              <div className="relative min-w-0 flex-1 overflow-hidden">
                 <Virtuoso
                   ref={virtuosoRef}
-                  className="h-full w-full pl-4 pr-6 lg:pr-8 overflow-x-hidden scroll-smooth"
+                  className="h-full w-full overflow-x-hidden scroll-smooth pl-4 pr-6 lg:pr-8"
                   data={messages}
                   initialTopMostItemIndex={messages.length - 1}
                   followOutput="auto"
                   alignToBottom
                   itemContent={(index, m) => {
-                    const sender = activeConv?.peers.find(p => p.id === m.senderId);
-                    
-                    const isRead = activeConv?.peers.some(p => p.lastReadAt && new Date(p.lastReadAt) >= new Date(m.createdAt));
-                    const isDelivered = activeConv?.peers.some(p => p.lastDeliveredAt && new Date(p.lastDeliveredAt) >= new Date(m.createdAt));
+                    const sender = activeConv?.peers.find((p) => p.id === m.senderId);
+
+                    const isRead = activeConv?.peers.some(
+                      (p) => p.lastReadAt && new Date(p.lastReadAt) >= new Date(m.createdAt),
+                    );
+                    const isDelivered = activeConv?.peers.some(
+                      (p) =>
+                        p.lastDeliveredAt && new Date(p.lastDeliveredAt) >= new Date(m.createdAt),
+                    );
                     const status = isRead ? 'read' : isDelivered ? 'delivered' : 'sent';
 
                     return (
@@ -696,30 +763,55 @@ export function MessagesView() {
                         readStatus={status}
                         isPulsing={m.id === pulsingId}
                         onScrollToMessage={(msgId) => {
-                          const idx = messages.findIndex(msg => msg.id === msgId);
+                          const idx = messages.findIndex((msg) => msg.id === msgId);
                           if (idx !== -1) {
-                            virtuosoRef.current?.scrollToIndex({ index: idx, align: 'center', behavior: 'smooth' });
+                            virtuosoRef.current?.scrollToIndex({
+                              index: idx,
+                              align: 'center',
+                              behavior: 'smooth',
+                            });
                             setPulsingId(msgId);
                             setTimeout(() => setPulsingId(null), 2000);
                           }
                         }}
                         onReply={() => setReplyingTo(m)}
                         onReact={(emoji) => {
-                          chatSocket?.emit('chat:react', { messageId: m.id, emoji }, (ack: any) => {
-                            if (ack?.ok) queryClient.invalidateQueries({ queryKey: queryKeys.chat.roomMessages(roomId) });
-                          });
+                          chatSocket?.emit(
+                            'chat:react',
+                            { messageId: m.id, emoji },
+                            (ack: { ok?: boolean }) => {
+                              if (ack?.ok)
+                                queryClient.invalidateQueries({
+                                  queryKey: queryKeys.chat.roomMessages(roomId),
+                                });
+                            },
+                          );
                         }}
                         onUnsend={() => {
                           if (!confirm('Bạn có chắc muốn thu hồi tin nhắn này?')) return;
-                          chatSocket?.emit('chat:unsend', { messageId: m.id }, (ack: any) => {
-                            if (ack?.ok) queryClient.invalidateQueries({ queryKey: queryKeys.chat.roomMessages(roomId) });
-                          });
+                          chatSocket?.emit(
+                            'chat:unsend',
+                            { messageId: m.id },
+                            (ack: { ok?: boolean }) => {
+                              if (ack?.ok)
+                                queryClient.invalidateQueries({
+                                  queryKey: queryKeys.chat.roomMessages(roomId),
+                                });
+                            },
+                          );
                         }}
                         onDelete={() => {
                           if (!confirm('Bạn có chắc muốn xoá tin nhắn này (chỉ phía bạn)?')) return;
-                          chatSocket?.emit('chat:delete', { messageId: m.id }, (ack: any) => {
-                            if (ack?.ok) queryClient.invalidateQueries({ queryKey: queryKeys.chat.roomMessages(roomId) });
-                          });
+                          chatSocket?.emit(
+                            'chat:delete',
+                            { messageId: m.id },
+                            (ack: { ok?: boolean }) => {
+                              if (ack?.ok)
+                                queryClient.invalidateQueries({
+                                  queryKey: queryKeys.chat.roomMessages(roomId),
+                                });
+                            },
+                          );
                         }}
                       />
                     );
@@ -732,26 +824,37 @@ export function MessagesView() {
 
             {roomId ? (
               <form
-                className="border-border flex flex-col gap-0 border-t min-w-0 relative"
+                className="border-border relative flex min-w-0 flex-col gap-0 border-t"
                 onSubmit={(e) => {
                   e.preventDefault();
                   void onSend();
                 }}
               >
                 {replyingTo && (
-                  <div className="flex items-center justify-between bg-muted/50 px-4 py-2 text-sm border-b border-border">
-                    <div className="flex-1 truncate border-l-4 border-primary pl-3">
-                      <span className="font-semibold mr-1">
-                        Đang trả lời {replyingTo.senderId === meId ? 'chính bạn' : (activeConv?.peers.find(p => p.id === replyingTo.senderId)?.name || 'người dùng')}:
+                  <div className="bg-muted/50 border-border flex items-center justify-between border-b px-4 py-2 text-sm">
+                    <div className="border-primary flex-1 truncate border-l-4 pl-3">
+                      <span className="mr-1 font-semibold">
+                        Đang trả lời{' '}
+                        {replyingTo.senderId === meId
+                          ? 'chính bạn'
+                          : activeConv?.peers.find((p) => p.id === replyingTo.senderId)?.name ||
+                            'người dùng'}
+                        :
                       </span>
-                      <span className="text-muted-foreground opacity-80">{replyingTo.type === 'text' ? 'Tin nhắn' : 'Đính kèm'}</span>
+                      <span className="text-muted-foreground opacity-80">
+                        {replyingTo.type === 'text' ? 'Tin nhắn' : 'Đính kèm'}
+                      </span>
                     </div>
-                    <button type="button" onClick={() => setReplyingTo(null)} className="text-muted-foreground hover:text-foreground">
-                      <X className="w-4 h-4" />
+                    <button
+                      type="button"
+                      onClick={() => setReplyingTo(null)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
                     </button>
                   </div>
                 )}
-                <div className="flex gap-2 p-3 items-center">
+                <div className="flex items-center gap-2 p-3">
                   <input
                     type="file"
                     accept="image/*,video/*"
@@ -759,74 +862,74 @@ export function MessagesView() {
                     className="hidden"
                     onChange={(e) => void handleFileSelect(e, 'image')}
                   />
-                <input
-                  type="file"
-                  accept="*/*"
-                  ref={fileInputRef}
-                  className="hidden"
-                  onChange={(e) => void handleFileSelect(e, 'file')}
-                />
-                
-                {/* 🖼️ Image Button */}
-                <button
-                  type="button"
-                  onClick={() => imageInputRef.current?.click()}
-                  disabled={sending || !roomKey}
-                  className="text-muted-foreground hover:bg-muted flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-40"
-                  aria-label="Đính kèm ảnh/video"
-                >
-                  <ImagePlus className="h-5 w-5" />
-                </button>
+                  <input
+                    type="file"
+                    accept="*/*"
+                    ref={fileInputRef}
+                    className="hidden"
+                    onChange={(e) => void handleFileSelect(e, 'file')}
+                  />
 
-                {/* 📎 File Button */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={sending || !roomKey}
-                  className="text-muted-foreground hover:bg-muted flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-40"
-                  aria-label="Đính kèm tệp tin"
-                >
-                  <Paperclip className="h-5 w-5" />
-                </button>
+                  {/* 🖼️ Image Button */}
+                  <button
+                    type="button"
+                    onClick={() => imageInputRef.current?.click()}
+                    disabled={sending || !roomKey}
+                    className="text-muted-foreground hover:bg-muted flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-40"
+                    aria-label="Đính kèm ảnh/video"
+                  >
+                    <ImagePlus className="h-5 w-5" />
+                  </button>
 
-                {/* 😀 Emoji/Sticker Picker */}
-                <EmojiStickerPicker
-                  open={pickerOpen}
-                  onOpenChange={setPickerOpen}
-                  onEmojiSelect={(emoji) => setDraft(prev => prev + emoji)}
-                  onStickerSelect={onSendSticker}
-                  trigger={
-                    <button
-                      type="button"
-                      disabled={sending || !roomKey}
-                      className="text-muted-foreground hover:bg-muted focus-visible:ring-ring flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-40 relative focus-visible:outline-none focus-visible:ring-2"
-                      aria-label="Emoji và Sticker"
-                    >
-                      <Smile className="h-5 w-5" />
-                    </button>
-                  }
-                />
+                  {/* 📎 File Button */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={sending || !roomKey}
+                    className="text-muted-foreground hover:bg-muted flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-40"
+                    aria-label="Đính kèm tệp tin"
+                  >
+                    <Paperclip className="h-5 w-5" />
+                  </button>
 
-                <input
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  placeholder="Nhập tin nhắn…"
-                  className="border-border bg-muted/50 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring min-h-11 flex-1 rounded-full border px-4 text-sm focus-visible:outline-none focus-visible:ring-2"
-                  maxLength={8000}
-                  disabled={sending || !roomKey}
-                />
-                <button
-                  type="submit"
-                  disabled={sending || !draft.trim() || !roomKey}
-                  className="bg-primary text-primary-foreground focus-visible:ring-ring flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 disabled:opacity-40"
-                  aria-label="Gửi"
-                >
-                  {sending ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <Send className="h-5 w-5" />
-                  )}
-                </button>
+                  {/* 😀 Emoji/Sticker Picker */}
+                  <EmojiStickerPicker
+                    open={pickerOpen}
+                    onOpenChange={setPickerOpen}
+                    onEmojiSelect={(emoji) => setDraft((prev) => prev + emoji)}
+                    onStickerSelect={onSendSticker}
+                    trigger={
+                      <button
+                        type="button"
+                        disabled={sending || !roomKey}
+                        className="text-muted-foreground hover:bg-muted focus-visible:ring-ring relative flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:opacity-40"
+                        aria-label="Emoji và Sticker"
+                      >
+                        <Smile className="h-5 w-5" />
+                      </button>
+                    }
+                  />
+
+                  <input
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    placeholder="Nhập tin nhắn…"
+                    className="border-border bg-muted/50 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring min-h-11 flex-1 rounded-full border px-4 text-sm focus-visible:outline-none focus-visible:ring-2"
+                    maxLength={8000}
+                    disabled={sending || !roomKey}
+                  />
+                  <button
+                    type="submit"
+                    disabled={sending || !draft.trim() || !roomKey}
+                    className="bg-primary text-primary-foreground focus-visible:ring-ring flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 disabled:opacity-40"
+                    aria-label="Gửi"
+                  >
+                    {sending ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <Send className="h-5 w-5" />
+                    )}
+                  </button>
                 </div>
               </form>
             ) : null}

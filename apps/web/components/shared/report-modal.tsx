@@ -1,11 +1,12 @@
 'use client';
 
+import { Flag, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Flag, Loader2 } from 'lucide-react';
 
-import { Modal } from './modal';
 import { Button } from './button';
+import { Modal } from './modal';
+
 import { apiFetch } from '@/lib/api-client';
 
 type ReportReason =
@@ -122,17 +123,18 @@ export function ReportModal({ open, onClose, targetType, targetId }: Props) {
   return (
     <Modal open={open} onClose={onClose} dismissOnEsc={!submitting} dismissOnBackdrop={!submitting}>
       <Modal.Backdrop />
-      <Modal.Panel size="md" className="max-h-[85vh] flex flex-col">
+      <Modal.Panel size="md" className="flex max-h-[85vh] flex-col">
         <Modal.Header title="Báo cáo nội dung vi phạm" closeDisabled={submitting} />
 
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-          <div className="p-5 space-y-4 overflow-y-auto flex-1 scrollbar-thin">
-            <p className="text-sm text-muted-foreground">
-              Nếu bạn thấy bài viết hoặc nội dung này vi phạm Tiêu chuẩn Cộng đồng của chúng tôi, hãy chọn lý do phù hợp để báo cáo cho đội ngũ kiểm duyệt xử lý.
+        <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
+          <div className="scrollbar-thin flex-1 space-y-4 overflow-y-auto p-5">
+            <p className="text-muted-foreground text-sm">
+              Nếu bạn thấy bài viết hoặc nội dung này vi phạm Tiêu chuẩn Cộng đồng của chúng tôi,
+              hãy chọn lý do phù hợp để báo cáo cho đội ngũ kiểm duyệt xử lý.
             </p>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">
+              <label className="text-foreground text-sm font-semibold">
                 Lý do báo cáo <span className="text-destructive">*</span>
               </label>
 
@@ -144,9 +146,9 @@ export function ReportModal({ open, onClose, targetType, targetId }: Props) {
                       key={opt.value}
                       type="button"
                       onClick={() => setSelectedReason(opt.value)}
-                      className={`w-full text-left p-3 rounded-xl border text-sm transition-all flex items-start gap-3 ${
+                      className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left text-sm transition-all ${
                         isSelected
-                          ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                          ? 'border-primary bg-primary/5 ring-primary ring-1'
                           : 'border-border bg-card hover:bg-muted/50'
                       }`}
                     >
@@ -155,11 +157,11 @@ export function ReportModal({ open, onClose, targetType, targetId }: Props) {
                         name="report-reason"
                         checked={isSelected}
                         onChange={() => setSelectedReason(opt.value)}
-                        className="mt-1 h-4 w-4 shrink-0 text-primary accent-primary"
+                        className="text-primary accent-primary mt-1 h-4 w-4 shrink-0"
                       />
                       <div className="space-y-0.5">
-                        <div className="font-medium text-foreground">{opt.label}</div>
-                        <div className="text-xs text-muted-foreground leading-normal">
+                        <div className="text-foreground font-medium">{opt.label}</div>
+                        <div className="text-muted-foreground text-xs leading-normal">
                           {opt.description}
                         </div>
                       </div>
@@ -170,7 +172,7 @@ export function ReportModal({ open, onClose, targetType, targetId }: Props) {
             </div>
 
             <div className="space-y-2 pt-2">
-              <label htmlFor="report-desc" className="text-sm font-semibold text-foreground">
+              <label htmlFor="report-desc" className="text-foreground text-sm font-semibold">
                 Mô tả chi tiết (Tùy chọn)
               </label>
               <textarea
@@ -179,19 +181,14 @@ export function ReportModal({ open, onClose, targetType, targetId }: Props) {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Nhập thêm chi tiết hoặc ngữ cảnh cụ thể..."
-                className="w-full text-sm rounded-xl border border-border bg-transparent p-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary disabled:opacity-50"
+                className="border-border text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary w-full rounded-xl border bg-transparent p-3 text-sm focus:outline-none focus:ring-1 disabled:opacity-50"
                 disabled={submitting}
               />
             </div>
           </div>
 
-          <div className="border-t border-border p-4 bg-muted/20 flex items-center justify-end gap-3 shrink-0">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={onClose}
-              disabled={submitting}
-            >
+          <div className="border-border bg-muted/20 flex shrink-0 items-center justify-end gap-3 border-t p-4">
+            <Button type="button" variant="ghost" onClick={onClose} disabled={submitting}>
               Hủy
             </Button>
             <Button

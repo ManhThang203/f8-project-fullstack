@@ -61,7 +61,7 @@ function SidebarPanel({
     <>
       <div
         className={cn(
-          'flex h-14 shrink-0 flex-nowrap items-center border-b border-border',
+          'border-border flex h-14 shrink-0 flex-nowrap items-center border-b',
           collapsed ? 'justify-center px-2' : 'justify-between gap-2 px-3',
         )}
       >
@@ -72,7 +72,7 @@ function SidebarPanel({
           <button
             type="button"
             onClick={onCloseMobile}
-            className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex size-10 shrink-0 items-center justify-center rounded-lg transition-colors"
             aria-label={t('common.closeMenu')}
           >
             <X className="size-5" aria-hidden />
@@ -82,7 +82,7 @@ function SidebarPanel({
             type="button"
             onClick={onToggleCollapse}
             className={cn(
-              'inline-flex shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
+              'text-muted-foreground hover:bg-muted hover:text-foreground inline-flex shrink-0 items-center justify-center rounded-lg transition-colors',
               collapsed ? 'size-10' : 'min-h-11 min-w-11',
             )}
             aria-label={collapsed ? t('common.expandSidebar') : t('common.collapseSidebar')}
@@ -108,7 +108,7 @@ function SidebarPanel({
                 'flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm no-underline transition-colors',
                 collapsed && 'justify-center px-0',
                 pathname === item.href ||
-                (item.href !== '/' && pathname.startsWith(`${item.href}/`))
+                  (item.href !== '/' && pathname.startsWith(`${item.href}/`))
                   ? 'bg-accent text-accent-foreground'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',
               )}
@@ -120,7 +120,7 @@ function SidebarPanel({
         ))}
       </nav>
 
-      <div className="border-t border-border p-3">
+      <div className="border-border border-t p-3">
         <Button
           variant="ghost"
           className={cn('w-full justify-start gap-2', collapsed && 'justify-center px-0')}
@@ -145,11 +145,11 @@ export function Sidebar(props: Props) {
       <>
         <button
           type="button"
-          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm md:hidden"
+          className="bg-background/80 fixed inset-0 z-40 backdrop-blur-sm md:hidden"
           onClick={onCloseMobile}
           aria-label={props.onCloseMobile ? undefined : 'Close'}
         />
-        <aside className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-card shadow-lg md:hidden">
+        <aside className="border-border bg-card fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r shadow-lg md:hidden">
           <SidebarPanel {...props} mobile onCloseMobile={onCloseMobile} />
         </aside>
       </>
@@ -159,7 +159,7 @@ export function Sidebar(props: Props) {
   return (
     <aside
       className={cn(
-        'hidden shrink-0 flex-col border-r border-border bg-card transition-[width] duration-200 md:flex h-full',
+        'border-border bg-card hidden h-full shrink-0 flex-col border-r transition-[width] duration-200 md:flex',
         props.collapsed ? 'w-16' : 'w-60',
       )}
     >

@@ -3,10 +3,10 @@
 import { useRouter } from 'next/navigation';
 import { useMemo, useRef } from 'react';
 
+import { FeedVideoControlBar } from './feed-video-control-bar';
+
 import { useFeedPostVideo } from '@/hooks/use-feed-post-video';
 import { cn } from '@/lib/utils';
-
-import { FeedVideoControlBar } from './feed-video-control-bar';
 
 const DRAG_THRESHOLD_PX = 8;
 const MAX_VIDEO_HEIGHT_PX = 520;

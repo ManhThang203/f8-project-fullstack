@@ -57,24 +57,25 @@ export interface MetadataItem {
   value: string;
 }
 
+/** next-intl `t` accepts string fallbacks and interpolation objects. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TranslateFn = (key: string, options?: any) => string;
+
 /** Maps report/user status enums to a friendly label via i18n. */
-export function formatStatusLabel(
-  status: string,
-  t: (key: string, fallback?: string) => string,
-): string {
+export function formatStatusLabel(status: string, t: TranslateFn): string {
   return t(`reportStatus.${status}`, t(`status.${status}`, status));
 }
 
 export function renderAuditMetadata(
-  metadata: Record<string, any> | null | undefined,
-  t: (key: string, options?: any) => string
+  metadata: Record<string, unknown> | null | undefined,
+  t: TranslateFn,
 ): MetadataItem[] {
   if (!metadata || typeof metadata !== 'object') return [];
 
   const items: MetadataItem[] = [];
 
   // 1. Target Type
-  if (metadata.targetType) {
+  if (typeof metadata.targetType === 'string') {
     items.push({
       label: t('metadata.targetType', 'Loại'),
       value: t(`targetType.${metadata.targetType}`, metadata.targetType),
@@ -82,7 +83,7 @@ export function renderAuditMetadata(
   }
 
   // 2. Reason
-  if (metadata.reason) {
+  if (typeof metadata.reason === 'string') {
     items.push({
       label: t('metadata.reason', 'Lý do'),
       value: t(`reportReason.${metadata.reason}`, metadata.reason),
@@ -90,19 +91,19 @@ export function renderAuditMetadata(
   }
 
   // 3. Status (previousStatus / newStatus / status)
-  if (metadata.previousStatus) {
+  if (typeof metadata.previousStatus === 'string') {
     items.push({
       label: t('metadata.previousStatus', 'Trạng thái cũ'),
       value: formatStatusLabel(metadata.previousStatus, t),
     });
   }
-  if (metadata.newStatus) {
+  if (typeof metadata.newStatus === 'string') {
     items.push({
       label: t('metadata.newStatus', 'Trạng thái mới'),
       value: formatStatusLabel(metadata.newStatus, t),
     });
   }
-  if (metadata.status) {
+  if (typeof metadata.status === 'string') {
     items.push({
       label: t('metadata.status', 'Trạng thái'),
       value: formatStatusLabel(metadata.status, t),
@@ -126,13 +127,13 @@ export function renderAuditMetadata(
   }
 
   // 6. Usernames (warned/banned etc.) - keep human readable usernames, hide IDs
-  if (metadata.warnedUsername) {
+  if (typeof metadata.warnedUsername === 'string') {
     items.push({
       label: t('metadata.warnedUser', 'Người nhận cảnh báo'),
       value: `@${metadata.warnedUsername}`,
     });
   }
-  if (metadata.bannedUsername) {
+  if (typeof metadata.bannedUsername === 'string') {
     items.push({
       label: t('metadata.bannedUser', 'Tài khoản bị cấm'),
       value: `@${metadata.bannedUsername}`,
@@ -154,7 +155,7 @@ export function renderAuditMetadata(
   }
 
   // 8. Temporary Ban Date
-  if (metadata.banType === 'temporary' && metadata.bannedUntil) {
+  if (metadata.banType === 'temporary' && typeof metadata.bannedUntil === 'string') {
     items.push({
       label: t('metadata.banDuration', 'Thời hạn ban'),
       value: formatDateTime(metadata.bannedUntil),
@@ -167,7 +168,7 @@ export function renderAuditMetadata(
   }
 
   // 9. Hashtag tag
-  if (metadata.tag) {
+  if (typeof metadata.tag === 'string') {
     items.push({
       label: t('metadata.hashtag', 'Hashtag'),
       value: `#${metadata.tag}`,

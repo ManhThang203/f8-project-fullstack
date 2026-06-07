@@ -1,6 +1,11 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { PostFeedItemDto } from '@costy/shared';
+import { useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
+
 import { apiFetch } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
+
+type FeedPage = { data: PostFeedItemDto[] };
+type FeedCache = InfiniteData<FeedPage>;
 
 type ReactPostVariables = {
   postId: string;
@@ -31,13 +36,13 @@ export function useReactPost() {
       await queryClient.cancelQueries({ queryKey: queryKeys.posts.feed });
       const previousData = queryClient.getQueryData(queryKeys.posts.feed);
 
-      queryClient.setQueryData(queryKeys.posts.feed, (old: any) => {
+      queryClient.setQueryData(queryKeys.posts.feed, (old: FeedCache | undefined) => {
         if (!old) return old;
         return {
           ...old,
-          pages: old.pages.map((page: any) => ({
+          pages: old.pages.map((page) => ({
             ...page,
-            data: page.data.map((p: any) => {
+            data: page.data.map((p) => {
               if (p.id === postId) {
                 // Tính toán likeCount giả định
                 const wasLiked = p.myReaction !== null;
