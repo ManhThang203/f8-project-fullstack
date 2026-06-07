@@ -48,12 +48,7 @@ export async function getServerSession(): Promise<{ user: ServerAuthUser } | nul
   if (body == null || typeof body !== 'object') return null;
   const o = body as Record<string, unknown>;
   let userRaw: unknown = o.user;
-  if (
-    userRaw == null &&
-    o.data != null &&
-    typeof o.data === 'object' &&
-    !Array.isArray(o.data)
-  ) {
+  if (userRaw == null && o.data != null && typeof o.data === 'object' && !Array.isArray(o.data)) {
     userRaw = (o.data as Record<string, unknown>).user;
   }
   if (userRaw == null || typeof userRaw !== 'object' || Array.isArray(userRaw)) return null;
@@ -64,7 +59,12 @@ export async function getServerSession(): Promise<{ user: ServerAuthUser } | nul
   return {
     user: {
       id,
-      email: typeof user.email === 'string' ? user.email : user.email == null ? null : String(user.email),
+      email:
+        typeof user.email === 'string'
+          ? user.email
+          : user.email == null
+            ? null
+            : String(user.email),
       name:
         user.name === null || user.name === undefined
           ? null

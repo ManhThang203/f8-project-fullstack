@@ -45,7 +45,10 @@ export async function apiFetch<TData, TMeta = undefined>(
   init?: RequestInit,
 ): Promise<ApiResponse<TData, TMeta>> {
   let res: Response;
-  let headers = { 'Content-Type': 'application/json', ...init?.headers } as Record<string, string>;
+  const headers = { 'Content-Type': 'application/json', ...init?.headers } as Record<
+    string,
+    string
+  >;
   if (init?.body instanceof FormData) {
     // Let browser set the content type with boundary automatically
     delete headers['Content-Type'];

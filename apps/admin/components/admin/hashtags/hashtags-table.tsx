@@ -23,7 +23,7 @@ export function HashtagsTable({ hashtags, isPending, onAction }: Props) {
   const { t } = useTranslation();
 
   return (
-    <div className={cn(adminTable.wrap, 'block')}>
+    <div className={adminTable.wrap}>
       <table className={cn(adminTable.table, 'min-w-[520px]')}>
         <thead className={adminTable.theadAlt}>
           <tr>
@@ -42,9 +42,7 @@ export function HashtagsTable({ hashtags, isPending, onAction }: Props) {
                     {tag.status !== 'BLOCKED' ? (
                       <button
                         type="button"
-                        onClick={() =>
-                          onAction(tag.id, tag.featured ? 'unfeature' : 'feature')
-                        }
+                        onClick={() => onAction(tag.id, tag.featured ? 'unfeature' : 'feature')}
                         className="cursor-pointer transition-transform focus:outline-none active:scale-95"
                         title={tag.featured ? t('hashtags.unfeature') : t('hashtags.feature')}
                         disabled={isPending}

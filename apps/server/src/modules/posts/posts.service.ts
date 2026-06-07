@@ -1,5 +1,11 @@
 import { MediaKind, MediaStatus, prisma } from '@costy/db';
-import type { CreatePostBody, CursorPageQuery, PostFeedItemDto, ReelsFeedItemDto, ReelsFeedQuery } from '@costy/shared';
+import type {
+  CreatePostBody,
+  CursorPageQuery,
+  PostFeedItemDto,
+  ReelsFeedItemDto,
+  ReelsFeedQuery,
+} from '@costy/shared';
 
 import {
   destroyMany,
@@ -10,9 +16,16 @@ import {
 import { AppError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
 
-import { mapPostToFeedItemDto, mapPostToReelsFeedItemDto, postFeedInclude, postReelInclude } from './posts.mapper.js';
-import { createNotification } from '../notifications/notifications.service.js';
+import { MODERATION_CONFIG } from '../../config/moderation.config.js';
 import { syncPostHashtags } from '../../lib/hashtag/hashtag.service.js';
+import { contentModerationQueue } from '../../queues/index.js';
+import { createNotification } from '../notifications/notifications.service.js';
+import {
+  mapPostToFeedItemDto,
+  mapPostToReelsFeedItemDto,
+  postFeedInclude,
+  postReelInclude,
+} from './posts.mapper.js';
 
 const IMAGE_MAX_BYTES = 10 * 1024 * 1024; // 10MB
 const VIDEO_MAX_BYTES = 500 * 1024 * 1024; // 500MB
@@ -101,7 +114,10 @@ function validatePostFiles(files: Express.Multer.File[], content: string): void 
 }
 
 // Lấy danh sách bài viết + phân trang khi cuộn xuống
-export async function listFeed(query: CursorPageQuery, viewerId?: string | null): Promise<{
+export async function listFeed(
+  query: CursorPageQuery,
+  viewerId?: string | null,
+): Promise<{
   items: PostFeedItemDto[];
   nextCursor: string | null;
 }> {
@@ -252,7 +268,10 @@ export async function listReelsFeed(
   return { items, nextCursor };
 }
 
-export async function getPostById(postId: string, viewerId?: string | null): Promise<PostFeedItemDto> {
+export async function getPostById(
+  postId: string,
+  viewerId?: string | null,
+): Promise<PostFeedItemDto> {
   const row = await prisma.post.findUnique({
     where: { id: postId, deletedAt: null },
     include: postFeedInclude,
@@ -277,22 +296,22 @@ export async function getPostById(postId: string, viewerId?: string | null): Pro
 export async function getRootPostId(postId: string): Promise<string> {
   let currentId = postId;
   let limit = 10;
-  
+
   while (limit > 0) {
     const post = await prisma.post.findUnique({
       where: { id: currentId },
       select: { parentId: true },
     });
-    
+
     if (!post) throw AppError.notFound('Bài viết không tồn tại');
-    
+
     if (!post.parentId) {
       return currentId;
     }
     currentId = post.parentId;
     limit--;
   }
-  
+
   return currentId;
 }
 
@@ -316,7 +335,9 @@ export async function listComments(
         parentId: postId,
         OR: [
           { createdAt: { [op]: cursorData.createdAt } },
-          { AND: [{ createdAt: { equals: cursorData.createdAt } }, { id: { [op]: cursorData.id } }] },
+          {
+            AND: [{ createdAt: { equals: cursorData.createdAt } }, { id: { [op]: cursorData.id } }],
+          },
         ],
       }
     : {
@@ -351,6 +372,15 @@ export async function listComments(
   return { items, nextCursor };
 }
 
+/** Đẩy job AI moderation vào BullMQ (không chặn response). */
+async function enqueueModerationJob(postId: string, content: string): Promise<void> {
+  if (!MODERATION_CONFIG.enabled || !content.trim()) return;
+  try {
+    await contentModerationQueue.add('moderate-post', { postId }, { jobId: `moderate-${postId}` });
+  } catch (err) {
+    logger.error({ err, postId }, 'Failed to enqueue moderation job');
+  }
+}
 
 // Tạo bài viết
 export async function createPost(opts: {
@@ -431,10 +461,12 @@ export async function createPost(opts: {
       await syncPostHashtags(postId, content);
     }
 
+    void enqueueModerationJob(postId, content);
+
     if (opts.body.parentId) {
       const parentPost = await prisma.post.findUnique({
         where: { id: opts.body.parentId },
-        select: { id: true, authorId: true }
+        select: { id: true, authorId: true },
       });
 
       if (parentPost) {
@@ -450,20 +482,20 @@ export async function createPost(opts: {
 
         const parentLikers = await prisma.postLike.findMany({
           where: { postId: parentPost.id },
-          select: { userId: true }
+          select: { userId: true },
         });
         const parentCommenters = await prisma.post.findMany({
           where: { parentId: parentPost.id, deletedAt: null },
-          select: { authorId: true }
+          select: { authorId: true },
         });
-        
+
         const followers = new Set<string>();
-        parentLikers.forEach(l => followers.add(l.userId));
-        parentCommenters.forEach(c => followers.add(c.authorId));
-        
+        parentLikers.forEach((l) => followers.add(l.userId));
+        parentCommenters.forEach((c) => followers.add(c.authorId));
+
         followers.delete(opts.authorId);
         followers.delete(parentPost.authorId);
-        
+
         for (const recipientId of Array.from(followers)) {
           await createNotification({
             recipientId,
@@ -500,7 +532,7 @@ export async function setPostReaction(postId: string, userId: string, reactionTy
       update: { type: reactionType },
       create: { userId, postId, type: reactionType },
     });
-    
+
     if (userId !== post.authorId) {
       await createNotification({
         recipientId: post.authorId,
@@ -518,7 +550,7 @@ export async function setPostReaction(postId: string, userId: string, reactionTy
 
   // Lấy tổng like sau khi update
   const likeCount = await prisma.postLike.count({ where: { postId } });
-  
+
   return { postId, reactionType, likeCount };
 }
 
@@ -526,7 +558,7 @@ export async function setPostReaction(postId: string, userId: string, reactionTy
 export async function deletePost(postId: string, userId: string) {
   const post = await prisma.post.findUnique({
     where: { id: postId, deletedAt: null },
-    include: { parent: { select: { authorId: true } } }
+    include: { parent: { select: { authorId: true } } },
   });
 
   if (!post) {
@@ -542,7 +574,7 @@ export async function deletePost(postId: string, userId: string) {
 
   await prisma.post.update({
     where: { id: postId },
-    data: { deletedAt: new Date() }
+    data: { deletedAt: new Date() },
   });
 
   return { success: true, postId };

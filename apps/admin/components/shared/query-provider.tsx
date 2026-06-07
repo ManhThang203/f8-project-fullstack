@@ -9,9 +9,9 @@ export function QueryProvider({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 30 * 1000,              // Tắt/giảm thời gian dữ liệu được coi là fresh xuống 30 giây để test
-            refetchOnWindowFocus: false,       // Tắt tính năng tự động gọi lại API khi chuyển/focus tab
-            retry: 1
+            staleTime: 30 * 1000, // Tắt/giảm thời gian dữ liệu được coi là fresh xuống 30 giây để test
+            refetchOnWindowFocus: false, // Tắt tính năng tự động gọi lại API khi chuyển/focus tab
+            retry: 1,
           },
         },
       }),

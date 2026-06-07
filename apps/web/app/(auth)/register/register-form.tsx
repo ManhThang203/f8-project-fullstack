@@ -1,7 +1,7 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
 import { registerBodySchema } from '@costy/shared';
+import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -217,7 +217,9 @@ export function RegisterForm() {
                   autoComplete="name"
                   {...register('name')}
                 />
-                {errors.name ? <p className="mt-1 text-xs text-red-600">{errors.name.message}</p> : null}
+                {errors.name ? (
+                  <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>
+                ) : null}
               </div>
 
               <div>
@@ -282,7 +284,10 @@ export function RegisterForm() {
 
             <p className="text-muted-foreground mt-6 text-center text-sm sm:mt-8">
               Đã có tài khoản?{' '}
-              <Link href={loginHref} className={cn('text-foreground font-semibold', linkFocusClass)}>
+              <Link
+                href={loginHref}
+                className={cn('text-foreground font-semibold', linkFocusClass)}
+              >
                 Đăng nhập
               </Link>
             </p>

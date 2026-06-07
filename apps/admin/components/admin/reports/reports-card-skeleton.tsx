@@ -6,7 +6,7 @@ type Props = {
 
 function ReportsCardSkeletonItem() {
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card p-4 space-y-3">
+    <div className="border-border bg-card space-y-3 overflow-hidden rounded-xl border p-4">
       <div className="flex items-center justify-between gap-2">
         <Skeleton className="h-5 w-16 shrink-0 rounded" />
         <Skeleton className="h-5 w-20 shrink-0 rounded-full" />
@@ -19,7 +19,7 @@ function ReportsCardSkeletonItem() {
         <Skeleton className="h-4 w-20 shrink-0 rounded" />
       </div>
 
-      <div className="flex items-center justify-between gap-2 border-t border-border/50 pt-2">
+      <div className="border-border/50 flex items-center justify-between gap-2 border-t pt-2">
         <Skeleton className="h-3 w-24 shrink-0 rounded" />
         <Skeleton className="h-3 w-16 shrink-0 rounded" />
       </div>

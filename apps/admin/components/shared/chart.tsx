@@ -38,10 +38,7 @@ function ChartStyle({ id, config }: { id: string; config: ChartConfig }) {
       dangerouslySetInnerHTML={{
         __html: Object.entries(config)
           .filter(([, item]) => item.color)
-          .map(
-            ([key, item]) =>
-              `[data-chart=${id}] { --color-${key}: ${item.color}; }`,
-          )
+          .map(([key, item]) => `[data-chart=${id}] { --color-${key}: ${item.color}; }`)
           .join('\n'),
       }}
     />
@@ -64,7 +61,7 @@ const ChartContainer = React.forwardRef<
         data-chart={chartId}
         ref={ref}
         className={cn(
-          'flex aspect-auto justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke="#ccc"]]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-layer]:outline-none [&_.recharts-polar-grid_[stroke="#ccc"]]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-sector]:outline-none [&_.recharts-surface]:outline-none',
+          '[&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke="#ccc"]]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-polar-grid_[stroke="#ccc"]]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted flex aspect-auto justify-center text-xs [&_.recharts-layer]:outline-none [&_.recharts-sector]:outline-none [&_.recharts-surface]:outline-none',
           className,
         )}
         {...props}
@@ -119,14 +116,12 @@ const ChartTooltipContent = React.forwardRef<
       const itemConfig = config[key];
       const value =
         !labelKey && typeof label === 'string'
-          ? config[label]?.label ?? label
+          ? (config[label]?.label ?? label)
           : itemConfig?.label;
 
       if (labelFormatter) {
         return (
-          <div className={cn('font-medium', labelClassName)}>
-            {labelFormatter(value, payload)}
-          </div>
+          <div className={cn('font-medium', labelClassName)}>{labelFormatter(value, payload)}</div>
         );
       }
 
@@ -140,7 +135,7 @@ const ChartTooltipContent = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          'grid min-w-[8rem] gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs text-card-foreground shadow-md',
+          'border-border bg-card text-card-foreground grid min-w-[8rem] gap-1.5 rounded-lg border px-3 py-2 text-xs shadow-md',
           className,
         )}
       >
@@ -154,7 +149,7 @@ const ChartTooltipContent = React.forwardRef<
             return (
               <div
                 key={item.dataKey ?? index}
-                className="flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-muted-foreground"
+                className="[&>svg]:text-muted-foreground flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5"
               >
                 {formatter && item?.value !== undefined && item.name ? (
                   formatter(item.value, item.name, item, index, item.payload)
@@ -162,11 +157,15 @@ const ChartTooltipContent = React.forwardRef<
                   <>
                     {!hideIndicator ? (
                       <div
-                        className={cn('shrink-0 rounded-[2px] border-[--color-border] bg-[--color-bg]', {
-                          'h-2.5 w-2.5': indicator === 'dot',
-                          'w-1': indicator === 'line',
-                          'w-0 border-[1.5px] border-dashed bg-transparent': indicator === 'dashed',
-                        })}
+                        className={cn(
+                          'shrink-0 rounded-[2px] border-[--color-border] bg-[--color-bg]',
+                          {
+                            'h-2.5 w-2.5': indicator === 'dot',
+                            'w-1': indicator === 'line',
+                            'w-0 border-[1.5px] border-dashed bg-transparent':
+                              indicator === 'dashed',
+                          },
+                        )}
                         style={
                           {
                             '--color-bg': indicatorColor,
@@ -180,7 +179,7 @@ const ChartTooltipContent = React.forwardRef<
                         {itemConfig?.label ?? item.name}
                       </span>
                       {item.value != null ? (
-                        <span className="font-mono font-medium tabular-nums text-foreground">
+                        <span className="text-foreground font-mono font-medium tabular-nums">
                           {item.value.toLocaleString()}
                         </span>
                       ) : null}
@@ -212,10 +211,7 @@ const ChartLegendContent = React.forwardRef<
   if (!payload?.length) return null;
 
   return (
-    <div
-      ref={ref}
-      className={cn('flex flex-col gap-2', className)}
-    >
+    <div ref={ref} className={cn('flex flex-col gap-2', className)}>
       {payload.map((item) => {
         const key = `${nameKey ?? item.dataKey ?? item.value ?? 'value'}`;
         const itemConfig = config[key];
@@ -228,9 +224,7 @@ const ChartLegendContent = React.forwardRef<
                 style={{ backgroundColor: item.color }}
               />
             ) : null}
-            <span className="text-muted-foreground">
-              {itemConfig?.label ?? item.value}
-            </span>
+            <span className="text-muted-foreground">{itemConfig?.label ?? item.value}</span>
           </div>
         );
       })}
@@ -239,10 +233,4 @@ const ChartLegendContent = React.forwardRef<
 });
 ChartLegendContent.displayName = 'ChartLegendContent';
 
-export {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
-};
+export { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent };

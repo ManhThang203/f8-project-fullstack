@@ -69,12 +69,12 @@ export function ModeratorsTable({ moderators, onEditPermissions }: Props) {
               <td className={colActions.td}>
                 <div className={colActions.cell}>
                   <Button
-                    variant="ghost"
+                    variant="secondary"
                     disabled={mod.role === 'SUPER_ADMIN'}
                     onClick={() => onEditPermissions(mod)}
-                    className="text-primary hover:bg-primary hover:text-primary-foreground disabled:text-muted-foreground h-9 min-h-9 gap-1.5 px-3 text-xs leading-none disabled:hover:bg-transparent"
+                    className={cn(adminTable.actionBtn, 'gap-1.5 leading-none')}
                   >
-                    <Key className="text-primary size-3.5 shrink-0" aria-hidden />
+                    <Key className="size-3.5 shrink-0" aria-hidden />
                     {t('moderators.editPermissions')}
                   </Button>
                 </div>

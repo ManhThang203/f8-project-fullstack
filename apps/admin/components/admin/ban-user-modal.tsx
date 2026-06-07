@@ -44,7 +44,7 @@ export function BanUserModal({ isOpen, onClose, user }: Props) {
       }
       setReason('');
       setDurationPreset('7d');
-      
+
       // Default custom date to 7 days from now formatted for datetime-local
       const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
       // Format as YYYY-MM-DDThh:mm
@@ -125,47 +125,43 @@ export function BanUserModal({ isOpen, onClose, user }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity duration-200" 
+      <div
+        className="bg-background/80 fixed inset-0 backdrop-blur-sm transition-opacity duration-200"
         onClick={onClose}
       />
 
       {/* Modal Content */}
-      <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl duration-200 animate-in fade-in-50 zoom-in-95">
+      <div className="border-border bg-card animate-in fade-in-50 zoom-in-95 relative z-10 w-full max-w-md rounded-2xl border p-6 shadow-xl duration-200">
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground p-1"
+          className="text-muted-foreground hover:bg-muted hover:text-foreground absolute right-4 top-4 rounded-lg p-1 transition-colors"
           aria-label={t('common.closeMenu')}
         >
           <X className="size-5" />
         </button>
 
-        <h3 className="text-lg font-semibold text-foreground pr-8">
-          {t('users.modalTitle')}
-        </h3>
-        
-        <div className="mt-2 text-sm text-muted-foreground">
+        <h3 className="text-foreground pr-8 text-lg font-semibold">{t('users.modalTitle')}</h3>
+
+        <div className="text-muted-foreground mt-2 text-sm">
           <p>
             {user.name ?? user.username}{' '}
-            <span className="text-xs text-muted-foreground/75">@{user.username}</span>
+            <span className="text-muted-foreground/75 text-xs">@{user.username}</span>
           </p>
           <p className="mt-1 text-xs">
             {t('common.status')}:{' '}
-            <span className="font-semibold text-foreground">
-              {t(`status.${user.status}`)}
-            </span>
+            <span className="text-foreground font-semibold">{t(`status.${user.status}`)}</span>
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           {/* Action Select */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
+            <label className="text-muted-foreground text-xs font-medium">
               {t('users.statusLabel')}
             </label>
             <Select value={action} onValueChange={setAction}>
-              <SelectTrigger className="h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:ring-1 focus:ring-ring">
+              <SelectTrigger className="border-border bg-background text-foreground focus:ring-ring h-10 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:ring-1">
                 <SelectValue placeholder={t('users.statusLabel')} />
               </SelectTrigger>
               <SelectContent>
@@ -195,13 +191,13 @@ export function BanUserModal({ isOpen, onClose, user }: Props) {
 
           {/* Ban Duration Select (Visible only for ban_temp) */}
           {action === 'ban_temp' && (
-            <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-3 animate-in slide-in-from-top-2 duration-150">
+            <div className="border-border bg-muted/30 animate-in slide-in-from-top-2 space-y-4 rounded-lg border p-3 duration-150">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">
+                <label className="text-muted-foreground text-xs font-medium">
                   {t('users.banDurationLabel')}
                 </label>
                 <Select value={durationPreset} onValueChange={setDurationPreset}>
-                  <SelectTrigger className="h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:ring-1 focus:ring-ring">
+                  <SelectTrigger className="border-border bg-background text-foreground focus:ring-ring h-10 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:ring-1">
                     <SelectValue placeholder={t('users.banDurationLabel')} />
                   </SelectTrigger>
                   <SelectContent>
@@ -214,8 +210,11 @@ export function BanUserModal({ isOpen, onClose, user }: Props) {
               </div>
 
               {durationPreset === 'custom' && (
-                <div className="space-y-1.5 animate-in fade-in-50 duration-150">
-                  <label htmlFor="modal-custom-date" className="text-xs font-medium text-muted-foreground">
+                <div className="animate-in fade-in-50 space-y-1.5 duration-150">
+                  <label
+                    htmlFor="modal-custom-date"
+                    className="text-muted-foreground text-xs font-medium"
+                  >
                     {t('users.customDateLabel')}
                   </label>
                   <input
@@ -224,7 +223,7 @@ export function BanUserModal({ isOpen, onClose, user }: Props) {
                     value={customDate}
                     onChange={(e) => setCustomDate(e.target.value)}
                     required
-                    className="flex h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="border-border bg-background text-foreground focus:ring-ring flex h-10 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1"
                   />
                 </div>
               )}
@@ -233,7 +232,7 @@ export function BanUserModal({ isOpen, onClose, user }: Props) {
 
           {/* Reason Input */}
           <div className="space-y-1.5">
-            <label htmlFor="modal-reason" className="text-xs font-medium text-muted-foreground">
+            <label htmlFor="modal-reason" className="text-muted-foreground text-xs font-medium">
               {t('users.reasonLabel')} <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -243,12 +242,12 @@ export function BanUserModal({ isOpen, onClose, user }: Props) {
               placeholder={t('users.reasonPlaceholder')}
               required
               rows={3}
-              className="flex w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+              className="border-border bg-background text-foreground focus:ring-ring flex w-full resize-none rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1"
             />
           </div>
 
           {/* Action Buttons */}
-          <div className="mt-6 flex justify-end gap-3 border-t border-border pt-4">
+          <div className="border-border mt-6 flex justify-end gap-3 border-t pt-4">
             <Button
               type="button"
               variant="ghost"
@@ -257,11 +256,7 @@ export function BanUserModal({ isOpen, onClose, user }: Props) {
             >
               {t('users.cancel')}
             </Button>
-            <Button
-              type="submit"
-              disabled={patchStatus.isPending}
-              className="min-w-20"
-            >
+            <Button type="submit" disabled={patchStatus.isPending} className="min-w-20">
               {patchStatus.isPending ? t('common.loading') : t('users.confirm')}
             </Button>
           </div>

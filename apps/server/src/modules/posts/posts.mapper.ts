@@ -1,5 +1,11 @@
 import { MediaKind, MediaStatus, type Media, type Post, type User } from '@costy/db';
-import type { PostAuthorDto, PostFeedItemDto, PostMediaDto, PostMediaType, ReelsFeedItemDto } from '@costy/shared';
+import type {
+  PostAuthorDto,
+  PostFeedItemDto,
+  PostMediaDto,
+  PostMediaType,
+  ReelsFeedItemDto,
+} from '@costy/shared';
 
 type PostWithAuthorAndMedia = Post & {
   author: Pick<User, 'id' | 'username' | 'name' | 'image'>;
@@ -24,10 +30,11 @@ function mapMediaRow(m: Media, position: number): PostMediaDto {
 }
 
 /** Single mapper for list + create — keeps API shape identical for the frontend. */
-export function mapPostToFeedItemDto(post: PostWithAuthorAndMedia, myReaction: string | null = null): PostFeedItemDto {
-  const sortedMedia = [...post.media].sort(
-    (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
-  );
+export function mapPostToFeedItemDto(
+  post: PostWithAuthorAndMedia,
+  myReaction: string | null = null,
+): PostFeedItemDto {
+  const sortedMedia = [...post.media].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
   return {
     id: post.id,

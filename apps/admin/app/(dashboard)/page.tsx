@@ -7,6 +7,7 @@ import {
   FileText,
   Flag,
   Hash,
+  ScanEye,
   ShieldCheck,
   UserPlus,
   Users,
@@ -15,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 
 import { ActiveUsersChart } from '@/components/admin/charts/active-users-chart';
 import { PostsPerDayChart } from '@/components/admin/charts/posts-per-day-chart';
+import { ModerationStatusDonutChart } from '@/components/admin/charts/moderation-status-donut-chart';
 import { ReportStatusDonutChart } from '@/components/admin/charts/report-status-donut-chart';
 import { TopHashtagsBarChart } from '@/components/admin/charts/top-hashtags-bar-chart';
 import { KpiCard } from '@/components/admin/kpi-card';
@@ -52,13 +54,24 @@ export default function DashboardPage() {
         <KpiCard title={t('dashboard.dau')} value={stats?.dau ?? '—'} icon={Activity} />
         <KpiCard title={t('dashboard.wau')} value={stats?.wau ?? '—'} icon={CalendarDays} />
         <KpiCard title={t('dashboard.mau')} value={stats?.mau ?? '—'} icon={CalendarRange} />
-        <KpiCard title={t('dashboard.postsToday')} value={stats?.postsToday ?? '—'} icon={FileText} />
+        <KpiCard
+          title={t('dashboard.postsToday')}
+          value={stats?.postsToday ?? '—'}
+          icon={FileText}
+        />
         <KpiCard
           title={t('dashboard.pendingReports')}
           value={stats?.pendingReports ?? '—'}
           href="/reports"
           linkLabel={t('dashboard.linkReports')}
           icon={Flag}
+        />
+        <KpiCard
+          title={t('dashboard.pendingModeration')}
+          value={stats?.pendingModerationCases ?? '—'}
+          href="/reports?tab=ai-moderation"
+          linkLabel={t('dashboard.linkModeration')}
+          icon={ScanEye}
         />
         <KpiCard
           title={t('dashboard.activeHashtags')}
@@ -83,10 +96,16 @@ export default function DashboardPage() {
 
       <TopHashtagsBarChart data={topHashtags?.data ?? []} isLoading={hashtagsLoading} />
 
-      <ReportStatusDonutChart
-        breakdown={stats?.reportStatusBreakdown}
-        isLoading={overviewLoading}
-      />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <ReportStatusDonutChart
+          breakdown={stats?.reportStatusBreakdown}
+          isLoading={overviewLoading}
+        />
+        <ModerationStatusDonutChart
+          breakdown={stats?.moderationStatusBreakdown}
+          isLoading={overviewLoading}
+        />
+      </div>
     </div>
   );
 }

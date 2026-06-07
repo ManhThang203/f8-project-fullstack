@@ -123,6 +123,76 @@ model Report {
   @@map("reports")
 }
 
+enum ModerationLabel {
+  TOXIC
+  SPAM
+  HARASSMENT
+  HATE
+  SEXUAL
+  VIOLENCE
+  SELF_HARM
+  OTHER
+}
+
+enum ModerationCaseStatus {
+  PENDING
+  AUTO_HIDDEN
+  RESOLVED_KEPT
+  RESOLVED_REMOVED
+  DISMISSED
+}
+
+enum AppealStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ModerationCase {
+  id             String               @id @default(cuid())
+  targetType     ReportTargetType
+  targetId       String
+  authorId       String
+  label          ModerationLabel
+  confidence     Float
+  scores         Json?
+  reason         String?
+  status         ModerationCaseStatus @default(PENDING)
+  autoHidden     Boolean              @default(false)
+  reviewedById   String?
+  reviewedAt     DateTime?
+  resolutionNote String?
+  createdAt      DateTime             @default(now())
+
+  author   User  @relation("ModerationCaseAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  reviewer User? @relation("ModerationCaseReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  appeal   Appeal?
+
+  @@index([status, createdAt])
+  @@index([targetType, targetId])
+  @@index([authorId])
+  @@map("moderation_cases")
+}
+
+model Appeal {
+  id           String       @id @default(cuid())
+  caseId       String       @unique
+  userId       String
+  message      String
+  status       AppealStatus @default(PENDING)
+  reviewedById String?
+  reviewedAt   DateTime?
+  decisionNote String?
+  createdAt    DateTime     @default(now())
+
+  moderationCase ModerationCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  user           User           @relation("AppealAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  reviewer       User?          @relation("AppealReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@map("appeals")
+}
+
 enum HashtagStatus {
   ACTIVE
   HIDDEN
@@ -215,6 +285,10 @@ model User {
 
   reportsSubmitted       Report[]         @relation("ReportReporter")
   reportsReviewed        Report[]         @relation("ReportReviewer")
+  moderationCasesAuthored ModerationCase[] @relation("ModerationCaseAuthor")
+  moderationCasesReviewed ModerationCase[] @relation("ModerationCaseReviewer")
+  appealsSubmitted       Appeal[]         @relation("AppealAuthor")
+  appealsReviewed        Appeal[]         @relation("AppealReviewer")
   userPermissions        UserPermission[] @relation("UserPermissionTarget")
   permissionsGranted     UserPermission[] @relation("UserPermissionGrantedBy")
   adminAuditLogs         AdminAuditLog[]  @relation("AdminAuditActor")
@@ -352,8 +426,8 @@ model Post {
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-  hiddenAt  DateTime?
+  deletedAt              DateTime?
+  hiddenAt               DateTime?
 
   author    User           @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   parent    Post?          @relation("PostReplies", fields: [parentId], references: [id], onDelete: SetNull)
@@ -453,6 +527,9 @@ enum NotificationType {
   MENTION
   SYSTEM
   REPORT_RESOLVED
+  MODERATION_ACTION
+  APPEAL_APPROVED
+  APPEAL_REJECTED
 }
 
 model Notification {

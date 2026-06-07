@@ -1,7 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { prisma } from '@costy/db';
 import { AppError } from '../../lib/errors.js';
-import { env } from '../../config/env.js';
 
 export const handleUploadMedia = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -33,7 +32,7 @@ export const handleUploadMedia = async (req: Request, res: Response, next: NextF
           mimeType: file.mimetype || 'application/octet-stream',
           sizeBytes: file.size,
           storagePath: file.filename, // Chỉ lưu filename, thư mục là uploads/
-          expiresAt, 
+          expiresAt,
         },
       });
 

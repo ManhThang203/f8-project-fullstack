@@ -2,9 +2,9 @@
 
 import { useRef } from 'react';
 
-import { cn } from '@/lib/utils';
-
 import type { VideoSize } from '../reels-types';
+
+import { cn } from '@/lib/utils';
 
 export type { VideoSize } from '../reels-types';
 

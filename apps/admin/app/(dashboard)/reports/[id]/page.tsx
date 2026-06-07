@@ -34,7 +34,13 @@ const ACTION_COLORS: Record<ActionType, string> = {
   BAN_ACCOUNT: 'bg-red-900 hover:bg-red-800 text-white',
 };
 
-const POST_ACTIONS: ActionType[] = ['DISMISS', 'HIDE_POST', 'DELETE_POST', 'WARN_USER', 'BAN_ACCOUNT'];
+const POST_ACTIONS: ActionType[] = [
+  'DISMISS',
+  'HIDE_POST',
+  'DELETE_POST',
+  'WARN_USER',
+  'BAN_ACCOUNT',
+];
 const USER_ACTIONS: ActionType[] = ['DISMISS', 'WARN_USER', 'BAN_ACCOUNT'];
 
 function formatDate(iso: string) {
@@ -54,7 +60,9 @@ function StatusBadge({ status }: { status: string }) {
     BANNED: 'bg-red-500/15 text-red-700 dark:text-red-400',
   };
   return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${map[status] ?? 'bg-muted text-muted-foreground'}`}>
+    <span
+      className={`rounded-full px-2 py-0.5 text-xs font-medium ${map[status] ?? 'bg-muted text-muted-foreground'}`}
+    >
       {t(`reportStatus.${status}`, t(`status.${status}`, status))}
     </span>
   );
@@ -78,8 +86,7 @@ export default function ReportDetailPage() {
 
   const report = data?.data;
 
-  const availableActions =
-    report?.targetType === 'POST' ? POST_ACTIONS : USER_ACTIONS;
+  const availableActions = report?.targetType === 'POST' ? POST_ACTIONS : USER_ACTIONS;
 
   const handleAction = () => {
     if (!report) return;
@@ -132,7 +139,7 @@ export default function ReportDetailPage() {
     );
   }
 
-  const isResolved = report.status === 'RESOLVED' || report.status === 'DISMISSED' || report.status === 'AUTO_HIDDEN';
+  const isResolved = report.status === 'RESOLVED' || report.status === 'DISMISSED';
 
   return (
     <div className="space-y-5">
@@ -149,11 +156,10 @@ export default function ReportDetailPage() {
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
         {/* ── Left column (3/5) ───────────────────────── */}
         <div className="space-y-4 lg:col-span-3">
-
           {/* Target content */}
-          <section className="rounded-xl border border-border bg-card p-5">
+          <section className="border-border bg-card rounded-xl border p-5">
             <div className="mb-3 flex items-center gap-2">
-              <span className="rounded bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              <span className="bg-muted text-muted-foreground rounded px-2 py-0.5 text-xs font-medium">
                 {t(`targetType.${report.targetType}`, report.targetType)}
               </span>
               <h3 className="text-sm font-semibold">Nội dung bị báo cáo</h3>
@@ -165,16 +171,18 @@ export default function ReportDetailPage() {
             </div>
 
             {report.targetContent ? (
-              <div className="rounded-lg bg-muted/30 p-4">
-                <p className="whitespace-pre-wrap text-sm leading-relaxed">{report.targetContent}</p>
+              <div className="bg-muted/30 rounded-lg p-4">
+                <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                  {report.targetContent}
+                </p>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Không thể tải nội dung</p>
+              <p className="text-muted-foreground text-sm">Không thể tải nội dung</p>
             )}
 
             {/* Target media with click-to-reveal */}
             {report.targetMedia && report.targetMedia.length > 0 && (
-              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {report.targetMedia.map((m) => {
                   const isRevealed = revealedMediaIds.includes(m.id);
                   const isVideo = m.kind === 'VIDEO';
@@ -182,7 +190,7 @@ export default function ReportDetailPage() {
                   return (
                     <div
                       key={m.id}
-                      className="group relative aspect-video overflow-hidden rounded-lg border border-border bg-muted/30 flex items-center justify-center cursor-pointer select-none"
+                      className="border-border bg-muted/30 group relative flex aspect-video cursor-pointer select-none items-center justify-center overflow-hidden rounded-lg border"
                       onClick={() => {
                         if (!isRevealed) {
                           setRevealedMediaIds((prev) => [...prev, m.id]);
@@ -195,7 +203,7 @@ export default function ReportDetailPage() {
                           src={m.publicUrl ?? undefined}
                           controls={isRevealed}
                           className={`h-full w-full object-cover transition-all duration-300 ${
-                            isRevealed ? '' : 'blur-2xl scale-95 opacity-50 pointer-events-none'
+                            isRevealed ? '' : 'pointer-events-none scale-95 opacity-50 blur-2xl'
                           }`}
                         />
                       ) : (
@@ -203,19 +211,19 @@ export default function ReportDetailPage() {
                           src={m.publicUrl ?? undefined}
                           alt="Báo cáo đính kèm"
                           className={`h-full w-full object-cover transition-all duration-300 ${
-                            isRevealed ? '' : 'blur-2xl scale-95 opacity-50 pointer-events-none'
+                            isRevealed ? '' : 'pointer-events-none scale-95 opacity-50 blur-2xl'
                           }`}
                         />
                       )}
 
                       {/* Cover overlay when blurred */}
                       {!isRevealed && (
-                        <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-3 transition-colors group-hover:bg-black/60">
-                          <EyeOff className="h-6 w-6 text-white/90 mb-1" />
-                          <span className="text-[11px] font-semibold text-white uppercase tracking-wider">
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 p-3 text-center transition-colors group-hover:bg-black/60">
+                          <EyeOff className="mb-1 h-6 w-6 text-white/90" />
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-white">
                             Nội dung nhạy cảm
                           </span>
-                          <span className="text-[10px] text-white/70 mt-0.5">
+                          <span className="mt-0.5 text-[10px] text-white/70">
                             Click để hiển thị
                           </span>
                         </div>
@@ -228,13 +236,15 @@ export default function ReportDetailPage() {
 
             {/* Target author */}
             {report.targetAuthor && (
-              <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-border p-3">
-                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold uppercase flex-shrink-0">
+              <div className="border-border mt-3 flex flex-wrap items-center gap-3 rounded-lg border p-3">
+                <div className="bg-muted flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold uppercase">
                   {report.targetAuthor.username[0]}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">@{report.targetAuthor.username}</p>
-                  <p className="text-xs text-muted-foreground truncate">{report.targetAuthor.name}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">@{report.targetAuthor.username}</p>
+                  <p className="text-muted-foreground truncate text-xs">
+                    {report.targetAuthor.name}
+                  </p>
                 </div>
                 <StatusBadge status={report.targetAuthor.status} />
               </div>
@@ -242,10 +252,10 @@ export default function ReportDetailPage() {
           </section>
 
           {/* Reporter info */}
-          <section className="rounded-xl border border-border bg-card p-5">
+          <section className="border-border bg-card rounded-xl border p-5">
             <h3 className="mb-3 text-sm font-semibold">Thông tin người báo cáo</h3>
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold uppercase">
+              <div className="bg-muted flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold uppercase">
                 {(report.reporter?.username ?? 'U')[0]}
               </div>
               <div className="flex-1">
@@ -253,17 +263,19 @@ export default function ReportDetailPage() {
                   @{report.reporter?.username ?? t('common.unknownUser')}
                 </p>
                 {report.reporter?.name && (
-                  <p className="text-xs text-muted-foreground">{report.reporter.name}</p>
+                  <p className="text-muted-foreground text-xs">{report.reporter.name}</p>
                 )}
               </div>
             </div>
             {report.description && (
-              <div className="mt-3 rounded-lg bg-muted/30 p-3">
-                <p className="text-xs text-muted-foreground mb-1 font-medium">Mô tả thêm từ reporter:</p>
+              <div className="bg-muted/30 mt-3 rounded-lg p-3">
+                <p className="text-muted-foreground mb-1 text-xs font-medium">
+                  Mô tả thêm từ reporter:
+                </p>
                 <p className="text-sm">{report.description}</p>
               </div>
             )}
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-muted-foreground">
+            <div className="text-muted-foreground mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
               <div>
                 <span className="font-medium">Lý do: </span>
                 {t(`reportReason.${report.reason}`, report.reason)}
@@ -277,7 +289,7 @@ export default function ReportDetailPage() {
 
           {/* Related reports */}
           {report.relatedReports && report.relatedReports.length > 0 && (
-            <section className="rounded-xl border border-border bg-card p-5">
+            <section className="border-border bg-card rounded-xl border p-5">
               <h3 className="mb-3 text-sm font-semibold">
                 Báo cáo liên quan ({report.relatedReports.length})
               </h3>
@@ -285,23 +297,21 @@ export default function ReportDetailPage() {
                 {report.relatedReports.map((r) => (
                   <div
                     key={r.id}
-                    className="flex flex-col gap-1.5 rounded-lg bg-muted/20 px-3 py-2.5 text-xs sm:flex-row sm:items-center sm:gap-3"
+                    className="bg-muted/20 flex flex-col gap-1.5 rounded-lg px-3 py-2.5 text-xs sm:flex-row sm:items-center sm:gap-3"
                   >
                     {/* Row 1 (mobile): reporter + reason */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-foreground">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-foreground font-medium">
                         @{r.reporter?.username ?? t('common.unknownUser')}
                       </span>
-                      <span className="rounded bg-muted px-1.5 py-0.5 text-muted-foreground">
+                      <span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5">
                         {t(`reportReason.${r.reason}`, r.reason)}
                       </span>
                     </div>
                     {/* Row 2 (mobile): status + date */}
                     <div className="flex items-center gap-2 sm:ml-auto">
                       <StatusBadge status={r.status} />
-                      <span className="text-muted-foreground">
-                        {formatDate(r.createdAt)}
-                      </span>
+                      <span className="text-muted-foreground">{formatDate(r.createdAt)}</span>
                     </div>
                   </div>
                 ))}
@@ -312,7 +322,6 @@ export default function ReportDetailPage() {
 
         {/* ── Right column (2/5) ───────────────────────── */}
         <div className="space-y-4 lg:col-span-2">
-
           {/* Tabs */}
           <div className={segmentedControl.track}>
             {(['info', 'audit'] as const).map((tab) => (
@@ -321,9 +330,7 @@ export default function ReportDetailPage() {
                 type="button"
                 onClick={() => setActiveTab(tab)}
                 className={`flex-1 justify-center py-1.5 ${segmentedControl.tab} ${
-                  activeTab === tab
-                    ? segmentedControl.tabActive
-                    : segmentedControl.tabInactive
+                  activeTab === tab ? segmentedControl.tabActive : segmentedControl.tabInactive
                 }`}
               >
                 {tab === 'info' ? 'Xử lý' : 'Audit Log'}
@@ -333,18 +340,16 @@ export default function ReportDetailPage() {
 
           {activeTab === 'info' ? (
             /* Action form */
-            <section className="rounded-xl border border-border bg-card p-5 space-y-4">
+            <section className="border-border bg-card space-y-4 rounded-xl border p-5">
               <h3 className="text-sm font-semibold">Hành động kiểm duyệt</h3>
 
               {isResolved ? (
-                <div className="rounded-lg bg-muted/30 p-4 text-center">
+                <div className="bg-muted/30 rounded-lg p-4 text-center">
                   <StatusBadge status={report.status} />
-                  <p className="mt-2 text-xs text-muted-foreground">Báo cáo đã được xử lý</p>
-                  {report.resolutionNote && (
-                    <p className="mt-1 text-xs">{report.resolutionNote}</p>
-                  )}
+                  <p className="text-muted-foreground mt-2 text-xs">Báo cáo đã được xử lý</p>
+                  {report.resolutionNote && <p className="mt-1 text-xs">{report.resolutionNote}</p>}
                   {report.reviewedAt && (
-                    <p className="mt-1 text-xs text-muted-foreground">
+                    <p className="text-muted-foreground mt-1 text-xs">
                       {formatDate(report.reviewedAt)}
                     </p>
                   )}
@@ -352,7 +357,7 @@ export default function ReportDetailPage() {
               ) : (
                 <>
                   {/* Mark under review */}
-                  {report.status === 'PENDING' && (
+                  {(report.status === 'PENDING' || report.status === 'AUTO_HIDDEN') && (
                     <Button
                       variant="secondary"
                       className="w-full text-xs"
@@ -370,7 +375,7 @@ export default function ReportDetailPage() {
 
                   {/* Action select */}
                   <div className="space-y-2">
-                    <label className="text-xs font-medium text-muted-foreground">
+                    <label className="text-muted-foreground text-xs font-medium">
                       Chọn hành động
                     </label>
                     <div className="space-y-1.5">
@@ -395,7 +400,7 @@ export default function ReportDetailPage() {
 
                   {/* Resolution note */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">
+                    <label className="text-muted-foreground text-xs font-medium">
                       Ghi chú xử lý
                       <span className="ml-1 text-red-400">*</span>
                     </label>
@@ -404,21 +409,21 @@ export default function ReportDetailPage() {
                       onChange={(e) => setResolutionNote(e.target.value)}
                       placeholder={`Lý do ${ACTION_LABELS[selectedAction].toLowerCase()}…`}
                       rows={3}
-                      className="w-full resize-none rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="border-border bg-muted/20 text-foreground placeholder:text-muted-foreground/60 focus:border-ring focus:ring-ring w-full resize-none rounded-lg border px-3 py-2 text-xs focus:outline-none focus:ring-1"
                     />
                   </div>
 
                   {/* Ban date (optional) */}
                   {selectedAction === 'BAN_ACCOUNT' && (
                     <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-muted-foreground">
+                      <label className="text-muted-foreground text-xs font-medium">
                         Thời hạn ban (để trống = vĩnh viễn)
                       </label>
                       <input
                         type="datetime-local"
                         value={bannedUntil}
                         onChange={(e) => setBannedUntil(e.target.value)}
-                        className="w-full rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                        className="border-border bg-muted/20 text-foreground focus:border-ring focus:ring-ring w-full rounded-lg border px-3 py-2 text-xs focus:outline-none focus:ring-1"
                       />
                     </div>
                   )}
@@ -426,8 +431,8 @@ export default function ReportDetailPage() {
                   {/* Confirm delete warning */}
                   {confirmDelete && selectedAction === 'DELETE_POST' && (
                     <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400">
-                      ⚠ Hành động này không thể hoàn tác. Bài viết sẽ bị xóa vĩnh viễn.
-                      Nhấn nút bên dưới để xác nhận.
+                      ⚠ Hành động này không thể hoàn tác. Bài viết sẽ bị xóa vĩnh viễn. Nhấn nút bên
+                      dưới để xác nhận.
                     </div>
                   )}
 
@@ -440,58 +445,67 @@ export default function ReportDetailPage() {
                     {actionMutation.isPending
                       ? 'Đang xử lý…'
                       : confirmDelete
-                      ? '⚠ Xác nhận xóa bài'
-                      : ACTION_LABELS[selectedAction]}
+                        ? '⚠ Xác nhận xóa bài'
+                        : ACTION_LABELS[selectedAction]}
                   </button>
                 </>
               )}
             </section>
           ) : (
             /* Audit log timeline */
-            <section className="rounded-xl border border-border bg-card p-5">
+            <section className="border-border bg-card rounded-xl border p-5">
               <h3 className="mb-4 text-sm font-semibold">Lịch sử hành động</h3>
               {!report.auditLogs || report.auditLogs.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Chưa có hành động nào</p>
+                <p className="text-muted-foreground text-xs">Chưa có hành động nào</p>
               ) : (
                 <div className="relative space-y-0">
                   {report.auditLogs.map((log, idx) => (
                     <div key={log.id} className="flex gap-3">
                       {/* Timeline line */}
                       <div className="flex flex-col items-center">
-                        <div className="mt-1 h-2 w-2 rounded-full bg-primary/60 flex-shrink-0" />
+                        <div className="bg-primary/60 mt-1 h-2 w-2 flex-shrink-0 rounded-full" />
                         {idx < report.auditLogs.length - 1 && (
-                          <div className="w-px flex-1 bg-border" />
+                          <div className="bg-border w-px flex-1" />
                         )}
                       </div>
                       {/* Content */}
-                      <div className="pb-4 flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium">
-                            {t(AUDIT_ACTION_KEY_MAP[log.action] ?? `auditAction.${log.action}`, log.action)}
+                      <div className="min-w-0 flex-1 pb-4">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="bg-muted rounded px-1.5 py-0.5 text-xs font-medium">
+                            {t(
+                              AUDIT_ACTION_KEY_MAP[log.action] ?? `auditAction.${log.action}`,
+                              log.action,
+                            )}
                           </span>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-muted-foreground text-xs">
                             @{log.actor?.username ?? t('common.unknownUser')}
                           </span>
                         </div>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
+                        <p className="text-muted-foreground mt-0.5 text-xs">
                           {formatDate(log.createdAt)}
                         </p>
                         {(() => {
                           const metadataItems = renderAuditMetadata(log.metadata, t);
-                          return metadataItems.length > 0 && (
-                            <details className="mt-1">
-                              <summary className="cursor-pointer text-xs text-muted-foreground/60 hover:text-muted-foreground">
-                                {t('common.details')}
-                              </summary>
-                              <div className="mt-1 rounded bg-muted/30 p-2 text-xs space-y-1 max-h-36 overflow-auto">
-                                {metadataItems.map((item, idx) => (
-                                  <div key={idx} className="flex gap-2">
-                                    <span className="font-semibold text-muted-foreground">{item.label}:</span>
-                                    <span className="text-foreground break-all">{item.value}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </details>
+                          return (
+                            metadataItems.length > 0 && (
+                              <details className="mt-1">
+                                <summary className="text-muted-foreground/60 hover:text-muted-foreground cursor-pointer text-xs">
+                                  {t('common.details')}
+                                </summary>
+                                <div className="bg-muted/30 mt-1 max-h-36 space-y-1 overflow-auto rounded p-2 text-xs">
+                                  {metadataItems.map((item, idx) => (
+                                    <div key={idx} className="flex gap-2">
+                                      <span className="text-muted-foreground font-semibold">
+                                        {item.label}:
+                                      </span>
+                                      <span className="text-foreground break-all">
+                                        {item.value}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </details>
+                            )
                           );
                         })()}
                       </div>

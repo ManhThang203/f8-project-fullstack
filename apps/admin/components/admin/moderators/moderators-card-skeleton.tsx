@@ -6,7 +6,7 @@ type Props = {
 
 function ModeratorsCardSkeletonItem() {
   return (
-    <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+    <div className="border-border bg-card space-y-3 rounded-xl border p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1 space-y-1">
           <Skeleton className="h-4 w-32 rounded" />

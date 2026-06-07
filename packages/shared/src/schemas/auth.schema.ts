@@ -1,7 +1,11 @@
 import { z } from 'zod';
 
 export const registerBodySchema = z.object({
-  email: z.string().email().max(254).transform((s) => s.trim().toLowerCase()),
+  email: z
+    .string()
+    .email()
+    .max(254)
+    .transform((s) => s.trim().toLowerCase()),
   username: z
     .string()
     .min(3, 'Tối thiểu 3 ký tự')
@@ -25,7 +29,11 @@ export const loginBodySchema = z.object({
 export type LoginBody = z.infer<typeof loginBodySchema>;
 
 export const forgotPasswordRequestSchema = z.object({
-  email: z.string().email().max(254).transform((s) => s.trim().toLowerCase()),
+  email: z
+    .string()
+    .email()
+    .max(254)
+    .transform((s) => s.trim().toLowerCase()),
 });
 
 export type ForgotPasswordRequest = z.infer<typeof forgotPasswordRequestSchema>;

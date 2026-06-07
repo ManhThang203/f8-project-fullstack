@@ -21,7 +21,7 @@ function PermissionChip({ count }: { count: number }) {
       : t('moderators.permissionCountValue', { count });
 
   return (
-    <span className="inline-flex items-center whitespace-nowrap rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground ring-1 ring-inset ring-border">
+    <span className="bg-muted text-muted-foreground ring-border inline-flex items-center whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset">
       {label}
     </span>
   );
@@ -33,16 +33,13 @@ export function ModeratorsCardList({ moderators, onEditPermissions }: Props) {
   return (
     <div className="space-y-3 lg:hidden">
       {moderators.map((mod) => (
-        <div
-          key={mod.id}
-          className="space-y-3 rounded-xl border border-border bg-card p-4"
-        >
+        <div key={mod.id} className="border-border bg-card space-y-3 rounded-xl border p-4">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium">{mod.name ?? mod.username}</p>
-              <p className="truncate text-xs text-muted-foreground">@{mod.username}</p>
+              <p className="text-muted-foreground truncate text-xs">@{mod.username}</p>
             </div>
-            <span className="shrink-0 whitespace-nowrap rounded-md bg-muted px-2 py-1 text-xs font-semibold text-foreground">
+            <span className="bg-muted text-foreground shrink-0 whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold">
               {t(`roles.${mod.role}`, mod.role)}
             </span>
           </div>
@@ -50,12 +47,12 @@ export function ModeratorsCardList({ moderators, onEditPermissions }: Props) {
           <PermissionChip count={mod.permissionCount} />
 
           <Button
-            variant="ghost"
+            variant="secondary"
             disabled={mod.role === 'SUPER_ADMIN'}
             onClick={() => onEditPermissions(mod)}
-            className="h-9 w-full gap-1.5 text-xs text-primary hover:bg-primary hover:text-primary-foreground disabled:text-muted-foreground disabled:hover:bg-transparent"
+            className="h-9 w-full gap-1.5 text-xs"
           >
-            <Key className="size-3.5 text-primary" aria-hidden />
+            <Key className="size-3.5 shrink-0" aria-hidden />
             {t('moderators.editPermissions')}
           </Button>
         </div>

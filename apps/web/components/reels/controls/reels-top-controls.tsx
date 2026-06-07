@@ -2,12 +2,11 @@
 
 import { Pause, Play, Search } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
-
 import {
   ReelsVolumeControl,
   type ReelsVolumeVariant,
 } from '@/components/reels/controls/reels-volume-control';
+import { cn } from '@/lib/utils';
 
 type Props = {
   isPlaying: boolean;

@@ -1,4 +1,7 @@
 export type ReportStatus = 'PENDING' | 'UNDER_REVIEW' | 'RESOLVED' | 'DISMISSED' | 'AUTO_HIDDEN';
+
+/** Bộ lọc tab trạng thái — OPEN = hàng đợi chờ admin xử lý. */
+export type ReportStatusFilter = 'OPEN' | Exclude<ReportStatus, 'AUTO_HIDDEN' | 'PENDING'>;
 export type ReportReason =
   | 'SPAM'
   | 'BULLYING'
@@ -12,13 +15,20 @@ export type ReportReason =
   | 'NOT_INTERESTED';
 export type TargetType = 'POST' | 'USER' | 'COMMENT';
 
-export const ALL_STATUSES: ReportStatus[] = [
-  'PENDING',
-  'UNDER_REVIEW',
-  'RESOLVED',
-  'DISMISSED',
-  'AUTO_HIDDEN',
-];
+export const ALL_STATUSES: ReportStatusFilter[] = ['OPEN', 'UNDER_REVIEW', 'RESOLVED', 'DISMISSED'];
+
+/** Key i18n cho nhãn tab lọc trạng thái (OPEN chỉ là giá trị nội bộ, không hiển thị ra UI). */
+export const STATUS_FILTER_I18N_KEYS: Record<ReportStatusFilter, string> = {
+  OPEN: 'reports.statusFilter.open',
+  UNDER_REVIEW: 'reports.statusFilter.underReview',
+  RESOLVED: 'reports.statusFilter.resolved',
+  DISMISSED: 'reports.statusFilter.dismissed',
+};
+
+/** Báo cáo còn cần admin xử lý (kể cả AUTO_HIDDEN cũ từ auto-hide đã gỡ). */
+export function isActionableReportStatus(status: string): boolean {
+  return status === 'PENDING' || status === 'UNDER_REVIEW' || status === 'AUTO_HIDDEN';
+}
 
 export const ALL_REASONS: ReportReason[] = [
   'SPAM',

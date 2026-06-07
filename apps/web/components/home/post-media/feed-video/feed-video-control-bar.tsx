@@ -3,10 +3,10 @@
 import { Pause, Play } from 'lucide-react';
 import { useRef, useState } from 'react';
 
+import { FeedVideoVolumeControl } from './feed-video-volume-control';
+
 import { formatDuration } from '@/components/reels/reels-utils';
 import { cn } from '@/lib/utils';
-
-import { FeedVideoVolumeControl } from './feed-video-volume-control';
 
 type ProgressTrackProps = {
   currentTimeMs: number;

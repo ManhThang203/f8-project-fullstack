@@ -1,0 +1,3 @@
+-- AlterEnum
+ALTER TYPE "NotificationType" ADD VALUE 'APPEAL_APPROVED';
+ALTER TYPE "NotificationType" ADD VALUE 'APPEAL_REJECTED';

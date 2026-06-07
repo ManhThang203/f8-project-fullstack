@@ -13,7 +13,7 @@ const colStatus = adminCol('grow', 'center');
 const colPosts = adminCol('grow', 'center');
 const colActions = adminCol('actions', 'end');
 
-const headerCols: { col: (typeof colUser); className?: string; skeleton: string }[] = [
+const headerCols: { col: typeof colUser; className?: string; skeleton: string }[] = [
   { col: colUser, skeleton: 'w-16' },
   { col: colEmail, className: 'hidden xl:table-cell', skeleton: 'w-16' },
   { col: colRole, skeleton: 'w-16' },

@@ -1,4 +1,5 @@
-import { prisma, NotificationType } from '@costy/db';
+import { prisma } from '@costy/db';
+import type { NotificationType } from '@costy/db';
 import { getRealtimeIo } from '../../lib/realtime.js';
 
 export async function listNotifications(userId: string, limit = 20, cursor?: string) {
@@ -49,19 +50,20 @@ export async function markAsRead(userId: string, notificationId?: string) {
 
 type CreateNotificationInput = {
   recipientId: string;
-  actorId: string;
+  actorId?: string | null;
   type: NotificationType;
   entityType?: string;
   entityId?: string;
 };
 
 export async function createNotification(input: CreateNotificationInput) {
+  const actorId = input.actorId ?? null;
   // Prevent duplicate notifications for same actor, recipient, type, and entity
   if (input.entityId) {
     const existing = await prisma.notification.findFirst({
       where: {
         recipientId: input.recipientId,
-        actorId: input.actorId,
+        actorId,
         type: input.type,
         entityId: input.entityId,
       },
@@ -75,7 +77,7 @@ export async function createNotification(input: CreateNotificationInput) {
   const notification = await prisma.notification.create({
     data: {
       recipientId: input.recipientId,
-      actorId: input.actorId,
+      actorId,
       type: input.type,
       entityType: input.entityType,
       entityId: input.entityId,

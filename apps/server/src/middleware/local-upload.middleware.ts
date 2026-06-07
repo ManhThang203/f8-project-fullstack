@@ -3,8 +3,6 @@ import path from 'path';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 
-import { AppError } from '../lib/errors.js';
-
 // Đảm bảo thư mục upload tồn tại
 const uploadDir = path.resolve(process.cwd(), 'uploads');
 if (!fs.existsSync(uploadDir)) {

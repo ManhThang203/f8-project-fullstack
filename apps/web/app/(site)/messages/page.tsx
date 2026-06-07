@@ -12,8 +12,8 @@ export const metadata: Metadata = {
 
 function MessagesFallback() {
   return (
-    <main className="min-h-screen bg-background">
-      <div className="flex min-h-[50dvh] items-center justify-center text-sm text-muted-foreground">
+    <main className="bg-background min-h-screen">
+      <div className="text-muted-foreground flex min-h-[50dvh] items-center justify-center text-sm">
         Đang tải…
       </div>
     </main>
@@ -22,7 +22,7 @@ function MessagesFallback() {
 
 export default function MessagesPage() {
   return (
-    <main className="fixed inset-0 top-14 bg-background overflow-hidden flex flex-col">
+    <main className="bg-background fixed inset-0 top-14 flex flex-col overflow-hidden">
       <Suspense fallback={<MessagesFallback />}>
         <ClientOnly fallback={<MessagesSsrFallback />}>
           <MessagesView />

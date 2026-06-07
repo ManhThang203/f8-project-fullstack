@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { getRealtimeIo } from '../lib/realtime.js';
 import { logger } from '../lib/logger.js';
 
-export interface RealtimeOptions<TData = any> {
+export interface RealtimeOptions<TData = unknown> {
   /**
    * Namespace Socket.IO, ví dụ: '/feed', '/chat'
    */
@@ -22,7 +22,7 @@ export interface RealtimeOptions<TData = any> {
    * Hàm trích xuất dữ liệu để làm payload gửi đi.
    * Mặc định sẽ gửi `data` (từ wrapper `ok(data)`).
    */
-  payload?: (req: Request, resData: any) => any;
+  payload?: (req: Request, resData: unknown) => unknown;
 }
 
 /**
@@ -33,7 +33,7 @@ export function realtimeBroadcast(options: RealtimeOptions) {
     const originalJson = res.json;
 
     // Override res.json để chèn hook sau khi Controller trả kết quả
-    res.json = (function (this: any, body: any) {
+    res.json = function (this: Response, body: unknown) {
       originalJson.call(this, body);
 
       if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -46,7 +46,10 @@ export function realtimeBroadcast(options: RealtimeOptions) {
           const eventName =
             typeof options.event === 'function' ? options.event(req) : options.event;
 
-          const responseData = body && body.data !== undefined ? body.data : body;
+          const responseData =
+            body !== null && typeof body === 'object' && 'data' in body
+              ? (body as { data: unknown }).data
+              : body;
           const eventPayload = options.payload ? options.payload(req, responseData) : responseData;
 
           const roomOrRooms = options.room
@@ -66,7 +69,7 @@ export function realtimeBroadcast(options: RealtimeOptions) {
           logger.error({ err: error, event: options.event }, 'Failed to broadcast realtime event');
         }
       }
-    }) as any;
+    } as Response['json'];
 
     next();
   };

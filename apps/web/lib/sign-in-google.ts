@@ -2,12 +2,15 @@
 
 import { authClient } from '@/lib/auth-client';
 
-export type GoogleSignInResult =
-  | { ok: true }
-  | { ok: false; message: string };
+export type GoogleSignInResult = { ok: true } | { ok: false; message: string };
 
 function messageFromUnknownError(err: unknown): string {
-  if (err && typeof err === 'object' && 'message' in err && typeof (err as { message: unknown }).message === 'string') {
+  if (
+    err &&
+    typeof err === 'object' &&
+    'message' in err &&
+    typeof (err as { message: unknown }).message === 'string'
+  ) {
     return (err as { message: string }).message;
   }
   return 'Đăng nhập Google thất bại. Thử lại.';

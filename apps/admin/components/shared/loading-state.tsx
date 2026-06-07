@@ -27,8 +27,8 @@ export function LoadingState({ variant = 'inline', className, label, hideText = 
   return (
     <div
       className={cn(
-        'flex flex-row items-center justify-center gap-2 text-muted-foreground',
-        isOverlay && 'absolute inset-0 z-10 rounded-xl bg-background/60',
+        'text-muted-foreground flex flex-row items-center justify-center gap-2',
+        isOverlay && 'bg-background/60 absolute inset-0 z-10 rounded-xl',
         variant === 'inline' && 'py-12',
         className,
       )}
@@ -36,12 +36,8 @@ export function LoadingState({ variant = 'inline', className, label, hideText = 
       aria-busy="true"
       aria-live="polite"
     >
-      <Loader2
-        className="size-5 shrink-0 animate-spin motion-reduce:animate-none"
-        aria-hidden
-      />
+      <Loader2 className="size-5 shrink-0 animate-spin motion-reduce:animate-none" aria-hidden />
       {!hideText && !isOverlay && <span className="text-sm">{message}</span>}
     </div>
   );
 }
-

@@ -4,23 +4,28 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { useFollowMutation } from '@/hooks/queries/use-follow-mutation';
-import { useReelsControlsBehavior } from '@/hooks/use-reels-controls-behavior';
-import { useReelsVideoStage } from '@/hooks/use-reels-video-stage';
-import { useReelsDeviceProfile, useReelsLayoutMode, type ReelsDeviceProfile } from '../reels-layout.utils';
-import { authClient } from '@/lib/auth-client';
-import { feedVideoController } from '@/lib/feed-video-controller';
-import { cn } from '@/lib/utils';
-
 import { ReelsActionRail } from '../controls/reels-action-rail';
 import { ReelsCenterPlayIndicator } from '../controls/reels-center-play-indicator';
 import { ReelsProgressBar } from '../controls/reels-progress-bar';
-import type { ReelsVolumeVariant } from '../controls/reels-volume-control';
 import { ReelsTopControls } from '../controls/reels-top-controls';
+import type { ReelsVolumeVariant } from '../controls/reels-volume-control';
 import { ReelsBottomMeta } from '../meta/reels-bottom-meta';
 import { applyReelsAudio, useReelsAudio } from '../reels-audio-context';
+import {
+  useReelsDeviceProfile,
+  useReelsLayoutMode,
+  type ReelsDeviceProfile,
+} from '../reels-layout.utils';
 import type { ReelsPlayerProps } from '../reels-types';
+
 import { ReelsVideoSurface } from './reels-video-surface';
+
+import { useFollowMutation } from '@/hooks/queries/use-follow-mutation';
+import { useReelsControlsBehavior } from '@/hooks/use-reels-controls-behavior';
+import { useReelsVideoStage } from '@/hooks/use-reels-video-stage';
+import { authClient } from '@/lib/auth-client';
+import { feedVideoController } from '@/lib/feed-video-controller';
+import { cn } from '@/lib/utils';
 
 const TIMEUPDATE_THROTTLE_MS = 250;
 
@@ -350,9 +355,7 @@ export function FacebookReelsPlayer({ item, isActive }: ReelsPlayerProps) {
           ) : null}
         </div>
 
-        {!isImmersive ? (
-          <ReelsActionRail {...railProps} className="mr-2 shrink-0 lg:mr-4" />
-        ) : null}
+        {!isImmersive ? <ReelsActionRail {...railProps} className="mr-2 shrink-0 lg:mr-4" /> : null}
       </div>
     </div>
   );

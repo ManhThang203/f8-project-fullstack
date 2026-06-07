@@ -3,7 +3,12 @@
 import { MessageCircle, Share2, ThumbsUp } from 'lucide-react';
 
 import { ActionButton } from './action-button';
-import { ReactionFace, type PostReactionId, REACTION_LABELS, REACTION_COLORS } from './reaction-face';
+import {
+  ReactionFace,
+  type PostReactionId,
+  REACTION_LABELS,
+  REACTION_COLORS,
+} from './reaction-face';
 
 import { cn } from '@/lib/utils';
 
@@ -69,7 +74,11 @@ export function PostFooter({
       )}
     >
       <div className="flex flex-1 items-center justify-between gap-1">
-        <div className="relative flex flex-1" onMouseEnter={onLikeHoverEnter} onMouseLeave={onLikeHoverLeave}>
+        <div
+          className="relative flex flex-1"
+          onMouseEnter={onLikeHoverEnter}
+          onMouseLeave={onLikeHoverLeave}
+        >
           <ActionButton
             icon={likeIcon}
             count={likeCount > 0 ? likeCount : undefined}

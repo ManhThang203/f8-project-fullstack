@@ -51,7 +51,12 @@ const envSchema = z.object({
   CORS_ORIGINS: z
     .string()
     .default('http://localhost:3000,http://localhost:3001')
-    .transform((s) => s.split(',').map((o) => o.trim()).filter(Boolean)),
+    .transform((s) =>
+      s
+        .split(',')
+        .map((o) => o.trim())
+        .filter(Boolean),
+    ),
 
   RATE_LIMIT_POINTS: z.coerce.number().int().positive().default(500),
   RATE_LIMIT_DURATION: z.coerce.number().int().positive().default(60),
@@ -74,6 +79,20 @@ const envSchema = z.object({
       return s === 'true' || s === '1' || s === 'yes';
     }, z.boolean())
     .default(false),
+
+  /** Vercel AI Gateway — dùng cho embeddings và content moderation. */
+  AI_GATEWAY_API_KEY: z.string().optional().default(''),
+
+  /** Bật AI moderation khi có API key (có thể override bằng MODERATION_ENABLED). */
+  MODERATION_ENABLED: z.preprocess((val) => {
+    if (val === undefined || val === '') return undefined;
+    const s = String(val).toLowerCase();
+    return s === 'true' || s === '1' || s === 'yes';
+  }, z.boolean().optional()),
+
+  MODERATION_AI_MODEL: z.string().default('openai/gpt-4o-mini'),
+  MODERATION_AUTO_HIDE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.9),
+  MODERATION_REVIEW_THRESHOLD: z.coerce.number().min(0).max(1).default(0.6),
 });
 
 const parsed = envSchema.safeParse(process.env);

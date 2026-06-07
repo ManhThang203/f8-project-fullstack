@@ -23,10 +23,23 @@ export const adminUserStatusPatchSchema = z.object({
 export const adminReportListQuerySchema = z.object({
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
+  /** Hàng đợi chờ admin xử lý: PENDING + UNDER_REVIEW (+ AUTO_HIDDEN cũ). */
+  queue: z.enum(['open']).optional(),
   status: z.enum(['PENDING', 'UNDER_REVIEW', 'RESOLVED', 'DISMISSED', 'AUTO_HIDDEN']).optional(),
   targetType: z.enum(['POST', 'USER', 'COMMENT']).optional(),
   reason: z
-    .enum(['SPAM', 'BULLYING', 'MINOR_SAFETY', 'SELF_HARM', 'VIOLENCE', 'RESTRICTED_GOODS', 'ADULT_CONTENT', 'MISINFORMATION', 'IP_VIOLATION', 'NOT_INTERESTED'])
+    .enum([
+      'SPAM',
+      'BULLYING',
+      'MINOR_SAFETY',
+      'SELF_HARM',
+      'VIOLENCE',
+      'RESTRICTED_GOODS',
+      'ADULT_CONTENT',
+      'MISINFORMATION',
+      'IP_VIOLATION',
+      'NOT_INTERESTED',
+    ])
     .optional(),
   from: z.string().datetime().optional(),
   to: z.string().datetime().optional(),
@@ -46,7 +59,18 @@ export const adminReportActionSchema = z.object({
 export const createReportBodySchema = z.object({
   targetType: z.enum(['POST', 'USER', 'COMMENT']),
   targetId: z.string().min(1),
-  reason: z.enum(['SPAM', 'BULLYING', 'MINOR_SAFETY', 'SELF_HARM', 'VIOLENCE', 'RESTRICTED_GOODS', 'ADULT_CONTENT', 'MISINFORMATION', 'IP_VIOLATION', 'NOT_INTERESTED']),
+  reason: z.enum([
+    'SPAM',
+    'BULLYING',
+    'MINOR_SAFETY',
+    'SELF_HARM',
+    'VIOLENCE',
+    'RESTRICTED_GOODS',
+    'ADULT_CONTENT',
+    'MISINFORMATION',
+    'IP_VIOLATION',
+    'NOT_INTERESTED',
+  ]),
   description: z.string().max(1000).optional(),
 });
 

@@ -3,7 +3,10 @@ import type { ComponentPropsWithoutRef } from 'react';
 
 import { cn } from '../utils/cn';
 
-type CotsyLogoProps = Omit<ComponentPropsWithoutRef<typeof Image>, 'src' | 'alt' | 'width' | 'height'>;
+type CotsyLogoProps = Omit<
+  ComponentPropsWithoutRef<typeof Image>,
+  'src' | 'alt' | 'width' | 'height'
+>;
 
 /** Cotsy app logo — `/icon/Logo-app-2.webp`. */
 export function CotsyLogo({ className, ...props }: CotsyLogoProps) {

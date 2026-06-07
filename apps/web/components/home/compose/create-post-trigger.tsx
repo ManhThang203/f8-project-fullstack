@@ -14,16 +14,13 @@ export function CreatePostTrigger({ username, avatarUrl, onOpen }: Props) {
   const placeholder = username ? `${username} ơi, bạn đang nghĩ gì thế?` : 'Bạn đang nghĩ gì thế?';
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3">
+    <div className="border-border bg-card flex items-center gap-3 rounded-2xl border px-4 py-3">
       {/* Avatar */}
-      <div
-        className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-muted"
-        aria-hidden
-      >
+      <div className="bg-muted h-10 w-10 shrink-0 overflow-hidden rounded-full" aria-hidden>
         {avatarUrl ? (
           <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
         ) : (
-          <span className="flex h-full w-full items-center justify-center text-sm font-semibold text-muted-foreground">
+          <span className="text-muted-foreground flex h-full w-full items-center justify-center text-sm font-semibold">
             {username ? username[0]?.toUpperCase() : '?'}
           </span>
         )}
@@ -33,7 +30,7 @@ export function CreatePostTrigger({ username, avatarUrl, onOpen }: Props) {
       <button
         type="button"
         onClick={() => onOpen(false)}
-        className="flex-1 text-left text-sm text-muted-foreground transition-colors hover:text-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="text-muted-foreground hover:text-foreground/70 focus-visible:ring-ring focus-visible:ring-offset-background flex-1 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
         aria-label="Tạo bài viết mới"
       >
         {placeholder}
@@ -46,8 +43,8 @@ export function CreatePostTrigger({ username, avatarUrl, onOpen }: Props) {
           onClick={() => onOpen(false)}
           aria-label="Video trực tiếp"
           className={cn(
-            'flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors hover:bg-muted',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            'hover:bg-muted flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors',
+            'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
           )}
         >
           <Video className="h-5 w-5 text-[hsl(0,80%,60%)]" aria-hidden />
@@ -58,8 +55,8 @@ export function CreatePostTrigger({ username, avatarUrl, onOpen }: Props) {
           onClick={() => onOpen(true)}
           aria-label="Thêm ảnh/video"
           className={cn(
-            'flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors hover:bg-muted',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            'hover:bg-muted flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors',
+            'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
           )}
         >
           <Image className="h-5 w-5 text-[hsl(145,60%,50%)]" aria-hidden />
@@ -70,8 +67,8 @@ export function CreatePostTrigger({ username, avatarUrl, onOpen }: Props) {
           onClick={() => onOpen(false)}
           aria-label="Cảm xúc/hoạt động"
           className={cn(
-            'flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors hover:bg-muted',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            'hover:bg-muted flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors',
+            'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
           )}
         >
           <Smile className="h-5 w-5 text-[hsl(40,90%,60%)]" aria-hidden />

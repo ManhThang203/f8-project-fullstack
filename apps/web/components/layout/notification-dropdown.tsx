@@ -1,19 +1,32 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { Bell, Heart, MessageCircle, UserPlus, Info } from 'lucide-react';
-import Link from 'next/link';
-
-import { useNotifications, useUnreadNotificationCount, useMarkNotificationReadMutation } from '@/hooks/queries/use-notifications';
-import { getChatSocket } from '@/lib/chat-socket';
-import { Socket } from 'socket.io-client';
-import { Avatar } from '@/components/shared/avatar';
-import { NotificationBadge } from '@/components/shared/notification-badge';
-import { iconButtonClass } from '@/components/shared/icon-button';
-import { cn } from '@/lib/utils';
+import type { NotificationDto } from '@costy/shared';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  Bell,
+  Heart,
+  MessageCircle,
+  UserPlus,
+  Info,
+  ShieldAlert,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import type { Socket } from 'socket.io-client';
+
+import { Avatar } from '@/components/shared/avatar';
+import { iconButtonClass } from '@/components/shared/icon-button';
+import { NotificationBadge } from '@/components/shared/notification-badge';
+import {
+  useNotifications,
+  useUnreadNotificationCount,
+  useMarkNotificationReadMutation,
+} from '@/hooks/queries/use-notifications';
+import { getChatSocket } from '@/lib/chat-socket';
 import { queryKeys } from '@/lib/query-keys';
-import { NotificationDto } from '@costy/shared';
+import { cn } from '@/lib/utils';
 
 function getRelativeTime(dateString: string) {
   const date = new Date(dateString);
@@ -28,16 +41,26 @@ function getRelativeTime(dateString: string) {
   return `${Math.floor(diffInSeconds / 31536000)} năm trước`;
 }
 
+function getSystemNotificationText(notif: NotificationDto): string | null {
+  if (notif.type !== 'SYSTEM') return null;
+  return null;
+}
+
 function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose: () => void }) {
   const { mutate: markRead } = useMarkNotificationReadMutation();
-  
-  const iconMap: Record<string, any> = {
-    POST_LIKED: <Heart className="h-4 w-4 text-red-500 fill-current" />,
+  const systemText = getSystemNotificationText(notif);
+
+  const iconMap: Record<string, ReactNode> = {
+    POST_LIKED: <Heart className="h-4 w-4 fill-current text-red-500" />,
     POST_REPLIED: <MessageCircle className="h-4 w-4 text-blue-500" />,
     POST_COMMENTED_FOLLOWED: <MessageCircle className="h-4 w-4 text-blue-400" />,
     USER_FOLLOWED: <UserPlus className="h-4 w-4 text-green-500" />,
     MENTION: <Info className="h-4 w-4 text-yellow-500" />,
-    SYSTEM: <Info className="h-4 w-4 text-gray-500" />
+    SYSTEM: <Info className="h-4 w-4 text-gray-500" />,
+    MODERATION_ACTION: <ShieldAlert className="h-4 w-4 text-orange-500" />,
+    APPEAL_APPROVED: <CheckCircle className="h-4 w-4 text-green-500" />,
+    APPEAL_REJECTED: <XCircle className="h-4 w-4 text-red-500" />,
+    REPORT_RESOLVED: <Info className="h-4 w-4 text-blue-500" />,
   };
 
   const textMap: Record<string, string> = {
@@ -46,47 +69,80 @@ function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose:
     POST_COMMENTED_FOLLOWED: 'đã bình luận một bài viết mà bạn đang theo dõi',
     USER_FOLLOWED: 'đã bắt đầu theo dõi bạn',
     MENTION: 'đã nhắc đến bạn',
-    SYSTEM: 'thông báo hệ thống'
+    SYSTEM: 'thông báo hệ thống',
+    MODERATION_ACTION: 'đã xử lý nội dung của bạn',
+    APPEAL_APPROVED: 'kháng nghị của bạn đã được chấp nhận',
+    APPEAL_REJECTED: 'kháng nghị của bạn đã bị từ chối',
+    REPORT_RESOLVED: 'báo cáo của bạn đã được xử lý',
   };
 
+  const isSystemNotification =
+    notif.type === 'MODERATION_ACTION' ||
+    notif.type === 'APPEAL_APPROVED' ||
+    notif.type === 'APPEAL_REJECTED';
+
   const getHref = () => {
+    if (
+      (notif.type === 'MODERATION_ACTION' ||
+        notif.type === 'APPEAL_APPROVED' ||
+        notif.type === 'APPEAL_REJECTED') &&
+      notif.entityId
+    ) {
+      return `/moderation/${notif.entityId}`;
+    }
     if (notif.type === 'USER_FOLLOWED' && notif.actor) return `/${notif.actor.username}`;
-    // Fallback to / post route for likes and replies
-    if ((notif.type === 'POST_LIKED' || notif.type === 'POST_REPLIED' || notif.type === 'POST_COMMENTED_FOLLOWED') && notif.entityId) {
+    if (
+      (notif.type === 'POST_LIKED' ||
+        notif.type === 'POST_REPLIED' ||
+        notif.type === 'POST_COMMENTED_FOLLOWED') &&
+      notif.entityId
+    ) {
       return `/${notif.actor?.username || 'post'}/post/${notif.entityId}`;
     }
     return '#';
   };
 
   return (
-    <Link 
+    <Link
       href={getHref()}
       onClick={() => {
         if (!notif.readAt) markRead(notif.id);
         onClose();
       }}
       className={cn(
-        "flex items-start gap-3 p-3 transition-colors hover:bg-muted",
-        !notif.readAt ? "bg-primary/5" : ""
+        'hover:bg-muted flex items-start gap-3 p-3 transition-colors',
+        !notif.readAt ? 'bg-primary/5' : '',
       )}
     >
       <div className="relative shrink-0">
         <Avatar name={notif.actor?.name || null} username={notif.actor?.username || ''} size="md" />
-        <div className="absolute -bottom-1 -right-1 rounded-full bg-background p-0.5">
+        <div className="bg-background absolute -bottom-1 -right-1 rounded-full p-0.5">
           {iconMap[notif.type]}
         </div>
       </div>
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="text-sm">
-          <span className="font-semibold text-foreground">{notif.actor?.name || notif.actor?.username || 'Hệ thống'}</span>
-          {' '}
-          <span className="text-muted-foreground">{textMap[notif.type] || textMap['SYSTEM']}</span>
+          {systemText || isSystemNotification ? (
+            <>
+              <span className="text-foreground font-semibold">Hệ thống</span>{' '}
+              <span className="text-muted-foreground">
+                {systemText ?? textMap[notif.type] ?? textMap['SYSTEM']}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="text-foreground font-semibold">
+                {notif.actor?.name || notif.actor?.username || 'Hệ thống'}
+              </span>{' '}
+              <span className="text-muted-foreground">
+                {textMap[notif.type] || textMap['SYSTEM']}
+              </span>
+            </>
+          )}
         </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          {getRelativeTime(notif.createdAt)}
-        </p>
+        <p className="text-muted-foreground mt-1 text-xs">{getRelativeTime(notif.createdAt)}</p>
       </div>
-      {!notif.readAt && <div className="h-2 w-2 shrink-0 rounded-full bg-primary mt-2" />}
+      {!notif.readAt && <div className="bg-primary mt-2 h-2 w-2 shrink-0 rounded-full" />}
     </Link>
   );
 }
@@ -114,16 +170,18 @@ export function NotificationDropdown() {
   // Realtime updates
   useEffect(() => {
     let activeSocket: Socket | null = null;
-    
-    getChatSocket().then((s) => {
-      activeSocket = s;
-      const onNew = () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all() });
-        queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() });
-      };
-      s.on('notification:new', onNew);
-    }).catch(err => console.error("Failed to connect socket for notifications", err));
-    
+
+    getChatSocket()
+      .then((s) => {
+        activeSocket = s;
+        const onNew = () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all() });
+          queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() });
+        };
+        s.on('notification:new', onNew);
+      })
+      .catch((err) => console.error('Failed to connect socket for notifications', err));
+
     return () => {
       if (activeSocket) {
         activeSocket.off('notification:new');
@@ -131,14 +189,14 @@ export function NotificationDropdown() {
     };
   }, [queryClient]);
 
-  const notifications = data?.pages.flatMap(p => p.items) || [];
+  const notifications = data?.pages.flatMap((p) => p.items) || [];
 
   return (
     <div className="relative" ref={containerRef}>
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={cn("relative", iconButtonClass({ shape: 'circle' }))}
+        className={cn('relative', iconButtonClass({ shape: 'circle' }))}
         aria-label="Thông báo"
       >
         <Bell className="h-6 w-6" strokeWidth={2} />
@@ -146,28 +204,31 @@ export function NotificationDropdown() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-[360px] max-h-[80vh] flex flex-col rounded-xl border border-border bg-card shadow-lg z-50 overflow-hidden">
-          <div className="flex items-center justify-between p-4 border-b border-border bg-card">
-            <h3 className="font-semibold text-lg">Thông báo</h3>
+        <div className="border-border bg-card absolute right-0 top-full z-50 mt-2 flex max-h-[80vh] w-[360px] flex-col overflow-hidden rounded-xl border shadow-lg">
+          <div className="border-border bg-card flex items-center justify-between border-b p-4">
+            <h3 className="text-lg font-semibold">Thông báo</h3>
             {unreadCount > 0 && (
-              <button 
+              <button
                 type="button"
-                onClick={() => { markRead(undefined); setOpen(false); }}
-                className="text-sm text-primary hover:underline"
+                onClick={() => {
+                  markRead(undefined);
+                  setOpen(false);
+                }}
+                className="text-primary text-sm hover:underline"
               >
                 Đánh dấu đã đọc tất cả
               </button>
             )}
           </div>
-          
-          <div className="overflow-y-auto flex-1 p-0">
+
+          <div className="flex-1 overflow-y-auto p-0">
             {notifications.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground">
+              <div className="text-muted-foreground p-8 text-center">
                 <p>Bạn chưa có thông báo nào.</p>
               </div>
             ) : (
               <div className="flex flex-col">
-                {notifications.map(n => (
+                {notifications.map((n) => (
                   <NotificationItem key={n.id} notif={n} onClose={() => setOpen(false)} />
                 ))}
                 {hasNextPage && (
@@ -175,7 +236,7 @@ export function NotificationDropdown() {
                     type="button"
                     onClick={() => fetchNextPage()}
                     disabled={isFetchingNextPage}
-                    className="p-3 text-sm text-primary hover:underline text-center"
+                    className="text-primary p-3 text-center text-sm hover:underline"
                   >
                     {isFetchingNextPage ? 'Đang tải...' : 'Xem thêm'}
                   </button>

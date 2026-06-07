@@ -1,6 +1,7 @@
 # Skill: Create Feed
 
 Requirements:
+
 - Flat list layout
 - Transparent post cards
 - Skeleton initial loading

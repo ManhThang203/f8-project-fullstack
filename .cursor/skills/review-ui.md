@@ -1,6 +1,7 @@
 # Skill: Review UI
 
 Check for:
+
 - hardcoded colors
 - inconsistent spacing
 - wrong typography

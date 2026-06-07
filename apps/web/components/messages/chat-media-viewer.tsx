@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { decryptBufferWithAES } from '@/lib/e2ee/crypto-utils';
 import { Loader2, FileIcon, Download, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useState, useRef } from 'react';
+
+import { decryptBufferWithAES } from '@/lib/e2ee/crypto-utils';
 
 type Props = {
   mediaUrl: string;
@@ -16,7 +17,16 @@ type Props = {
   fileType?: string;
 };
 
-export function ChatMediaViewer({ mediaUrl, blurDataUrl, width, height, iv, roomKey, fileName, fileType }: Props) {
+export function ChatMediaViewer({
+  mediaUrl,
+  blurDataUrl,
+  width,
+  height,
+  iv,
+  roomKey,
+  fileName,
+  fileType,
+}: Props) {
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
@@ -34,12 +44,12 @@ export function ChatMediaViewer({ mediaUrl, blurDataUrl, width, height, iv, room
         const res = await fetch(fetchUrl);
         if (!res.ok) throw new Error('Không thể tải file đính kèm');
         const encryptedBuffer = await res.arrayBuffer();
-        
+
         const decryptedBuffer = await decryptBufferWithAES(encryptedBuffer, iv, roomKey);
-        
+
         const blob = new Blob([decryptedBuffer], { type: fileType || 'application/octet-stream' });
         const url = URL.createObjectURL(blob);
-        
+
         if (!cancelled) {
           setObjectUrl(url);
           objectUrlRef.current = url;
@@ -64,24 +74,28 @@ export function ChatMediaViewer({ mediaUrl, blurDataUrl, width, height, iv, room
 
   if (!isImage) {
     return (
-      <div className="mt-2 flex items-center gap-3 rounded-lg border border-border bg-card p-3 shadow-sm max-w-[280px]">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+      <div className="border-border bg-card mt-2 flex max-w-[280px] items-center gap-3 rounded-lg border p-3 shadow-sm">
+        <div className="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
           <FileIcon className="h-5 w-5" />
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="truncate text-sm font-medium text-foreground">{fileName || 'Tệp đính kèm'}</p>
-          <p className="text-xs text-muted-foreground uppercase">{fileType?.split('/')[1] || 'FILE'}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-foreground truncate text-sm font-medium">
+            {fileName || 'Tệp đính kèm'}
+          </p>
+          <p className="text-muted-foreground text-xs uppercase">
+            {fileType?.split('/')[1] || 'FILE'}
+          </p>
         </div>
-        
+
         {error ? (
-          <div className="text-xs text-destructive">Lỗi tải</div>
+          <div className="text-destructive text-xs">Lỗi tải</div>
         ) : !objectUrl ? (
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground shrink-0" />
+          <Loader2 className="text-muted-foreground h-5 w-5 shrink-0 animate-spin" />
         ) : (
           <a
             href={objectUrl}
             download={fileName || 'download'}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="hover:bg-muted text-muted-foreground focus-visible:ring-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
             title="Tải xuống"
           >
             <Download className="h-4 w-4" />
@@ -97,36 +111,36 @@ export function ChatMediaViewer({ mediaUrl, blurDataUrl, width, height, iv, room
 
   return (
     <>
-      <div 
+      <div
         style={{ width: `${displayWidth}px`, maxWidth: '100%', aspectRatio }}
-        className="relative mt-2 overflow-hidden rounded-lg bg-black/5 dark:bg-white/5 flex items-center justify-center cursor-zoom-in"
+        className="relative mt-2 flex cursor-zoom-in items-center justify-center overflow-hidden rounded-lg bg-black/5 dark:bg-white/5"
         onClick={() => objectUrl && !error && setIsZoomed(true)}
       >
         {blurDataUrl && !objectUrl && !error && (
-          <img 
-            src={blurDataUrl} 
-            alt="" 
-            className="absolute inset-0 h-full w-full object-cover blur-md scale-110 opacity-70" 
+          <img
+            src={blurDataUrl}
+            alt=""
+            className="absolute inset-0 h-full w-full scale-110 object-cover opacity-70 blur-md"
           />
         )}
 
         {!objectUrl && !error && (
-          <div className="absolute inset-0 flex items-center justify-center z-10">
-            <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
+          <div className="absolute inset-0 z-10 flex items-center justify-center">
+            <Loader2 className="text-primary/50 h-6 w-6 animate-spin" />
           </div>
         )}
 
         {error && (
-          <div className="absolute inset-0 flex items-center justify-center text-xs text-destructive bg-destructive/10">
+          <div className="text-destructive bg-destructive/10 absolute inset-0 flex items-center justify-center text-xs">
             Lỗi tải tệp đính kèm
           </div>
         )}
 
         {objectUrl && (
-          <motion.img 
+          <motion.img
             layoutId={uniqueLayoutId}
-            src={objectUrl} 
-            alt="Tệp đính kèm" 
+            src={objectUrl}
+            alt="Tệp đính kèm"
             className="absolute inset-0 h-full w-full object-contain"
           />
         )}
@@ -138,20 +152,20 @@ export function ChatMediaViewer({ mediaUrl, blurDataUrl, width, height, iv, room
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
             onClick={() => setIsZoomed(false)}
           >
-            <button 
-              className="absolute top-4 right-4 text-white/70 hover:text-white bg-black/50 hover:bg-black/80 rounded-full p-2 transition-colors focus-visible:outline-none focus-visible:ring-2"
+            <button
+              className="absolute right-4 top-4 rounded-full bg-black/50 p-2 text-white/70 transition-colors hover:bg-black/80 hover:text-white focus-visible:outline-none focus-visible:ring-2"
               onClick={() => setIsZoomed(false)}
             >
-              <X className="w-6 h-6" />
+              <X className="h-6 w-6" />
             </button>
             <motion.img
               layoutId={uniqueLayoutId}
               src={objectUrl}
               alt="Phóng to"
-              className="max-w-full max-h-[90vh] object-contain cursor-zoom-out rounded-md shadow-2xl"
+              className="max-h-[90vh] max-w-full cursor-zoom-out rounded-md object-contain shadow-2xl"
               onClick={(e) => e.stopPropagation()} // Prevent clicking image from closing if we wanted, but clicking image to close is also fine. Let's allow clicking image to close for better UX in chat apps.
             />
           </motion.div>

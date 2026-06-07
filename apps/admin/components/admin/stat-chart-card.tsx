@@ -14,17 +14,10 @@ type Props = {
 
 export function StatChartCard({ title, description, children, className }: Props) {
   return (
-    <section
-      className={cn(
-        'rounded-xl border border-border bg-card p-6 shadow-sm',
-        className,
-      )}
-    >
+    <section className={cn('border-border bg-card rounded-xl border p-6 shadow-sm', className)}>
       <header className="mb-4 space-y-1">
-        <h2 className="text-base font-semibold text-foreground">{title}</h2>
-        {description ? (
-          <p className="text-sm text-muted-foreground">{description}</p>
-        ) : null}
+        <h2 className="text-foreground text-base font-semibold">{title}</h2>
+        {description ? <p className="text-muted-foreground text-sm">{description}</p> : null}
       </header>
       {children}
     </section>
@@ -45,7 +38,7 @@ export function ChartState({ isLoading, isEmpty, emptyMessage, children }: Chart
   if (isLoading) {
     return (
       <div
-        className="h-64 animate-pulse rounded-lg bg-muted"
+        className="bg-muted h-64 animate-pulse rounded-lg"
         aria-busy="true"
         aria-label={t('charts.loading')}
       />
@@ -54,7 +47,7 @@ export function ChartState({ isLoading, isEmpty, emptyMessage, children }: Chart
 
   if (isEmpty) {
     return (
-      <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground">
+      <div className="border-border text-muted-foreground flex h-64 items-center justify-center rounded-lg border border-dashed text-sm">
         {emptyMessage ?? t('common.noData')}
       </div>
     );

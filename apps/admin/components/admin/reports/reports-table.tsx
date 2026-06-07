@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 
 import {
+  isActionableReportStatus,
   REASON_COLORS,
   REPORT_ESCALATE_THRESHOLD,
   STATUS_COLORS,
@@ -50,9 +51,7 @@ export function ReportsTable({ reports, isReviewPending, onDismiss, locale }: Pr
             </th>
             <th className={colReportCount.th}>{t('reports.columns.reportCount')}</th>
             <th className={colStatus.th}>{t('reports.columns.status')}</th>
-            <th className={cn(colTime.th, 'hidden xl:table-cell')}>
-              {t('reports.columns.time')}
-            </th>
+            <th className={cn(colTime.th, 'hidden xl:table-cell')}>{t('reports.columns.time')}</th>
             <th className={colActions.th}>{t('reports.columns.actions')}</th>
           </tr>
         </thead>
@@ -128,13 +127,15 @@ export function ReportsTable({ reports, isReviewPending, onDismiss, locale }: Pr
                   </div>
                 </td>
 
-                <td className={cn(colTime.td, 'text-muted-foreground hidden text-xs xl:table-cell')}>
+                <td
+                  className={cn(colTime.td, 'text-muted-foreground hidden text-xs xl:table-cell')}
+                >
                   <div className={colTime.cell}>{formattedDate}</div>
                 </td>
 
                 <td className={colActions.td}>
                   <div className={colActions.cell}>
-                    {status === 'PENDING' || status === 'UNDER_REVIEW' ? (
+                    {isActionableReportStatus(status) ? (
                       <Button
                         variant="secondary"
                         className={adminTable.actionBtn}

@@ -10,6 +10,6 @@ export const mediaRouter = Router();
 mediaRouter.post(
   '/upload',
   attachWebAuthSession, // Đảm bảo user đã đăng nhập
-  uploadLocalMedia,        // Xử lý multipart/form-data lưu vào đĩa
+  uploadLocalMedia, // Xử lý multipart/form-data lưu vào đĩa
   handleUploadMedia,
 );

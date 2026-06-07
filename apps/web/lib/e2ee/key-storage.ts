@@ -1,4 +1,5 @@
 import { get, set, del } from 'idb-keyval';
+
 import { exportKeyToBase64, importKeyFromBase64, generateUserKeyPair } from './crypto-utils';
 
 const PRIVATE_KEY_STORAGE_KEY = 'e2ee_private_key';
@@ -23,13 +24,16 @@ export async function clearPrivateKey(): Promise<void> {
   await del(PUBLIC_KEY_STORAGE_KEY);
 }
 
-/** 
+/**
  * Khởi tạo khóa cho User:
  * Nếu đã có trong IndexedDB thì trả về.
  * Nếu chưa có thì tạo mới, lưu Private Key vào IDB và trả về cả cặp.
  * (Public Key sẽ được gửi lên Server sau đó).
  */
-export async function initializeUserKeys(): Promise<{ publicKey: CryptoKey; privateKey: CryptoKey }> {
+export async function initializeUserKeys(): Promise<{
+  publicKey: CryptoKey;
+  privateKey: CryptoKey;
+}> {
   const existingPrivateKeyBase64 = await get<string>(PRIVATE_KEY_STORAGE_KEY);
   const existingPublicKeyBase64 = await get<string>(PUBLIC_KEY_STORAGE_KEY);
 
@@ -41,11 +45,11 @@ export async function initializeUserKeys(): Promise<{ publicKey: CryptoKey; priv
 
   // Nếu chưa có, tạo cặp khóa mới
   const keyPair = await generateUserKeyPair();
-  
+
   // Lưu vào IndexedDB để dùng sau này
   const privateBase64 = await exportKeyToBase64(keyPair.privateKey);
   const publicBase64 = await exportKeyToBase64(keyPair.publicKey);
-  
+
   await set(PRIVATE_KEY_STORAGE_KEY, privateBase64);
   await set(PUBLIC_KEY_STORAGE_KEY, publicBase64);
 

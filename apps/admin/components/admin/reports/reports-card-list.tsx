@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 
 import {
+  isActionableReportStatus,
   REASON_COLORS,
   REPORT_ESCALATE_THRESHOLD,
   STATUS_COLORS,
@@ -39,12 +40,12 @@ export function ReportsCardList({ reports, isReviewPending, onDismiss, locale }:
         return (
           <div
             key={report.id}
-            className={`space-y-3 rounded-xl border border-border bg-card p-4 transition-colors ${
+            className={`border-border bg-card space-y-3 rounded-xl border p-4 transition-colors ${
               isHighPriority ? 'border-red-500/20 bg-red-500/5' : ''
             }`}
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs font-semibold text-muted-foreground">
+              <span className="bg-muted text-muted-foreground shrink-0 rounded px-1.5 py-0.5 text-xs font-semibold">
                 {t(`targetType.${report.targetType}`, report.targetType)}
               </span>
               <span
@@ -55,7 +56,7 @@ export function ReportsCardList({ reports, isReviewPending, onDismiss, locale }:
             </div>
 
             {report.targetPreview ? (
-              <p className="line-clamp-2 rounded-lg bg-muted/30 p-2 text-xs italic text-muted-foreground">
+              <p className="bg-muted/30 text-muted-foreground line-clamp-2 rounded-lg p-2 text-xs italic">
                 &ldquo;{report.targetPreview}&rdquo;
               </p>
             ) : null}
@@ -66,7 +67,7 @@ export function ReportsCardList({ reports, isReviewPending, onDismiss, locale }:
               >
                 {t(`reportReasonShort.${reason}`, t(`reportReason.${reason}`, reason))}
               </span>
-              <div className="flex items-center justify-end gap-1.5 text-muted-foreground">
+              <div className="text-muted-foreground flex items-center justify-end gap-1.5">
                 <span>{t('reports.reportCountLabel')}:</span>
                 <span
                   className={`rounded-full px-1.5 py-0.5 text-xs font-bold ${
@@ -80,13 +81,13 @@ export function ReportsCardList({ reports, isReviewPending, onDismiss, locale }:
               </div>
             </div>
 
-            <div className="flex items-center justify-between gap-2 border-t border-border/50 pt-2 text-xs text-muted-foreground">
+            <div className="border-border/50 text-muted-foreground flex items-center justify-between gap-2 border-t pt-2 text-xs">
               <span className="min-w-0 truncate">@{reporterUsername}</span>
               <span className="shrink-0">{formatReportDate(report.createdAt, locale)}</span>
             </div>
 
             <div className="flex gap-2 pt-1">
-              {(status === 'PENDING' || status === 'UNDER_REVIEW') && (
+              {isActionableReportStatus(status) && (
                 <Button
                   className="h-9 flex-1 text-xs"
                   variant="secondary"

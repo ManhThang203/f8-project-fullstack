@@ -59,7 +59,13 @@ export type AdminReportDto = {
 
 export type AdminReportDetailDto = AdminReportDto & {
   targetContent: string | null;
-  targetAuthor: { id: string; username: string; name: string | null; image: string | null; status: string } | null;
+  targetAuthor: {
+    id: string;
+    username: string;
+    name: string | null;
+    image: string | null;
+    status: string;
+  } | null;
   targetMedia: { id: string; kind: string; publicUrl: string | null }[] | null;
   relatedReports: AdminReportDto[];
   auditLogs: AdminAuditLogDto[];
@@ -120,6 +126,14 @@ export type AdminStatsOverviewDto = {
     resolved: number;
     rejected: number;
     actionTaken: number;
+  };
+  pendingModerationCases: number;
+  moderationStatusBreakdown: {
+    pending: number;
+    autoHidden: number;
+    resolvedKept: number;
+    resolvedRemoved: number;
+    dismissed: number;
   };
 };
 

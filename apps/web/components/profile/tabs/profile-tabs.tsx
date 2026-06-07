@@ -77,7 +77,7 @@ export function ProfileTabs({ username, isOwner, activeTab }: Props) {
               className={cn(
                 'text-muted-foreground flex min-h-11 flex-1 items-center justify-center gap-2 px-3 text-sm font-medium',
                 'hover:text-foreground transition-colors duration-150',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+                'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset',
                 selected && 'text-foreground border-primary border-b-2',
               )}
             >

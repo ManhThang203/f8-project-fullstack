@@ -1,23 +1,25 @@
 'use client';
 
 import type { PostFeedItemDto } from '@costy/shared';
-import { Image, MoreHorizontal, Smile, Sticker, UserPlus, MapPin } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Image, Sticker } from 'lucide-react';
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { toast } from 'sonner';
 
-import { Avatar } from '@/components/shared/avatar';
-import { IconButton } from '@/components/shared/icon-button';
-import { createPostWithMedia } from '@/lib/create-post';
-import { ACCEPT_MEDIA, isImageMime, isVideoMime, validateFiles } from '@/lib/media-validation';
-import { cn } from '@/lib/utils';
-import { usePostComments } from '@/hooks/queries/use-post-comments';
-import { usePost } from '@/hooks/queries/use-post';
+import type { DraftMedia } from '../post-media/post-media-carousel';
+import { PostMediaCarousel } from '../post-media/post-media-carousel';
+
 import { CommentItem } from './comment-item';
 import { PostCard } from './post-card';
-import { PostMediaCarousel, DraftMedia } from '../post-media/post-media-carousel';
-import { useQueryClient } from '@tanstack/react-query';
-import { queryKeys } from '@/lib/query-keys';
+
+import { Avatar } from '@/components/shared/avatar';
+import { IconButton } from '@/components/shared/icon-button';
+import { usePost } from '@/hooks/queries/use-post';
+import { usePostComments } from '@/hooks/queries/use-post-comments';
 import { authClient } from '@/lib/auth-client';
+import { createPostWithMedia } from '@/lib/create-post';
+import { ACCEPT_MEDIA, isImageMime, isVideoMime, validateFiles } from '@/lib/media-validation';
+import { queryKeys } from '@/lib/query-keys';
 
 type Props = {
   post: PostFeedItemDto;
@@ -26,7 +28,9 @@ type Props = {
 
 type DraftEntry = DraftMedia & { file: File };
 let _tempCounter = 0;
-function nextTempId() { return `draft-${++_tempCounter}`; }
+function nextTempId() {
+  return `draft-${++_tempCounter}`;
+}
 
 export function PostDetailView({ post, highlightCommentId }: Props) {
   const queryClient = useQueryClient();
@@ -38,19 +42,22 @@ export function PostDetailView({ post, highlightCommentId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data, fetchNextPage, hasNextPage, isLoading } = usePostComments(post.id);
-  const comments = useMemo(() => data?.pages.flatMap(p => p.items) || [], [data]);
+  const comments = useMemo(() => data?.pages.flatMap((p) => p.items) || [], [data]);
 
-  const { data: highlightedComment, isLoading: isHighlightLoading } = usePost(highlightCommentId || null);
+  const { data: highlightedComment, isLoading: isHighlightLoading } = usePost(
+    highlightCommentId || null,
+  );
 
   const imageCount = drafts.filter((d) => isImageMime(d.file.type)).length;
   const videoCount = drafts.filter((d) => isVideoMime(d.file.type)).length;
 
   useEffect(() => {
     return () => {
-      drafts.forEach(d => { if (d.url.startsWith('blob:')) URL.revokeObjectURL(d.url); });
+      drafts.forEach((d) => {
+        if (d.url.startsWith('blob:')) URL.revokeObjectURL(d.url);
+      });
     };
   }, []);
 
@@ -95,7 +102,11 @@ export function PostDetailView({ post, highlightCommentId }: Props) {
       files,
       parentId: replyingToCommentId ?? post.id,
       onUploadProgress: (fileIndex, percent) => {
-        setDrafts((prev) => prev.map((d, i) => i === fileIndex ? { ...d, status: 'uploading' as const, progress: percent } : d));
+        setDrafts((prev) =>
+          prev.map((d, i) =>
+            i === fileIndex ? { ...d, status: 'uploading' as const, progress: percent } : d,
+          ),
+        );
       },
     });
 
@@ -110,9 +121,9 @@ export function PostDetailView({ post, highlightCommentId }: Props) {
     setContent('');
     setDrafts([]);
     toast.success('Đã gửi bình luận');
-    
+
     queryClient.invalidateQueries({ queryKey: ['posts', 'comments', post.id] });
-    
+
     if (replyingToCommentId) {
       queryClient.invalidateQueries({ queryKey: ['posts', 'comments', replyingToCommentId] });
       setReplyingToCommentId(null);
@@ -127,40 +138,57 @@ export function PostDetailView({ post, highlightCommentId }: Props) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-background relative w-full">
+    <div className="bg-background relative flex h-full w-full flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <PostCard post={post} onDismiss={() => {}} onCommentClick={() => textareaRef.current?.focus()} />
+        <PostCard
+          post={post}
+          onDismiss={() => {}}
+          onCommentClick={() => textareaRef.current?.focus()}
+        />
 
-        <div className="border-t border-border mt-2" />
-        
+        <div className="border-border mt-2 border-t" />
+
         <div className="py-2">
           {highlightCommentId && (
             <div className="mb-2">
-              <div className="bg-primary/5 border-l-4 border-primary pb-2 pt-2 mb-2 shadow-sm">
-                <p className="text-[11px] uppercase tracking-wider text-primary font-bold px-4 mb-2">Bình luận được gắn thẻ</p>
+              <div className="bg-primary/5 border-primary mb-2 border-l-4 pb-2 pt-2 shadow-sm">
+                <p className="text-primary mb-2 px-4 text-[11px] font-bold uppercase tracking-wider">
+                  Bình luận được gắn thẻ
+                </p>
                 {isHighlightLoading ? (
-                  <p className="text-center text-sm text-muted-foreground py-4">Đang tải bình luận...</p>
+                  <p className="text-muted-foreground py-4 text-center text-sm">
+                    Đang tải bình luận...
+                  </p>
                 ) : highlightedComment ? (
                   <CommentItem comment={highlightedComment} onReply={handleReplyTo} />
                 ) : (
-                  <p className="text-center text-sm text-muted-foreground py-4">Không tìm thấy bình luận</p>
+                  <p className="text-muted-foreground py-4 text-center text-sm">
+                    Không tìm thấy bình luận
+                  </p>
                 )}
               </div>
-              <div className="border-t border-border/50 mx-4" />
+              <div className="border-border/50 mx-4 border-t" />
             </div>
           )}
 
-          {isLoading && <p className="text-center text-sm text-muted-foreground py-4">Đang tải bình luận...</p>}
-          {!isLoading && comments.length === 0 && !highlightCommentId && (
-            <p className="text-center text-sm text-muted-foreground py-8">Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</p>
+          {isLoading && (
+            <p className="text-muted-foreground py-4 text-center text-sm">Đang tải bình luận...</p>
           )}
-          {comments.map((comment) => (
+          {!isLoading && comments.length === 0 && !highlightCommentId && (
+            <p className="text-muted-foreground py-8 text-center text-sm">
+              Chưa có bình luận nào. Hãy là người đầu tiên bình luận!
+            </p>
+          )}
+          {comments.map((comment) =>
             comment.id === highlightCommentId ? null : (
               <CommentItem key={comment.id} comment={comment} onReply={handleReplyTo} />
-            )
-          ))}
+            ),
+          )}
           {hasNextPage && (
-            <button onClick={() => fetchNextPage()} className="w-full text-center text-sm text-primary py-3 hover:underline">
+            <button
+              onClick={() => fetchNextPage()}
+              className="text-primary w-full py-3 text-center text-sm hover:underline"
+            >
               Xem thêm bình luận
             </button>
           )}
@@ -168,10 +196,16 @@ export function PostDetailView({ post, highlightCommentId }: Props) {
       </div>
 
       {/* Comment Input Area */}
-      <div className="border-t border-border bg-card p-3 shadow-[0_-4px_10px_rgba(0,0,0,0.02)] sticky bottom-0 z-10">
+      <div className="border-border bg-card sticky bottom-0 z-10 border-t p-3 shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
         <div className="flex gap-3">
-          <Avatar src={me?.image || null} name={me?.name} username={me?.username} size="sm" className="mt-1" />
-          <div className="flex-1 min-w-0 bg-muted/50 rounded-2xl p-3">
+          <Avatar
+            src={me?.image || null}
+            name={me?.name}
+            username={me?.username}
+            size="sm"
+            className="mt-1"
+          />
+          <div className="bg-muted/50 min-w-0 flex-1 rounded-2xl p-3">
             <textarea
               ref={textareaRef}
               value={content}
@@ -180,31 +214,47 @@ export function PostDetailView({ post, highlightCommentId }: Props) {
                 if (e.target.value.trim() === '') setReplyingToCommentId(null);
               }}
               placeholder="Viết bình luận..."
-              className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+              className="placeholder:text-muted-foreground w-full resize-none bg-transparent text-sm outline-none"
               rows={drafts.length > 0 ? 2 : 1}
               disabled={busy}
             />
-            
+
             {drafts.length > 0 && (
               <div className="mt-2">
-                <PostMediaCarousel mode="editable" items={drafts} onRemove={(id) => !busy && removeDraft(id)} />
+                <PostMediaCarousel
+                  mode="editable"
+                  items={drafts}
+                  onRemove={(id) => !busy && removeDraft(id)}
+                />
               </div>
             )}
 
-            {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
-            
-            <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/50">
+            {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+
+            <div className="border-border/50 mt-2 flex items-center justify-between border-t pt-2">
               <div className="flex items-center gap-1">
-                <label className="cursor-pointer p-1.5 rounded-full hover:bg-muted text-muted-foreground transition-colors">
+                <label className="hover:bg-muted text-muted-foreground cursor-pointer rounded-full p-1.5 transition-colors">
                   <Image className="h-4 w-4" />
-                  <input type="file" accept={ACCEPT_MEDIA} multiple={videoCount === 0} className="sr-only" onChange={(e) => handleFiles(e.target.files)} onClick={(e) => { (e.currentTarget as HTMLInputElement).value = ''; }} disabled={busy} />
+                  <input
+                    type="file"
+                    accept={ACCEPT_MEDIA}
+                    multiple={videoCount === 0}
+                    className="sr-only"
+                    onChange={(e) => handleFiles(e.target.files)}
+                    onClick={(e) => {
+                      (e.currentTarget as HTMLInputElement).value = '';
+                    }}
+                    disabled={busy}
+                  />
                 </label>
-                <IconButton shape="circle" size="sm" disabled={busy}><Sticker className="h-4 w-4 text-muted-foreground" /></IconButton>
+                <IconButton shape="circle" size="sm" disabled={busy}>
+                  <Sticker className="text-muted-foreground h-4 w-4" />
+                </IconButton>
               </div>
               <button
                 onClick={handleSubmit}
                 disabled={busy || (!content.trim() && drafts.length === 0)}
-                className="bg-primary text-primary-foreground text-xs font-semibold px-4 py-1.5 rounded-full disabled:opacity-50 transition-opacity"
+                className="bg-primary text-primary-foreground rounded-full px-4 py-1.5 text-xs font-semibold transition-opacity disabled:opacity-50"
               >
                 {busy ? 'Đang gửi...' : 'Gửi'}
               </button>

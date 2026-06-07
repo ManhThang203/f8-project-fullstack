@@ -23,8 +23,8 @@ export function ProfileMediaTile({ item, username, onClick }: Props) {
       onClick={onClick}
       className={cn(
         'bg-muted group relative aspect-square w-full overflow-hidden',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
-        !reduceMotion && 'hover:scale-[1.02] transition-transform duration-150',
+        'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset',
+        !reduceMotion && 'transition-transform duration-150 hover:scale-[1.02]',
       )}
     >
       {item.thumbnailUrl ? (
@@ -34,13 +34,13 @@ export function ProfileMediaTile({ item, username, onClick }: Props) {
       )}
 
       {item.isVideo ? (
-        <span className="absolute right-2 top-2 text-primary-foreground drop-shadow">
+        <span className="text-primary-foreground absolute right-2 top-2 drop-shadow">
           <Play className="h-5 w-5 fill-current" aria-hidden />
         </span>
       ) : null}
 
       {item.mediaCount > 1 ? (
-        <span className="absolute right-2 top-2 text-primary-foreground drop-shadow">
+        <span className="text-primary-foreground absolute right-2 top-2 drop-shadow">
           <Copy className="h-4 w-4" aria-hidden />
         </span>
       ) : null}
@@ -48,7 +48,7 @@ export function ProfileMediaTile({ item, username, onClick }: Props) {
       <span
         className={cn(
           'absolute inset-0 flex items-center justify-center gap-4 bg-black/40 text-sm font-semibold text-white opacity-0',
-          'group-hover:opacity-100 transition-opacity duration-150',
+          'transition-opacity duration-150 group-hover:opacity-100',
           reduceMotion && 'hidden',
         )}
         aria-hidden

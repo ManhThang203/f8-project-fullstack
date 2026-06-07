@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { apiQuery } from '@/lib/api-query';
 import type { PostFeedItemDto } from '@costy/shared';
+import { useQuery } from '@tanstack/react-query';
+
+import { apiQuery } from '@/lib/api-query';
 
 export function usePost(postId: string | null) {
   return useQuery({

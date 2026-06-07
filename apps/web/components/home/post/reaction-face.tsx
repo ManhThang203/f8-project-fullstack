@@ -59,7 +59,11 @@ export function ReactionFace({ id, size = 'md', className }: Props) {
 
   return (
     <span
-      className={cn('inline-flex shrink-0 items-center justify-center rounded-full', dim, className)}
+      className={cn(
+        'inline-flex shrink-0 items-center justify-center rounded-full',
+        dim,
+        className,
+      )}
       aria-hidden
     >
       <Image

@@ -10,21 +10,19 @@ import {
 } from '../../lib/rbac/permissions.service.js';
 import { invalidateStatsCache } from './admin-stats.service.js';
 
-function mapUserRow(
-  u: {
-    id: string;
-    username: string;
-    name: string | null;
-    email: string | null;
-    image: string | null;
-    role: string;
-    status: string;
-    bannedUntil: Date | null;
-    statusReason: string | null;
-    createdAt: Date;
-    _count?: { posts: number };
-  },
-): AdminUserListItemDto {
+function mapUserRow(u: {
+  id: string;
+  username: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
+  role: string;
+  status: string;
+  bannedUntil: Date | null;
+  statusReason: string | null;
+  createdAt: Date;
+  _count?: { posts: number };
+}): AdminUserListItemDto {
   return {
     id: u.id,
     username: u.username,
@@ -120,7 +118,9 @@ export async function patchAdminUserStatus(
       break;
     case 'ban_temp':
       status = 'BANNED';
-      bannedUntil = body.bannedUntil ? new Date(body.bannedUntil) : new Date(Date.now() + 7 * 86400000);
+      bannedUntil = body.bannedUntil
+        ? new Date(body.bannedUntil)
+        : new Date(Date.now() + 7 * 86400000);
       break;
     case 'ban_perm':
       status = 'BANNED';

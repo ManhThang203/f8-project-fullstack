@@ -7,6 +7,8 @@ import type {
   AdminPostsPerDayDto,
   AdminReportDetailDto,
   AdminReportDto,
+  ModerationCaseDetailDto,
+  ModerationCaseDto,
   AdminStatsMeta,
   AdminStatsOverviewDto,
   AdminTopHashtagDto,
@@ -71,7 +73,9 @@ export function useUserPermissions(userId: string) {
 // ── paginated (cursor-based) queries ──────────────────────────────────
 type CursorMeta = { nextCursor: string | null };
 
-export function useAdminUsers(filters: { q?: string; status?: string; cursor?: string; limit?: number } = {}) {
+export function useAdminUsers(
+  filters: { q?: string; status?: string; cursor?: string; limit?: number } = {},
+) {
   const base = new URLSearchParams();
   if (filters.q) base.set('q', filters.q);
   if (filters.status) base.set('status', filters.status);
@@ -90,6 +94,7 @@ export function useAdminUsers(filters: { q?: string; status?: string; cursor?: s
 
 export function useAdminReports(
   filters: {
+    queue?: 'open';
     status?: string;
     reason?: string;
     targetType?: string;
@@ -100,6 +105,7 @@ export function useAdminReports(
   } = {},
 ) {
   const base = new URLSearchParams();
+  if (filters.queue) base.set('queue', filters.queue);
   if (filters.status) base.set('status', filters.status);
   if (filters.reason) base.set('reason', filters.reason);
   if (filters.targetType) base.set('targetType', filters.targetType);
@@ -123,6 +129,82 @@ export function useAdminReportDetail(reportId: string | null) {
     queryKey: ['admin', 'reports', reportId, 'detail'],
     queryFn: () => apiQuery<AdminReportDetailDto>(`/admin/reports/${reportId}`),
     enabled: Boolean(reportId),
+  });
+}
+
+export function useModerationCases(
+  filters: {
+    queue?: 'open';
+    status?: string;
+    label?: string;
+    targetType?: string;
+    cursor?: string;
+    limit?: number;
+  } = {},
+) {
+  const base = new URLSearchParams();
+  if (filters.queue) base.set('queue', filters.queue);
+  if (filters.status) base.set('status', filters.status);
+  if (filters.label) base.set('label', filters.label);
+  if (filters.targetType) base.set('targetType', filters.targetType);
+  if (filters.cursor) base.set('cursor', filters.cursor);
+  if (filters.limit) base.set('limit', String(filters.limit));
+  const filterKey = base.toString();
+
+  return useQuery({
+    queryKey: ['admin', 'moderation', 'cases', filterKey],
+    queryFn: () => {
+      const suffix = filterKey ? `?${filterKey}` : '';
+      return apiQuery<ModerationCaseDto[], CursorMeta>(`/admin/moderation/cases${suffix}`);
+    },
+  });
+}
+
+export function useModerationCaseDetail(caseId: string | null) {
+  return useQuery({
+    queryKey: ['admin', 'moderation', 'cases', caseId, 'detail'],
+    queryFn: () => apiQuery<ModerationCaseDetailDto>(`/admin/moderation/cases/${caseId}`),
+    enabled: Boolean(caseId),
+  });
+}
+
+export function useResolveModerationCase() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (opts: { id: string; action: string; resolutionNote: string }) =>
+      apiQuery(`/admin/moderation/cases/${opts.id}/action`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          action: opts.action,
+          resolutionNote: opts.resolutionNote,
+        }),
+      }),
+    onSuccess: (_data, variables) => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'moderation', 'cases'] });
+      void qc.invalidateQueries({
+        queryKey: ['admin', 'moderation', 'cases', variables.id, 'detail'],
+      });
+    },
+  });
+}
+
+export function useReviewAppeal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (opts: { id: string; decision: string; decisionNote: string }) =>
+      apiQuery(`/admin/moderation/cases/${opts.id}/appeal`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          decision: opts.decision,
+          decisionNote: opts.decisionNote,
+        }),
+      }),
+    onSuccess: (_data, variables) => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'moderation', 'cases'] });
+      void qc.invalidateQueries({
+        queryKey: ['admin', 'moderation', 'cases', variables.id, 'detail'],
+      });
+    },
   });
 }
 
@@ -266,4 +348,3 @@ export function useUpdateUserPermissions() {
     },
   });
 }
-

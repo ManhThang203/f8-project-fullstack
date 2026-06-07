@@ -1,6 +1,7 @@
+import type { NotificationDto } from '@costy/shared';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { apiQueryData, apiQuery } from '@/lib/api-query';
-import { NotificationDto } from '@costy/shared';
 import { queryKeys } from '@/lib/query-keys';
 
 export function useNotifications() {
@@ -33,7 +34,7 @@ export function useUnreadNotificationCount() {
 
 export function useMarkNotificationReadMutation() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (notificationId?: string) => {
       await apiQuery('/notifications/read', {
