@@ -36,7 +36,7 @@ export function AdminShell({ children, role, permissions }: Props) {
   }, [mobileOpen]);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
+    <div className="bg-background text-foreground flex h-screen w-screen overflow-hidden">
       <Sidebar
         permissions={permissions}
         collapsed={collapsed}
@@ -50,7 +50,7 @@ export function AdminShell({ children, role, permissions }: Props) {
         onCloseMobile={() => setMobileOpen(false)}
         onLogout={handleLogout}
       />
-      <div className="flex min-w-0 flex-1 flex-col h-full overflow-hidden">
+      <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
         <Topbar
           onOpenMobileMenu={() => setMobileOpen(true)}
           role={role}

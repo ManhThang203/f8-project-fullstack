@@ -97,7 +97,8 @@ function HorizontalScroller({ children }: { children: ReactNode }) {
   function onPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
     if (e.button !== 0) return;
     if (e.pointerType !== 'mouse') return;
-    if ((e.target as HTMLElement).closest('button, .feed-video-controls, input[type="range"]')) return;
+    if ((e.target as HTMLElement).closest('button, .feed-video-controls, input[type="range"]'))
+      return;
     const el = elRef.current;
     if (!el) return;
     dragRef.current = {

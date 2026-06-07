@@ -19,7 +19,9 @@ async function main() {
   });
 
   if (!user) {
-    console.error(`❌ Không tìm thấy user với email ${email}. Vui lòng đăng ký tài khoản trước trên giao diện (Sign Up).`);
+    console.error(
+      `❌ Không tìm thấy user với email ${email}. Vui lòng đăng ký tài khoản trước trên giao diện (Sign Up).`,
+    );
     process.exit(1);
   }
 
@@ -28,7 +30,9 @@ async function main() {
     data: { role: 'SUPER_ADMIN' },
   });
 
-  console.log(`\n🎉 Nâng quyền thành công cho tài khoản "${email}" thành SUPER_ADMIN! Bây giờ bạn có thể đăng nhập vào Admin.`);
+  console.log(
+    `\n🎉 Nâng quyền thành công cho tài khoản "${email}" thành SUPER_ADMIN! Bây giờ bạn có thể đăng nhập vào Admin.`,
+  );
 }
 
 main()

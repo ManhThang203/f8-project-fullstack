@@ -1,11 +1,13 @@
 # Spacing System
 
 ## Rules
+
 - Use 4px spacing scale only
 - Avoid arbitrary spacing values
 - Maintain consistent rhythm across views
 
 ## Scale
+
 - space-1 = 4px
 - space-2 = 8px
 - space-3 = 12px

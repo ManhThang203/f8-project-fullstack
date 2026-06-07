@@ -4,8 +4,8 @@ import { MoreHorizontal } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { cn } from '@/lib/utils';
 import { ReportModal } from '@/components/shared/report-modal';
+import { cn } from '@/lib/utils';
 
 type Props = {
   postId: string;
@@ -20,7 +20,12 @@ const MENU_ITEMS = [
   { id: 'hide', label: 'Ẩn bài viết' },
 ] as const;
 
-export function PostOptionsMenu({ postId, hasVideo = false, onHidePost, isOwnPost = false }: Props) {
+export function PostOptionsMenu({
+  postId,
+  hasVideo = false,
+  onHidePost,
+  isOwnPost = false,
+}: Props) {
   const [open, setOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);

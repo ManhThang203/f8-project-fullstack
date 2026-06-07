@@ -43,7 +43,7 @@ function getInitial(name?: string | null, username?: string | null) {
 const baseClass =
   'bg-muted text-muted-foreground inline-flex shrink-0 self-start items-center justify-center overflow-hidden rounded-full p-0 font-semibold aspect-square';
 
-function AvatarInner({ src, name, username, size = 'md' }: BaseProps) {
+function AvatarInner({ src, name, username }: BaseProps) {
   const initial = getInitial(name, username);
   return src ? (
     <img src={src} alt="" className="h-full w-full rounded-full object-cover" />
@@ -63,11 +63,8 @@ export function Avatar(props: Props) {
 
   if (asProp === 'span') {
     return (
-      <span
-        aria-hidden
-        className={cn(baseClass, sizeClass, className)}
-      >
-        <AvatarInner src={src} name={name} username={username} size={size} />
+      <span aria-hidden className={cn(baseClass, sizeClass, className)}>
+        <AvatarInner src={src} name={name} username={username} />
       </span>
     );
   }
@@ -81,13 +78,13 @@ export function Avatar(props: Props) {
       aria-label={ariaLabel}
       className={cn(
         baseClass,
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+        'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
         sizeClass,
         className,
       )}
       {...(rest as ButtonHTMLAttributes<HTMLButtonElement>)}
     >
-      <AvatarInner src={src} name={name} username={username} size={size} />
+      <AvatarInner src={src} name={name} username={username} />
     </button>
   );
 }

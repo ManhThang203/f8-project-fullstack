@@ -14,16 +14,15 @@ const colStatus = adminCol('grow', 'center');
 const colTime = adminCol('grow', 'center');
 const colActions = adminCol('actions', 'end');
 
-const headerCols: { key: string; col: (typeof colTarget); className?: string; skeleton: string }[] =
-  [
-    { key: 'target', col: colTarget, skeleton: 'w-16' },
-    { key: 'reason', col: colReason, skeleton: 'w-16' },
-    { key: 'reporter', col: colReporter, className: 'hidden xl:table-cell', skeleton: 'w-16' },
-    { key: 'reportCount', col: colReportCount, skeleton: 'w-12' },
-    { key: 'status', col: colStatus, skeleton: 'w-16' },
-    { key: 'time', col: colTime, className: 'hidden xl:table-cell', skeleton: 'w-16' },
-    { key: 'actions', col: colActions, skeleton: 'w-14' },
-  ];
+const headerCols: { key: string; col: typeof colTarget; className?: string; skeleton: string }[] = [
+  { key: 'target', col: colTarget, skeleton: 'w-16' },
+  { key: 'reason', col: colReason, skeleton: 'w-16' },
+  { key: 'reporter', col: colReporter, className: 'hidden xl:table-cell', skeleton: 'w-16' },
+  { key: 'reportCount', col: colReportCount, skeleton: 'w-12' },
+  { key: 'status', col: colStatus, skeleton: 'w-16' },
+  { key: 'time', col: colTime, className: 'hidden xl:table-cell', skeleton: 'w-16' },
+  { key: 'actions', col: colActions, skeleton: 'w-14' },
+];
 
 function ReportsTableSkeletonRow() {
   return (

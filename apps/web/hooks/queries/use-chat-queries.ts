@@ -2,9 +2,9 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { ChatMessageDto, Conversation } from '@/types/chat';
 import { apiQuery, apiQueryData } from '@/lib/api-query';
 import { queryKeys } from '@/lib/query-keys';
+import type { ChatMessageDto, Conversation } from '@/types/chat';
 
 export const EMPTY_ROOM_MESSAGES: ChatMessageDto[] = [];
 export const EMPTY_CONVERSATIONS: Conversation[] = [];
@@ -42,7 +42,12 @@ export function useRoomMessages(roomId: string | null, enabled = true) {
 export function useCreateChatRoomMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: { isGroup?: boolean; name?: string; memberUserIds: string[]; encryptedRoomKeys: Record<string, string> }) =>
+    mutationFn: (body: {
+      isGroup?: boolean;
+      name?: string;
+      memberUserIds: string[];
+      encryptedRoomKeys: Record<string, string>;
+    }) =>
       apiQueryData<{ id: string }>('/chat/rooms', {
         method: 'POST',
         body: JSON.stringify(body),

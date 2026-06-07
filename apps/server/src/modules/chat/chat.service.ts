@@ -1,4 +1,4 @@
-import { prisma, Prisma } from '@costy/db';
+import { prisma } from '@costy/db';
 import { AppError } from '../../lib/errors.js';
 
 type ListMsgOpts = { limit?: number; beforeId?: string };
@@ -13,11 +13,7 @@ const userSelect = {
 /**
  * Lịch sử tin nhắn trong một phòng E2EE
  */
-export async function listRoomMessages(
-  userId: string,
-  roomId: string,
-  opts: ListMsgOpts = {},
-) {
+export async function listRoomMessages(userId: string, roomId: string, opts: ListMsgOpts = {}) {
   const limit = Math.min(Math.max(Number(opts.limit) || 40, 1), 200);
 
   // Check quyền
@@ -41,14 +37,14 @@ export async function listRoomMessages(
     include: {
       reactions: true,
       replyTo: true,
-    }
+    },
   });
 
   // Map to exclude database specifics if needed, but for now just return
-  const mapped = rows.map(r => ({
+  const mapped = rows.map((r) => ({
     ...r,
     replyToMessage: r.replyTo,
-    replyTo: undefined // Clean up Prisma output
+    replyTo: undefined, // Clean up Prisma output
   }));
 
   return mapped.reverse();
@@ -115,7 +111,7 @@ export async function createChatRoom(input: {
       },
       include: { members: true },
     });
-    
+
     // Đảm bảo chính xác 2 thành viên này
     const exactRoom = existingRooms.find((r) => r.members.length === 2);
     if (exactRoom) {
@@ -162,7 +158,7 @@ export async function listConversationsForUser(userId: string) {
   const items = await Promise.all(
     memberships.map(async (m) => {
       const room = m.room;
-      
+
       const lastMsg = await prisma.chatMessage.findFirst({
         where: { roomId: room.id },
         orderBy: { createdAt: 'desc' },
@@ -189,15 +185,15 @@ export async function listConversationsForUser(userId: string) {
           lastReadAt: om.lastReadAt?.toISOString(),
           lastDeliveredAt: om.lastDeliveredAt?.toISOString(),
         })),
-        
+
         lastMessage: lastMsg,
         unreadCount,
         updatedAt: lastMsg?.createdAt || room.createdAt,
-        
+
         // Trả về cả roomKey mã hóa cho user hiện tại
         encryptedRoomKey: m.encryptedRoomKey,
       };
-    })
+    }),
   );
 
   return items.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());

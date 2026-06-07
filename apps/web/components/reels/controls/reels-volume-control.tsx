@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -18,8 +18,7 @@ type Props = {
   onVolumeIconTap?: (e: React.MouseEvent) => void;
 };
 
-const pillShell =
-  'flex min-h-11 items-center rounded-full bg-black/40 text-white backdrop-blur-sm';
+const pillShell = 'flex min-h-11 items-center rounded-full bg-black/40 text-white backdrop-blur-sm';
 
 const iconBtn =
   'flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60';
@@ -103,7 +102,7 @@ export function ReelsVolumeControl({
       <div
         className={cn(
           pillShell,
-          variant === 'hover-slider' && 'group-hover/volume:pr-4 group-focus-within/volume:pr-4',
+          variant === 'hover-slider' && 'group-focus-within/volume:pr-4 group-hover/volume:pr-4',
           variant === 'tap-slider' && isOpen && 'pr-4',
         )}
       >

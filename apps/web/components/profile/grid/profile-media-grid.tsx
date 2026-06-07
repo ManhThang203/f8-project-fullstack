@@ -6,10 +6,7 @@ import { useEffect, useRef } from 'react';
 import { ProfileMediaTile } from '@/components/profile/grid/profile-media-tile';
 import type { ProfileTab } from '@/components/profile/profile-utils';
 import { Button } from '@/components/shared/button';
-import {
-  flattenProfileGridPages,
-  useProfileGrid,
-} from '@/hooks/queries/use-profile-grid';
+import { flattenProfileGridPages, useProfileGrid } from '@/hooks/queries/use-profile-grid';
 import { cn } from '@/lib/utils';
 
 type Props = {

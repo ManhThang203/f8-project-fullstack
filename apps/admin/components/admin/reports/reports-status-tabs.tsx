@@ -2,7 +2,10 @@
 
 import { useTranslation } from 'react-i18next';
 
-import { ALL_STATUSES, STATUS_FILTER_I18N_KEYS } from '@/components/admin/reports/reports.constants';
+import {
+  ALL_STATUSES,
+  STATUS_FILTER_I18N_KEYS,
+} from '@/components/admin/reports/reports.constants';
 import { segmentedControl } from './segmented-control';
 import { cn } from '@/lib/utils';
 
@@ -16,7 +19,7 @@ export function ReportsStatusTabs({ statusFilter, onStatusChange, className }: P
   const { t } = useTranslation();
 
   return (
-    <div className={cn('relative max-w-full w-fit min-w-0', className)}>
+    <div className={cn('relative w-fit min-w-0 max-w-full', className)}>
       <div
         role="tablist"
         aria-label={t('reports.filterByStatus')}
@@ -43,9 +46,7 @@ export function ReportsStatusTabs({ statusFilter, onStatusChange, className }: P
             onClick={() => onStatusChange(status)}
             className={cn(
               segmentedControl.tab,
-              statusFilter === status
-                ? segmentedControl.tabActive
-                : segmentedControl.tabInactive,
+              statusFilter === status ? segmentedControl.tabActive : segmentedControl.tabInactive,
             )}
           >
             {t(STATUS_FILTER_I18N_KEYS[status])}

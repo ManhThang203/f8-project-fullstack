@@ -1,6 +1,7 @@
 # Post Card
 
 ## Purpose
+
 Post cards are the core content unit in feed-based layouts.
 
 The design must remain lightweight, readable, and content-first.
@@ -45,15 +46,18 @@ Post card structure:
 ## Typography
 
 ### Username
+
 - text-body
 - font-weight: 600
 - color: text-primary
 
 ### Handle / Timestamp
+
 - text-body-sm
 - color: text-secondary
 
 ### Content
+
 - text-body
 - line-height: 1.6
 - max width: 65ch
@@ -63,17 +67,20 @@ Post card structure:
 ## Media
 
 ### Rules
+
 - object-fit: cover
 - responsive width
 - lazy loaded
 - use blur placeholder
 
 ### Allowed Ratios
+
 - 1:1
 - 4:5
 - 16:9
 
 ### Radius
+
 - radius-xl
 
 ---
@@ -92,13 +99,16 @@ For threaded replies:
 ## Actions
 
 ### Icons
+
 Use Lucide icons only.
 
 ### Sizes
+
 - 16px inline
 - 20px action buttons
 
 ### Interaction
+
 - hover opacity only
 - avoid large motion
 - touch targets minimum 44x44 on mobile
@@ -129,11 +139,13 @@ Avoid spinner-only loading for feed initialization.
 ## Responsive Rules
 
 ### Mobile
+
 - Full width
 - Reduced spacing density
 - Maintain touch targets
 
 ### Desktop
+
 - Max feed width: 600px
 - Center aligned layout
 

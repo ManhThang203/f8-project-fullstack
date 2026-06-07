@@ -53,12 +53,7 @@ const authRateLimit = env.AUTH_RATE_LIMIT_DISABLED
       },
     };
 
-const trustedOrigins = [
-  env.WEB_URL,
-  env.ADMIN_URL,
-  env.BETTER_AUTH_URL,
-  env.SERVER_URL,
-];
+const trustedOrigins = [env.WEB_URL, env.ADMIN_URL, env.BETTER_AUTH_URL, env.SERVER_URL];
 
 type CreateAppAuthOptions = {
   baseURL: string;
@@ -107,7 +102,9 @@ export function createAppAuth({
             }
             const email = u.email;
             if (typeof email !== 'string' || !email.includes('@')) {
-              throw new APIError('BAD_REQUEST', { message: 'Không thể tạo tài khoản: thiếu email.' });
+              throw new APIError('BAD_REQUEST', {
+                message: 'Không thể tạo tài khoản: thiếu email.',
+              });
             }
             const base = slugFromEmail(email);
             const usernameValue = await uniqueUsername(base);

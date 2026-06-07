@@ -29,9 +29,9 @@ export function CursorPagination({
   const [open, setOpen] = React.useState(false);
 
   return (
-    <div className="flex flex-col gap-3 py-4 px-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+    <div className="flex flex-col gap-3 px-1 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
       {/* Page Size Select */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="text-muted-foreground flex items-center gap-2 text-sm">
         <span>{t('pagination.show')}</span>
         <div className="w-[80px]">
           <Popover open={open} onOpenChange={setOpen}>
@@ -40,10 +40,10 @@ export function CursorPagination({
                 variant="secondary"
                 role="combobox"
                 aria-expanded={open}
-                className="h-9 w-full justify-between bg-background px-3 font-normal text-foreground hover:bg-accent hover:text-accent-foreground"
+                className="bg-background text-foreground hover:bg-accent hover:text-accent-foreground h-9 w-full justify-between px-3 font-normal"
               >
                 <span>{limit}</span>
-                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <ChevronDown className="text-muted-foreground h-4 w-4 shrink-0" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[80px] p-1" align="center">
@@ -59,7 +59,7 @@ export function CursorPagination({
                         setOpen(false);
                       }}
                       className={cn(
-                        'relative flex w-full cursor-default select-none items-center justify-center rounded-sm py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground transition-colors',
+                        'hover:bg-accent hover:text-accent-foreground relative flex w-full cursor-default select-none items-center justify-center rounded-sm py-1.5 text-sm outline-none transition-colors',
                         isSelected && 'bg-accent text-accent-foreground font-medium',
                       )}
                     >

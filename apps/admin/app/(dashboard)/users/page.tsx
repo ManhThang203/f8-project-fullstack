@@ -35,7 +35,7 @@ const UsersSearchInput = memo(function UsersSearchInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={cn(
-          'min-h-11 w-full rounded-lg border border-border bg-background px-3 text-sm',
+          'border-border bg-background min-h-11 w-full rounded-lg border px-3 text-sm',
           value ? 'pr-11' : 'pr-3',
         )}
         aria-label={t('users.searchLabel')}
@@ -44,7 +44,7 @@ const UsersSearchInput = memo(function UsersSearchInput({
         <button
           type="button"
           onClick={() => onChange('')}
-          className="absolute right-0 top-0 inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground absolute right-0 top-0 inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors"
           aria-label={t('users.clearSearch')}
         >
           <X className="size-4" aria-hidden />

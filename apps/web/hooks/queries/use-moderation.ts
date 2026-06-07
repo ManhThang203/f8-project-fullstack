@@ -1,7 +1,7 @@
 import type { AppealDto, MyModerationCaseDto } from '@costy/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiQuery, apiQueryData } from '@/lib/api-query';
+import { apiQueryData } from '@/lib/api-query';
 
 export function useMyModerationCase(caseId: string | null) {
   return useQuery({

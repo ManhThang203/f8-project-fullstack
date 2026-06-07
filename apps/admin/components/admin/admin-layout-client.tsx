@@ -67,4 +67,3 @@ export function AdminLayoutClient({ children }: { children: ReactNode }) {
     </AdminShell>
   );
 }
-

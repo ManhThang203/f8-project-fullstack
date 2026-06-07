@@ -25,7 +25,7 @@ export function ModerationStatusTabs({ statusFilter, onStatusChange, className }
   const { t } = useTranslation();
 
   return (
-    <div className={cn('relative max-w-full w-fit min-w-0', className)}>
+    <div className={cn('relative w-fit min-w-0 max-w-full', className)}>
       <div className={cn(segmentedControl.track, 'inline-flex w-max max-w-full')}>
         <button
           type="button"
@@ -43,9 +43,7 @@ export function ModerationStatusTabs({ statusFilter, onStatusChange, className }
             type="button"
             className={cn(
               segmentedControl.tab,
-              statusFilter === status
-                ? segmentedControl.tabActive
-                : segmentedControl.tabInactive,
+              statusFilter === status ? segmentedControl.tabActive : segmentedControl.tabInactive,
             )}
             onClick={() => onStatusChange(status)}
           >

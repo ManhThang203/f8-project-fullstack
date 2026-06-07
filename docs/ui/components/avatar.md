@@ -1,6 +1,7 @@
 # Avatar
 
 ## Sizes
+
 - xs
 - sm
 - md
@@ -9,6 +10,7 @@
 - 2xl
 
 ## Rules
+
 - Always fully rounded
 - No border
 - Verified badge positioned bottom-right

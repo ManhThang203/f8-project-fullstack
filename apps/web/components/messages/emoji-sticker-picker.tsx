@@ -1,13 +1,17 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { useState, useRef, useEffect } from 'react';
 
 // Lazy load emoji-picker to avoid SSR issues and reduce initial bundle size
-const EmojiPickerReact = dynamic(
-  () => import('emoji-picker-react').then((mod) => mod.default),
-  { ssr: false, loading: () => <div className="h-[350px] flex items-center justify-center text-sm text-muted-foreground">Đang tải...</div> }
-);
+const EmojiPickerReact = dynamic(() => import('emoji-picker-react').then((mod) => mod.default), {
+  ssr: false,
+  loading: () => (
+    <div className="text-muted-foreground flex h-[350px] items-center justify-center text-sm">
+      Đang tải...
+    </div>
+  ),
+});
 
 export const MOCK_STICKERS = [
   { id: 'st_joy', url: 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f602/512.webp' },
@@ -37,7 +41,13 @@ interface EmojiStickerPickerProps {
   onStickerSelect: (stickerId: string) => void;
 }
 
-export function EmojiStickerPicker({ open, onOpenChange, trigger, onEmojiSelect, onStickerSelect }: EmojiStickerPickerProps) {
+export function EmojiStickerPicker({
+  open,
+  onOpenChange,
+  trigger,
+  onEmojiSelect,
+  onStickerSelect,
+}: EmojiStickerPickerProps) {
   const [tab, setTab] = useState<'emoji' | 'sticker'>('emoji');
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -52,35 +62,33 @@ export function EmojiStickerPicker({ open, onOpenChange, trigger, onEmojiSelect,
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-    }
+    };
   }, [open, onOpenChange]);
 
   return (
     <div className="relative inline-block" ref={containerRef}>
-      <div onClick={() => onOpenChange(!open)}>
-        {trigger}
-      </div>
-      
+      <div onClick={() => onOpenChange(!open)}>{trigger}</div>
+
       {open && (
-        <div className="absolute bottom-[calc(100%+10px)] left-0 z-50 w-[350px] rounded-xl border border-border bg-card shadow-lg overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <div className="flex w-full border-b border-border">
+        <div className="border-border bg-card animate-in fade-in slide-in-from-bottom-2 absolute bottom-[calc(100%+10px)] left-0 z-50 w-[350px] overflow-hidden rounded-xl border shadow-lg duration-200">
+          <div className="border-border flex w-full border-b">
             <button
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${tab === 'emoji' ? 'border-b-2 border-primary text-foreground' : 'text-muted-foreground hover:bg-muted/50'}`}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${tab === 'emoji' ? 'border-primary text-foreground border-b-2' : 'text-muted-foreground hover:bg-muted/50'}`}
               onClick={() => setTab('emoji')}
             >
               Emoji
             </button>
             <button
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${tab === 'sticker' ? 'border-b-2 border-primary text-foreground' : 'text-muted-foreground hover:bg-muted/50'}`}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${tab === 'sticker' ? 'border-primary text-foreground border-b-2' : 'text-muted-foreground hover:bg-muted/50'}`}
               onClick={() => setTab('sticker')}
             >
               Nhãn dán
             </button>
           </div>
-          
+
           <div className="w-full">
             {tab === 'emoji' && (
-              <EmojiPickerReact 
+              <EmojiPickerReact
                 onEmojiClick={(emojiData) => onEmojiSelect(emojiData.emoji)}
                 width="100%"
                 height={350}
@@ -88,20 +96,24 @@ export function EmojiStickerPicker({ open, onOpenChange, trigger, onEmojiSelect,
                 skinTonesDisabled={true}
               />
             )}
-            
+
             {tab === 'sticker' && (
-              <div className="h-[350px] overflow-y-auto p-4 bg-card">
+              <div className="bg-card h-[350px] overflow-y-auto p-4">
                 <div className="grid grid-cols-3 gap-4">
                   {MOCK_STICKERS.map((sticker) => (
                     <button
                       key={sticker.id}
-                      className="hover:bg-muted p-2 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary flex items-center justify-center aspect-square"
+                      className="hover:bg-muted focus-visible:ring-primary flex aspect-square items-center justify-center rounded-xl p-2 transition-colors focus-visible:outline-none focus-visible:ring-2"
                       onClick={() => {
                         onStickerSelect(sticker.id);
                         onOpenChange(false);
                       }}
                     >
-                      <img src={sticker.url} alt="Sticker" className="w-16 h-16 object-contain hover:scale-110 transition-transform" />
+                      <img
+                        src={sticker.url}
+                        alt="Sticker"
+                        className="h-16 w-16 object-contain transition-transform hover:scale-110"
+                      />
                     </button>
                   ))}
                 </div>

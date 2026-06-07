@@ -231,14 +231,18 @@ adminRouter.get(
   },
 );
 
-adminRouter.get('/moderation/cases/:id', requirePermission('report:read'), async (req, res, next) => {
-  try {
-    const data = await getModerationCase(paramId(req.params.id));
-    res.json(ok(data));
-  } catch (e) {
-    next(e);
-  }
-});
+adminRouter.get(
+  '/moderation/cases/:id',
+  requirePermission('report:read'),
+  async (req, res, next) => {
+    try {
+      const data = await getModerationCase(paramId(req.params.id));
+      res.json(ok(data));
+    } catch (e) {
+      next(e);
+    }
+  },
+);
 
 adminRouter.patch(
   '/moderation/cases/:id/action',

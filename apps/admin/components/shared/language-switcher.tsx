@@ -25,7 +25,7 @@ export function LanguageSwitcher({ className }: Props) {
       type="button"
       onClick={handleSwitch}
       className={cn(
-        'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg px-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
+        'text-muted-foreground hover:bg-muted hover:text-foreground inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg px-2 text-xs font-semibold transition-colors',
         className,
       )}
       aria-label={next === 'vi' ? t('language.switchToVi') : t('language.switchToEn')}

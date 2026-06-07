@@ -270,9 +270,7 @@ export async function getAdminReport(reportId: string): Promise<AdminReportDetai
       },
     });
     targetContent = post?.content ?? null;
-    targetAuthor = post?.author
-      ? { ...post.author, status: post.author.status as string }
-      : null;
+    targetAuthor = post?.author ? { ...post.author, status: post.author.status as string } : null;
     targetMedia = post?.media ?? null;
   } else if (r.targetType === 'USER') {
     const user = await prisma.user.findUnique({

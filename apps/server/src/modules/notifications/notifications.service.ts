@@ -1,4 +1,5 @@
-import { prisma, NotificationType } from '@costy/db';
+import { prisma } from '@costy/db';
+import type { NotificationType } from '@costy/db';
 import { getRealtimeIo } from '../../lib/realtime.js';
 
 export async function listNotifications(userId: string, limit = 20, cursor?: string) {

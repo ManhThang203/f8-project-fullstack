@@ -1,4 +1,4 @@
-import type { ApiError, ApiSuccess } from '@costy/shared';
+import type { ApiSuccess } from '@costy/shared';
 
 import { apiFetch } from './api-client';
 

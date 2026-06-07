@@ -11,14 +11,14 @@
 
 ### In-scope
 
-| Area | Mô tả |
-|---|---|
-| Own profile | `/[username]` khi `isOwner = true` |
-| Other profile | `/[username]` khi `isOwner = false` |
-| Header | Avatar, tên, handle, bio, 3 chỉ số, action buttons |
-| Tabs | **Bài viết** (grid ảnh) · **Reels** (grid video) · **Đã thích** (own only) |
-| Modals | Danh sách Followers / Following, lightbox avatar, lightbox post |
-| States | Loading, empty, error, 404, deleted account |
+| Area          | Mô tả                                                                      |
+| ------------- | -------------------------------------------------------------------------- |
+| Own profile   | `/[username]` khi `isOwner = true`                                         |
+| Other profile | `/[username]` khi `isOwner = false`                                        |
+| Header        | Avatar, tên, handle, bio, 3 chỉ số, action buttons                         |
+| Tabs          | **Bài viết** (grid ảnh) · **Reels** (grid video) · **Đã thích** (own only) |
+| Modals        | Danh sách Followers / Following, lightbox avatar, lightbox post            |
+| States        | Loading, empty, error, 404, deleted account                                |
 
 ### Out-of-scope
 
@@ -33,14 +33,14 @@
 
 Phân tích pattern Instagram Profile áp dụng cho Cotsy:
 
-| Pattern IG | Áp dụng Cotsy |
-|---|---|
-| Không cover (mobile-first) | Bỏ cover — avatar + info nằm trên cùng |
-| Avatar tròn + stats hàng ngang | Avatar 2xl + 3 chỉ số clickable |
-| Grid 3 cột, gap mảnh | `gap-px` mobile, `gap-1` desktop |
-| Tab Posts / Reels / (Saved/Liked) | Tab Bài viết / Reels / Đã thích (own) |
-| Follow / Message trên profile người khác | Theo dõi + Nhắn tin |
-| Edit profile trên profile của mình | Chỉnh sửa trang cá nhân |
+| Pattern IG                               | Áp dụng Cotsy                          |
+| ---------------------------------------- | -------------------------------------- |
+| Không cover (mobile-first)               | Bỏ cover — avatar + info nằm trên cùng |
+| Avatar tròn + stats hàng ngang           | Avatar 2xl + 3 chỉ số clickable        |
+| Grid 3 cột, gap mảnh                     | `gap-px` mobile, `gap-1` desktop       |
+| Tab Posts / Reels / (Saved/Liked)        | Tab Bài viết / Reels / Đã thích (own)  |
+| Follow / Message trên profile người khác | Theo dõi + Nhắn tin                    |
+| Edit profile trên profile của mình       | Chỉnh sửa trang cá nhân                |
 
 Khác biệt so với IG: dùng design tokens Cotsy (dark-native, Geist, spacing 4px scale) theo [`layout.md`](../layout.md) và [`philosophy.md`](../philosophy.md).
 
@@ -50,19 +50,19 @@ Khác biệt so với IG: dùng design tokens Cotsy (dark-native, Geist, spacing
 
 ### Bảng mapping
 
-| Nguồn DB | UI field | Ghi chú |
-|---|---|---|
-| `User.image` | Avatar | Size `2xl` (96px desktop, 88px mobile). Xem [`avatar.md`](../components/avatar.md) |
-| `User.name` | Display name | `text-heading-2`, semibold |
-| `User.username` | Handle | `@username`, `text-body-sm`, muted |
-| `User.bio` | Bio | `text-body`, line-clamp 4 mobile / full desktop |
-| `User.createdAt` | Meta | "Tham gia tháng MM/YYYY", `text-caption`, muted |
-| `count(Post)` where `authorId = user.id`, `deletedAt IS NULL`, `parentId IS NULL` | **Bài viết** | Chỉ đếm bài gốc, không đếm reply |
-| `count(Follow)` where `followingId = user.id` | **Người theo dõi** | Ai đang follow user này |
-| `count(Follow)` where `followerId = user.id` | **Đang theo dõi** | User này đang follow ai |
-| `Post` ⋈ `Media` where `kind = IMAGE`, `status = READY` | Grid Bài viết | Thumbnail = media đầu tiên (`orderBy createdAt asc`, `take 1`) |
-| `Post` ⋈ `Media` where `kind = VIDEO`, `status = READY` | Grid Reels | Thumbnail = frame đầu + icon play overlay |
-| `PostLike` where `userId = viewer.id` | Tab Đã thích | Chỉ hiển thị khi `isOwner = true` |
+| Nguồn DB                                                                          | UI field           | Ghi chú                                                                            |
+| --------------------------------------------------------------------------------- | ------------------ | ---------------------------------------------------------------------------------- |
+| `User.image`                                                                      | Avatar             | Size `2xl` (96px desktop, 88px mobile). Xem [`avatar.md`](../components/avatar.md) |
+| `User.name`                                                                       | Display name       | `text-heading-2`, semibold                                                         |
+| `User.username`                                                                   | Handle             | `@username`, `text-body-sm`, muted                                                 |
+| `User.bio`                                                                        | Bio                | `text-body`, line-clamp 4 mobile / full desktop                                    |
+| `User.createdAt`                                                                  | Meta               | "Tham gia tháng MM/YYYY", `text-caption`, muted                                    |
+| `count(Post)` where `authorId = user.id`, `deletedAt IS NULL`, `parentId IS NULL` | **Bài viết**       | Chỉ đếm bài gốc, không đếm reply                                                   |
+| `count(Follow)` where `followingId = user.id`                                     | **Người theo dõi** | Ai đang follow user này                                                            |
+| `count(Follow)` where `followerId = user.id`                                      | **Đang theo dõi**  | User này đang follow ai                                                            |
+| `Post` ⋈ `Media` where `kind = IMAGE`, `status = READY`                           | Grid Bài viết      | Thumbnail = media đầu tiên (`orderBy createdAt asc`, `take 1`)                     |
+| `Post` ⋈ `Media` where `kind = VIDEO`, `status = READY`                           | Grid Reels         | Thumbnail = frame đầu + icon play overlay                                          |
+| `PostLike` where `userId = viewer.id`                                             | Tab Đã thích       | Chỉ hiển thị khi `isOwner = true`                                                  |
 
 ### Quan hệ Follow (tham chiếu)
 
@@ -160,14 +160,14 @@ Tuân theo [`layout.md`](../layout.md) — main column max **600px** (cùng feed
 
 ### Spacing & typography
 
-| Token | Giá trị | Vị trí |
-|---|---|---|
-| `py-8` | 32px | Profile header padding desktop |
-| `gap-8` | 32px | Avatar ↔ info block desktop |
-| `gap-2` / `gap-3` | 8px / 12px | Stats, action buttons |
-| `gap-px` | 1px | Grid mobile |
-| `gap-1` | 4px | Grid desktop |
-| `top-14` | 56px | Sticky tabs offset (SiteHeader height) |
+| Token             | Giá trị    | Vị trí                                 |
+| ----------------- | ---------- | -------------------------------------- |
+| `py-8`            | 32px       | Profile header padding desktop         |
+| `gap-8`           | 32px       | Avatar ↔ info block desktop            |
+| `gap-2` / `gap-3` | 8px / 12px | Stats, action buttons                  |
+| `gap-px`          | 1px        | Grid mobile                            |
+| `gap-1`           | 4px        | Grid desktop                           |
+| `top-14`          | 56px       | Sticky tabs offset (SiteHeader height) |
 
 Typography: [`typography.md`](../typography.md) — max 2 weights per view.
 
@@ -179,11 +179,11 @@ Typography: [`typography.md`](../typography.md) — max 2 weights per view.
 
 **Actions:**
 
-| Control | Variant | Hành vi |
-|---|---|---|
+| Control                 | Variant           | Hành vi                            |
+| ----------------------- | ----------------- | ---------------------------------- |
 | Chỉnh sửa trang cá nhân | secondary outline | Navigate tới edit profile (future) |
-| Xem kho lưu trữ | secondary outline | Navigate tới archive (future) |
-| Settings | icon-md ghost | Mở menu cài đặt |
+| Xem kho lưu trữ         | secondary outline | Navigate tới archive (future)      |
+| Settings                | icon-md ghost     | Mở menu cài đặt                    |
 
 **Tabs:** Bài viết · Reels · **Đã thích** (tab 3 chỉ own thấy)
 
@@ -191,17 +191,17 @@ Typography: [`typography.md`](../typography.md) — max 2 weights per view.
 
 **Actions — chưa follow (`isFollowing = false`):**
 
-| Control | Variant |
-|---|---|
-| Theo dõi | primary (filled) |
+| Control  | Variant                          |
+| -------- | -------------------------------- |
+| Theo dõi | primary (filled)                 |
 | Nhắn tin | secondary outline → mở chat dock |
 
 **Actions — đã follow (`isFollowing = true`):**
 
-| Control | Variant |
-|---|---|
+| Control         | Variant                      |
+| --------------- | ---------------------------- |
 | Đang theo dõi ▾ | secondary outline + dropdown |
-| Nhắn tin | secondary outline |
+| Nhắn tin        | secondary outline            |
 
 **Dropdown "Đang theo dõi":** Hủy theo dõi · Hạn chế · Chặn (Hạn chế/Chặn = future)
 
@@ -213,16 +213,16 @@ Typography: [`typography.md`](../typography.md) — max 2 weights per view.
 
 Đặt tại `apps/web/modules/profile/components/`:
 
-| Component | Trách nhiệm |
-|---|---|
-| `ProfileHeader` | Avatar + tên + handle + bio + joined date |
-| `ProfileStats` | 3 ô số liệu, clickable |
-| `ProfileActions` | Render theo `isOwner` / `isFollowing` |
-| `ProfileTabs` | Sticky tab strip, sync `?tab=` |
-| `ProfileMediaGrid` | Grid 3-col, infinite scroll |
+| Component          | Trách nhiệm                                |
+| ------------------ | ------------------------------------------ |
+| `ProfileHeader`    | Avatar + tên + handle + bio + joined date  |
+| `ProfileStats`     | 3 ô số liệu, clickable                     |
+| `ProfileActions`   | Render theo `isOwner` / `isFollowing`      |
+| `ProfileTabs`      | Sticky tab strip, sync `?tab=`             |
+| `ProfileMediaGrid` | Grid 3-col, infinite scroll                |
 | `ProfileMediaTile` | 1 thumbnail, badge multi-media / play icon |
-| `FollowListModal` | Danh sách followers/following + search |
-| `MediaLightbox` | Xem post detail read-only |
+| `FollowListModal`  | Danh sách followers/following + search     |
+| `MediaLightbox`    | Xem post detail read-only                  |
 
 **Reuse:**
 
@@ -235,41 +235,41 @@ Typography: [`typography.md`](../typography.md) — max 2 weights per view.
 
 ## 7. States
 
-| State | Trigger | Hiển thị |
-|---|---|---|
-| Loading profile | Initial navigation | Skeleton: avatar tròn + 2 text lines + 3 stat blocks + 9 grid cells. Xem [`loading.md`](../loading.md) |
-| User không tồn tại | `GET /users/:username` → 404 | "Không tìm thấy người dùng này" + link Trang chủ |
-| User đã xóa | `User.deletedAt != null` | "Tài khoản này không khả dụng" — ẩn posts, ẩn follow actions |
-| Profile riêng tư (future) | `isPrivate && !isFollowing` | Header visible, grid: "Tài khoản riêng tư — theo dõi để xem" |
-| Empty posts (own) | Grid count = 0 | "Chia sẻ bài viết đầu tiên của bạn" + **Tạo bài viết** |
-| Empty posts (other) | Grid count = 0 | "Người này chưa có bài viết." |
-| Empty reels | Reels count = 0 | "Chưa có Reels." |
-| Loading more | IntersectionObserver trigger | Spinner cuối grid, batch 12 |
-| Network error | Fetch fail | Inline alert + nút **Thử lại** |
-| Follow action loading | POST/DELETE follow | Button loading state, disable double-tap |
+| State                     | Trigger                      | Hiển thị                                                                                               |
+| ------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Loading profile           | Initial navigation           | Skeleton: avatar tròn + 2 text lines + 3 stat blocks + 9 grid cells. Xem [`loading.md`](../loading.md) |
+| User không tồn tại        | `GET /users/:username` → 404 | "Không tìm thấy người dùng này" + link Trang chủ                                                       |
+| User đã xóa               | `User.deletedAt != null`     | "Tài khoản này không khả dụng" — ẩn posts, ẩn follow actions                                           |
+| Profile riêng tư (future) | `isPrivate && !isFollowing`  | Header visible, grid: "Tài khoản riêng tư — theo dõi để xem"                                           |
+| Empty posts (own)         | Grid count = 0               | "Chia sẻ bài viết đầu tiên của bạn" + **Tạo bài viết**                                                 |
+| Empty posts (other)       | Grid count = 0               | "Người này chưa có bài viết."                                                                          |
+| Empty reels               | Reels count = 0              | "Chưa có Reels."                                                                                       |
+| Loading more              | IntersectionObserver trigger | Spinner cuối grid, batch 12                                                                            |
+| Network error             | Fetch fail                   | Inline alert + nút **Thử lại**                                                                         |
+| Follow action loading     | POST/DELETE follow           | Button loading state, disable double-tap                                                               |
 
 ---
 
 ## 8. Tương tác (Interactions)
 
-| Hành động | Kết quả |
-|---|---|
-| Click avatar | Full-screen lightbox xem avatar |
-| Click **Người theo dõi** | Mở modal/route followers (paginated) |
-| Click **Đang theo dõi** | Mở modal/route following (paginated) |
-| Click grid tile | Mở `MediaLightbox` — post detail read-only |
-| Theo dõi / Hủy theo dõi | Optimistic UI → revert + toast nếu fail |
-| Đổi tab | URL `?tab=posts\|reels\|liked` — giữ state khi refresh |
-| Scroll grid | Infinite scroll, IntersectionObserver, batch 12 |
-| Hover tile (desktop) | Overlay: lượt thích + số phản hồi |
+| Hành động                | Kết quả                                                |
+| ------------------------ | ------------------------------------------------------ |
+| Click avatar             | Full-screen lightbox xem avatar                        |
+| Click **Người theo dõi** | Mở modal/route followers (paginated)                   |
+| Click **Đang theo dõi**  | Mở modal/route following (paginated)                   |
+| Click grid tile          | Mở `MediaLightbox` — post detail read-only             |
+| Theo dõi / Hủy theo dõi  | Optimistic UI → revert + toast nếu fail                |
+| Đổi tab                  | URL `?tab=posts\|reels\|liked` — giữ state khi refresh |
+| Scroll grid              | Infinite scroll, IntersectionObserver, batch 12        |
+| Hover tile (desktop)     | Overlay: lượt thích + số phản hồi                      |
 
 ### Tab URL sync
 
-| URL | Tab active | Ghi chú |
-|---|---|---|
-| `/minh` | posts | Default |
-| `/minh?tab=reels` | reels | |
-| `/minh?tab=liked` | liked | Chỉ own; redirect về posts nếu other |
+| URL               | Tab active | Ghi chú                              |
+| ----------------- | ---------- | ------------------------------------ |
+| `/minh`           | posts      | Default                              |
+| `/minh?tab=reels` | reels      |                                      |
+| `/minh?tab=liked` | liked      | Chỉ own; redirect về posts nếu other |
 
 ---
 
@@ -376,11 +376,11 @@ apps/web/app/(site)/[username]/
 
 ### Intercepting routes
 
-| Navigation | Hiển thị |
-|---|---|
+| Navigation                                  | Hiển thị                            |
+| ------------------------------------------- | ----------------------------------- |
 | Từ profile, click stats → `/minh/followers` | Modal overlay, profile vẫn phía sau |
-| Paste `/minh/followers` hoặc F5 | Trang full danh sách |
-| Browser Back từ modal | Đóng modal, vẫn ở `/minh` |
+| Paste `/minh/followers` hoặc F5             | Trang full danh sách                |
+| Browser Back từ modal                       | Đóng modal, vẫn ở `/minh`           |
 
 ---
 
@@ -443,13 +443,13 @@ apps/web/app/(site)/[username]/
 
 ## 13. Open questions (future plans)
 
-| Item | Ghi chú |
-|---|---|
-| Edit profile flow | Plan riêng — form avatar, name, bio |
-| Archive / Saved posts | Cần schema hoặc flag trên Post |
-| Private account | Cần field `isPrivate` trên User |
-| Block / Restrict | Cần bảng Block hoặc Restrict |
-| Verified badge | Cần field `isVerified` trên User |
+| Item                  | Ghi chú                             |
+| --------------------- | ----------------------------------- |
+| Edit profile flow     | Plan riêng — form avatar, name, bio |
+| Archive / Saved posts | Cần schema hoặc flag trên Post      |
+| Private account       | Cần field `isPrivate` trên User     |
+| Block / Restrict      | Cần bảng Block hoặc Restrict        |
+| Verified badge        | Cần field `isVerified` trên User    |
 
 ---
 

@@ -13,11 +13,7 @@ import { authClient } from '@/lib/auth-client';
 import { apiQuery } from '@/lib/api-query';
 import { cn } from '@/lib/utils';
 
-type LoginErrorCode =
-  | 'emailRequired'
-  | 'emailInvalid'
-  | 'passwordRequired'
-  | 'passwordMin';
+type LoginErrorCode = 'emailRequired' | 'emailInvalid' | 'passwordRequired' | 'passwordMin';
 
 type FieldErrors = {
   email?: LoginErrorCode;
@@ -52,7 +48,7 @@ function LoginHero({ compact }: { compact?: boolean }) {
     <div className={cn('space-y-2 sm:space-y-3', compact && 'text-center md:text-left')}>
       <h1
         className={cn(
-          'text-balance font-semibold tracking-tight text-foreground',
+          'text-foreground text-balance font-semibold tracking-tight',
           compact
             ? 'text-xl leading-snug sm:text-2xl md:text-3xl'
             : 'text-2xl leading-tight sm:text-3xl sm:leading-tight md:text-4xl lg:text-[2.5rem] lg:leading-tight',
@@ -62,7 +58,7 @@ function LoginHero({ compact }: { compact?: boolean }) {
       </h1>
       <p
         className={cn(
-          'max-w-md text-pretty text-muted-foreground',
+          'text-muted-foreground max-w-md text-pretty',
           compact ? 'text-sm sm:text-base' : 'text-base sm:text-lg',
         )}
       >
@@ -78,7 +74,7 @@ function LoginHeroVisual({ className }: { className?: string }) {
   return (
     <figure
       className={cn(
-        'mx-auto w-full max-w-lg overflow-hidden rounded-2xl bg-auth-hero-illustration p-4 sm:p-6',
+        'bg-auth-hero-illustration mx-auto w-full max-w-lg overflow-hidden rounded-2xl p-4 sm:p-6',
         className,
       )}
     >
@@ -159,7 +155,7 @@ export default function LoginForm() {
   }, [t]);
 
   return (
-    <main className="min-h-[100dvh] overflow-x-hidden bg-muted/40">
+    <main className="bg-muted/40 min-h-[100dvh] overflow-x-hidden">
       <div
         className={cn(
           'mx-auto flex min-h-[100dvh] w-full max-w-6xl flex-col justify-center gap-6',
@@ -180,24 +176,17 @@ export default function LoginForm() {
         <section className="flex w-full min-w-0 flex-none flex-col items-center justify-center md:flex-1 md:flex-row md:items-center md:justify-end">
           <div
             className={cn(
-              'w-full max-w-md rounded-2xl border border-border/60 bg-auth-hero-illustration shadow-md',
+              'border-border/60 bg-auth-hero-illustration w-full max-w-md rounded-2xl border shadow-md',
               'p-6 sm:p-8',
             )}
           >
-            <h2 className="text-center text-lg font-semibold tracking-tight text-auth-form-title sm:text-xl lg:text-2xl">
+            <h2 className="text-auth-form-title text-center text-lg font-semibold tracking-tight sm:text-xl lg:text-2xl">
               {t('login.formTitle')}
             </h2>
 
-            <form
-              onSubmit={handleSubmit}
-              className="mt-6 flex flex-col gap-4 sm:mt-8"
-              noValidate
-            >
+            <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4 sm:mt-8" noValidate>
               <div>
-                <label
-                  className="text-xs font-medium text-muted-foreground"
-                  htmlFor="login-email"
-                >
+                <label className="text-muted-foreground text-xs font-medium" htmlFor="login-email">
                   {t('login.email')}
                 </label>
                 <input
@@ -208,7 +197,11 @@ export default function LoginForm() {
                     setIdentifier(e.target.value);
                     if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
                   }}
-                  className={cn('mt-2', inputClass, errors.email && 'border-red-500 focus-visible:ring-red-500')}
+                  className={cn(
+                    'mt-2',
+                    inputClass,
+                    errors.email && 'border-red-500 focus-visible:ring-red-500',
+                  )}
                   autoComplete="username"
                   aria-invalid={Boolean(errors.email)}
                   aria-describedby={errors.email ? 'login-email-error' : undefined}
@@ -222,7 +215,7 @@ export default function LoginForm() {
 
               <div>
                 <label
-                  className="text-xs font-medium text-muted-foreground"
+                  className="text-muted-foreground text-xs font-medium"
                   htmlFor="login-password"
                 >
                   {t('login.password')}
@@ -268,7 +261,7 @@ export default function LoginForm() {
 
               <Button
                 type="submit"
-                className="mt-1 w-full rounded-xl bg-auth-form-button text-auth-form-button-fg hover:bg-auth-form-button/90"
+                className="bg-auth-form-button text-auth-form-button-fg hover:bg-auth-form-button/90 mt-1 w-full rounded-xl"
                 disabled={loading}
               >
                 {loading ? t('login.submitting') : t('login.submit')}

@@ -15,13 +15,7 @@
 
 import { X } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useId,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useEffect, useId, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 import { cn } from '@/lib/utils';
@@ -126,10 +120,7 @@ function Backdrop({ className }: BackdropProps) {
       type="button"
       aria-label="Đóng"
       tabIndex={-1}
-      className={cn(
-        'absolute inset-0',
-        className ?? 'bg-black/60 backdrop-blur-sm',
-      )}
+      className={cn('absolute inset-0', className ?? 'bg-black/60 backdrop-blur-sm')}
       onClick={dismissOnBackdrop ? onClose : undefined}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -176,19 +167,11 @@ function Panel({ size = 'md', from = 'center', className, children }: PanelProps
         };
 
   const alignClass =
-    from === 'bottom'
-      ? 'items-end justify-center sm:items-center'
-      : 'items-center justify-center';
+    from === 'bottom' ? 'items-end justify-center sm:items-center' : 'items-center justify-center';
 
   return (
     // pointer-events-none: click vùng trống xuyên qua → chạm backdrop → đóng modal
-    <div
-      className={cn(
-        'absolute inset-0 z-10 flex p-4',
-        alignClass,
-        'pointer-events-none',
-      )}
-    >
+    <div className={cn('absolute inset-0 z-10 flex p-4', alignClass, 'pointer-events-none')}>
       <motion.div
         role="dialog"
         aria-modal="true"
@@ -219,7 +202,7 @@ function Content({ className, children }: ContentProps) {
   return (
     <div
       className={cn(
-        'absolute inset-0 z-10 flex items-center justify-center p-4 pointer-events-none',
+        'pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-4',
         className,
       )}
     >

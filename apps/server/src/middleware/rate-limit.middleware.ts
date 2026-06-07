@@ -10,7 +10,11 @@ import { redis } from '../lib/redis.js';
  *
  * Usage: `router.use(rateLimit({ points: 30, duration: 60 }));`
  */
-export function rateLimit(opts?: { points?: number; duration?: number; keyPrefix?: string }): RequestHandler {
+export function rateLimit(opts?: {
+  points?: number;
+  duration?: number;
+  keyPrefix?: string;
+}): RequestHandler {
   const limiter = new RateLimiterRedis({
     storeClient: redis,
     keyPrefix: opts?.keyPrefix ?? 'rl',

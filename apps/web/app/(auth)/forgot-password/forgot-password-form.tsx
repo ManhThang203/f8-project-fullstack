@@ -1,7 +1,7 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
 import { forgotPasswordRequestSchema } from '@costy/shared';
+import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -138,7 +138,7 @@ export function ForgotPasswordForm() {
             <h2 className="text-foreground text-center text-lg font-semibold tracking-tight sm:text-xl lg:text-2xl">
               Quên mật khẩu
             </h2>
-            <p className="text-muted-foreground mt-3 text-center text-sm text-pretty">
+            <p className="text-muted-foreground mt-3 text-pretty text-center text-sm">
               Nhập email đã đăng ký. Nếu tồn tại tài khoản, bạn sẽ nhận liên kết đặt lại mật khẩu.
             </p>
 
@@ -148,7 +148,11 @@ export function ForgotPasswordForm() {
                 đặt lại mật khẩu.
               </p>
             ) : (
-              <form className="mt-6 flex flex-col gap-4 sm:mt-8" onSubmit={handleSubmit(onSubmit)} noValidate>
+              <form
+                className="mt-6 flex flex-col gap-4 sm:mt-8"
+                onSubmit={handleSubmit(onSubmit)}
+                noValidate
+              >
                 {errors.root ? (
                   <p className="text-sm text-red-600 dark:text-red-400" role="alert">
                     {errors.root.message}
@@ -156,7 +160,10 @@ export function ForgotPasswordForm() {
                 ) : null}
 
                 <div>
-                  <label className="text-muted-foreground text-xs font-medium" htmlFor="forgot-email">
+                  <label
+                    className="text-muted-foreground text-xs font-medium"
+                    htmlFor="forgot-email"
+                  >
                     Email
                   </label>
                   <input
@@ -183,7 +190,10 @@ export function ForgotPasswordForm() {
             )}
 
             <p className="text-muted-foreground mt-6 text-center text-sm sm:mt-8">
-              <Link href={loginHref} className={cn('text-foreground font-semibold', linkFocusClass)}>
+              <Link
+                href={loginHref}
+                className={cn('text-foreground font-semibold', linkFocusClass)}
+              >
                 Quay lại đăng nhập
               </Link>
             </p>

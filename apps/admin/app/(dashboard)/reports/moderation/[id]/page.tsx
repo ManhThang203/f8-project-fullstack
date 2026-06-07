@@ -63,14 +63,16 @@ export default function ModerationCaseDetailPage() {
     appealMutation.mutate({
       id: caseData.id,
       decision,
-      decisionNote: appealDecisionNote || (decision === 'APPROVED' ? 'Chấp nhận kháng nghị' : 'Từ chối kháng nghị'),
+      decisionNote:
+        appealDecisionNote ||
+        (decision === 'APPROVED' ? 'Chấp nhận kháng nghị' : 'Từ chối kháng nghị'),
     });
   };
 
   if (isLoading || !caseData) {
     return (
-      <div className="rounded-xl border border-border bg-card p-10 text-center">
-        <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
+      <div className="border-border bg-card rounded-xl border p-10 text-center">
+        <p className="text-muted-foreground text-sm">{t('common.loading')}</p>
       </div>
     );
   }
@@ -82,7 +84,7 @@ export default function ModerationCaseDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="text-muted-foreground flex items-center gap-2 text-sm">
         <Link href="/reports" className="hover:text-foreground">
           {t('nav.reports')}
         </Link>
@@ -90,7 +92,7 @@ export default function ModerationCaseDetailPage() {
         <span>{t('moderation.detailTitle')}</span>
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+      <div className="border-border bg-card space-y-4 rounded-xl border p-6">
         <div className="flex flex-wrap items-center gap-2">
           <span
             className={cn(
@@ -119,42 +121,42 @@ export default function ModerationCaseDetailPage() {
         </div>
 
         {caseData.targetContent ? (
-          <div className="rounded-lg bg-muted/30 p-4">
-            <p className="text-sm whitespace-pre-wrap">{caseData.targetContent}</p>
+          <div className="bg-muted/30 rounded-lg p-4">
+            <p className="whitespace-pre-wrap text-sm">{caseData.targetContent}</p>
           </div>
         ) : null}
 
         {caseData.reason ? (
-          <p className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{t('moderation.aiReason')}: </span>
+          <p className="text-muted-foreground text-sm">
+            <span className="text-foreground font-medium">{t('moderation.aiReason')}: </span>
             {caseData.reason}
           </p>
         ) : null}
 
         {caseData.author ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {t('moderation.author')}: @{caseData.author.username}
           </p>
         ) : null}
 
         {caseData.resolutionNote ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {t('moderation.resolutionNote')}: {caseData.resolutionNote}
           </p>
         ) : null}
       </div>
 
       {caseData.appeal ? (
-        <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+        <div className="border-border bg-card space-y-4 rounded-xl border p-6">
           <h3 className="font-semibold">{t('moderation.appealSection')}</h3>
-          <p className="text-sm whitespace-pre-wrap">{caseData.appeal.message}</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="whitespace-pre-wrap text-sm">{caseData.appeal.message}</p>
+          <p className="text-muted-foreground text-xs">
             {t(`appealStatus.${caseData.appeal.status}`, caseData.appeal.status)}
           </p>
           {caseData.appeal.status === 'PENDING' ? (
             <>
               <textarea
-                className="w-full rounded-lg border border-border bg-background p-3 text-sm"
+                className="border-border bg-background w-full rounded-lg border p-3 text-sm"
                 rows={2}
                 placeholder={t('moderation.appealDecisionPlaceholder')}
                 value={appealDecisionNote}
@@ -181,7 +183,7 @@ export default function ModerationCaseDetailPage() {
       ) : null}
 
       {actionable ? (
-        <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+        <div className="border-border bg-card space-y-4 rounded-xl border p-6">
           <h3 className="font-semibold">{t('moderation.actionSection')}</h3>
           <div className="flex flex-wrap gap-2">
             {(['DISMISS', 'KEEP', 'REMOVE'] as ActionType[]).map((action) => (
@@ -201,7 +203,7 @@ export default function ModerationCaseDetailPage() {
             ))}
           </div>
           <textarea
-            className="w-full rounded-lg border border-border bg-background p-3 text-sm"
+            className="border-border bg-background w-full rounded-lg border p-3 text-sm"
             rows={3}
             placeholder={t('moderation.resolutionPlaceholder')}
             value={resolutionNote}

@@ -10,7 +10,5 @@ export default function ErrorDemoPage() {
     notFound();
   }
 
-  throw new Error(
-    'Demo: cố ý ném lỗi để xem trang lỗi — xóa app/error-demo khi không cần',
-  );
+  throw new Error('Demo: cố ý ném lỗi để xem trang lỗi — xóa app/error-demo khi không cần');
 }

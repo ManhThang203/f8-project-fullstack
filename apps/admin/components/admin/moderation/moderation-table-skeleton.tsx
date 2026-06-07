@@ -32,21 +32,15 @@ export function ModerationTableSkeleton({ rows = 8 }: Props) {
         <tbody>
           {Array.from({ length: rows }).map((_, i) => (
             <tr key={i} className={adminTable.row}>
-              {[
-                colContent,
-                colLabel,
-                colConfidence,
-                colAuthor,
-                colStatus,
-                colTime,
-                colActions,
-              ].map((col, j) => (
-                <td key={j} className={col.td}>
-                  <div className={col.cell}>
-                    <Skeleton className="mx-auto h-5 w-20 rounded" />
-                  </div>
-                </td>
-              ))}
+              {[colContent, colLabel, colConfidence, colAuthor, colStatus, colTime, colActions].map(
+                (col, j) => (
+                  <td key={j} className={col.td}>
+                    <div className={col.cell}>
+                      <Skeleton className="mx-auto h-5 w-20 rounded" />
+                    </div>
+                  </td>
+                ),
+              )}
             </tr>
           ))}
         </tbody>

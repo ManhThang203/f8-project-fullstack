@@ -73,15 +73,20 @@ router.get(
 );
 
 /** POST — đánh dấu đã đọc phòng */
-router.post('/rooms/:roomId/read', requireAuth, validate(roomIdParamSchema, 'params'), async (req, res, next) => {
-  try {
-    const { roomId } = req.params as unknown as z.infer<typeof roomIdParamSchema>;
-    await chatService.markRoomRead(req.auth!.userId, roomId);
-    res.json(ok({ roomId }));
-  } catch (e) {
-    next(e);
-  }
-});
+router.post(
+  '/rooms/:roomId/read',
+  requireAuth,
+  validate(roomIdParamSchema, 'params'),
+  async (req, res, next) => {
+    try {
+      const { roomId } = req.params as unknown as z.infer<typeof roomIdParamSchema>;
+      await chatService.markRoomRead(req.auth!.userId, roomId);
+      res.json(ok({ roomId }));
+    } catch (e) {
+      next(e);
+    }
+  },
+);
 
 /** POST — Tạo phòng (kèm mã hóa room key) */
 router.post('/rooms', requireAuth, validate(createRoomBody), async (req, res, next) => {

@@ -3,7 +3,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import dotenv from 'dotenv';
-
 import type { NextConfig } from 'next';
 
 /**

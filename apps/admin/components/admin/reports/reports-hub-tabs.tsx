@@ -18,7 +18,7 @@ export function ReportsHubTabs({ activeTab, onTabChange, aiPendingCount, classNa
   const { t } = useTranslation();
 
   return (
-    <div className={cn('relative max-w-full w-fit min-w-0', className)}>
+    <div className={cn('relative w-fit min-w-0 max-w-full', className)}>
       <div className={cn(segmentedControl.track, 'inline-flex w-max max-w-full')}>
         <button
           type="button"

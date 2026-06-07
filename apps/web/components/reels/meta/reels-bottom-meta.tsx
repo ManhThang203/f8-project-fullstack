@@ -4,10 +4,10 @@ import type { PostAuthorDto } from '@costy/shared';
 import { Globe } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import type { ReelsLayoutMode } from '../reels-layout.utils';
+
 import { Avatar } from '@/components/shared/avatar';
 import { cn } from '@/lib/utils';
-
-import type { ReelsLayoutMode } from '../reels-layout.utils';
 
 type Props = {
   author: PostAuthorDto;
@@ -70,9 +70,7 @@ export function ReelsBottomMeta({
     <div
       className={cn(
         'absolute bottom-10 left-3 z-20 flex flex-col gap-1 pb-[env(safe-area-inset-bottom)]',
-        layoutMode === 'immersive'
-          ? 'reels-immersive-meta right-16'
-          : 'right-14',
+        layoutMode === 'immersive' ? 'reels-immersive-meta right-16' : 'right-14',
       )}
     >
       <div className="flex items-center gap-2">

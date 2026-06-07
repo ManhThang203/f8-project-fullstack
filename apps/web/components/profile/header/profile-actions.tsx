@@ -7,7 +7,6 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/shared/button';
-
 import { useFollowMutation } from '@/hooks/queries/use-follow-mutation';
 import { cn } from '@/lib/utils';
 
