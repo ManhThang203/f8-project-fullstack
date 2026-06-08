@@ -128,6 +128,7 @@ export type AdminStatsOverviewDto = {
     actionTaken: number;
   };
   pendingModerationCases: number;
+  moderationResolutionRate: number;
   moderationStatusBreakdown: {
     pending: number;
     autoHidden: number;

@@ -113,6 +113,15 @@ export async function getStatsOverview(range = '30d'): Promise<{
         ? 0
         : Math.round(((resolvedReports + dismissedReports) / totalReports) * 100);
 
+    const totalModerationCases =
+      modPending + modAutoHidden + modResolvedKept + modResolvedRemoved + modDismissed;
+    const moderationResolutionRate =
+      totalModerationCases === 0
+        ? 0
+        : Math.round(
+            ((modResolvedKept + modResolvedRemoved + modDismissed) / totalModerationCases) * 100,
+          );
+
     return {
       totalUsers,
       newUsersToday,
@@ -130,6 +139,7 @@ export async function getStatsOverview(range = '30d'): Promise<{
         actionTaken: 0,
       },
       pendingModerationCases: modPending + modAutoHidden,
+      moderationResolutionRate,
       moderationStatusBreakdown: {
         pending: modPending,
         autoHidden: modAutoHidden,
