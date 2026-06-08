@@ -129,7 +129,7 @@ export default function LoginForm() {
         password: parsed.data.password,
       });
       if (res.error) {
-        toast.error(res.error.message ?? t('login.failed'));
+        toast.error(t('login.failed'));
         return;
       }
 
