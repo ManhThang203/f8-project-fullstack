@@ -16,3 +16,9 @@ export const offsetPageQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 export type OffsetPageQuery = z.infer<typeof offsetPageQuerySchema>;
+
+export const searchQuerySchema = z.object({
+  q: z.string().trim().min(2).max(200),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type SearchQuery = z.infer<typeof searchQuerySchema>;

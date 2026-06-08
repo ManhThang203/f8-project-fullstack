@@ -6,3 +6,4 @@ export * from './profile.js';
 export * from './notification.js';
 export * from './admin.js';
 export * from './moderation.js';
+export * from './search.js';

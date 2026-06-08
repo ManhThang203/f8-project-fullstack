@@ -7,14 +7,14 @@ import type {
   ReelsFeedQuery,
 } from '@costy/shared';
 
-import {
-  destroyMany,
+import { destroyMany,
   isCloudinaryConfigured,
   uploadBuffer,
   type CloudinaryUploadResult,
 } from '../../lib/cloudinary.js';
 import { AppError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
+import { embeddingQueue } from '../../queues/index.js';
 
 import { MODERATION_CONFIG } from '../../config/moderation.config.js';
 import { syncPostHashtags } from '../../lib/hashtag/hashtag.service.js';
@@ -506,6 +506,12 @@ export async function createPost(opts: {
           });
         }
       }
+    }
+
+    if (!opts.body.parentId && content) {
+      await embeddingQueue
+        .add('index', { postId, content }, { jobId: postId })
+        .catch((err) => logger.error({ err, postId }, 'failed to enqueue embedding job'));
     }
 
     return mapPostToFeedItemDto(row);

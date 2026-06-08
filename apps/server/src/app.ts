@@ -32,6 +32,7 @@ import { handleSignInIdentifier } from './modules/auth/identifier-auth.routes.js
 import { healthRouter } from './modules/health/health.routes.js';
 import { chatRouter } from './modules/chat/chat.routes.js';
 import { postsRouter } from './modules/posts/posts.routes.js';
+import { searchRouter } from './modules/search/search.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
 import { mediaRouter } from './modules/media/media.routes.js';
 import { notificationsRouter } from './modules/notifications/notifications.routes.js';
@@ -96,6 +97,7 @@ export function buildApp(): Express {
   app.use('/api/v1', blockInactiveUsers);
   app.use('/api/v1/health', healthRouter);
   app.use('/api/v1/posts', postsRouter);
+  app.use('/api/v1/search', searchRouter);
   app.use('/api/v1/chat', chatRouter);
   app.use('/api/v1/users', usersRouter);
   app.use('/api/v1/media', mediaRouter);

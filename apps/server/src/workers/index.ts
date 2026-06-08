@@ -4,6 +4,8 @@ import { logger } from '../lib/logger.js';
 import { bullConnection } from '../lib/redis.js';
 import { QueueName } from '../queues/index.js';
 
+import { createEmbeddingWorker } from './embedding.worker.js';
+
 const baseOpts: WorkerOptions = { connection: bullConnection, concurrency: 2 };
 
 /**
@@ -80,6 +82,7 @@ export function startWorkers(): Worker[] {
       },
       baseOpts,
     ),
+    createEmbeddingWorker(),
   ];
 
   for (const w of workers) {
