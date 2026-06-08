@@ -21,6 +21,7 @@ COPY apps/web/package.json apps/web/package.json
 COPY apps/server/package.json apps/server/package.json
 COPY packages/db/package.json packages/db/package.json
 COPY packages/shared/package.json packages/shared/package.json
+COPY packages/ui/package.json packages/ui/package.json
 COPY packages/eslint-config/package.json packages/eslint-config/package.json
 COPY packages/typescript-config/package.json packages/typescript-config/package.json
 RUN pnpm install --frozen-lockfile
@@ -44,7 +45,8 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_SOCKET_URL=$NEXT_PUBLIC_SOCKET_URL
 ENV NEXT_PUBLIC_DEMO_USER_ID=$NEXT_PUBLIC_DEMO_USER_ID
 
-RUN pnpm build
+# Chỉ build web + server; admin không nằm trong image production.
+RUN pnpm turbo run build --filter=@costy/web --filter=@costy/server
 
 # ─── runner stage: minimal runtime image ────────────────────────────────────
 FROM node:22-alpine AS runner
