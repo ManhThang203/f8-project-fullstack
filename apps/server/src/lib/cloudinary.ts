@@ -26,6 +26,11 @@ export function isCloudinaryConfigured(): boolean {
   return Boolean(env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET);
 }
 
+/** Cloud name đang dùng (để log/diagnostic, không phải secret). */
+export function getCloudinaryCloudName(): string {
+  return env.CLOUDINARY_CLOUD_NAME;
+}
+
 // Chuyển đổi lỗi Cloudinary thành Error
 function toUploadError(error: unknown): Error {
   if (error && typeof error === 'object') {
