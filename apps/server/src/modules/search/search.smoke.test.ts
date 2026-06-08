@@ -13,8 +13,7 @@ describe('search smoke', () => {
   });
 
   it('hybridSearch returns valid result shape', async () => {
-    const skipOpenAi =
-      process.env.SKIP_EMBEDDING_TESTS === 'true' || !isEmbeddingConfigured();
+    const skipOpenAi = process.env.SKIP_EMBEDDING_TESTS === 'true' || !isEmbeddingConfigured();
 
     const { results, searchMode } = await hybridSearch('test', { limit: 5 });
 

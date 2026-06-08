@@ -12,9 +12,8 @@ loadDotenv({ path: path.join(repoRoot, '.env') });
 loadDotenv({ path: path.join(repoRoot, '.env.local') });
 
 const { prisma, Prisma } = await import('@costy/db');
-const { getPostContentEmbedding, upsertPostEmbedding } = await import(
-  '../src/lib/search/post-embed.js'
-);
+const { getPostContentEmbedding, upsertPostEmbedding } =
+  await import('../src/lib/search/post-embed.js');
 
 const BATCH_SIZE = 50;
 const BATCH_DELAY_MS = 1_500;

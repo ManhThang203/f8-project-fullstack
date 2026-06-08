@@ -7,7 +7,8 @@ import type {
   ReelsFeedQuery,
 } from '@costy/shared';
 
-import { destroyMany,
+import {
+  destroyMany,
   isCloudinaryConfigured,
   uploadBuffer,
   type CloudinaryUploadResult,
