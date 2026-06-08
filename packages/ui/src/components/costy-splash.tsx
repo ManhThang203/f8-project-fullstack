@@ -9,9 +9,12 @@ type CostySplashProps = {
 export function CostySplash({ className }: CostySplashProps) {
   return (
     <div
-      className={cn('flex min-h-screen w-screen items-center justify-center bg-black px-6', className)}
+      className={cn(
+        'flex min-h-screen w-screen items-center justify-center bg-black px-6',
+        className,
+      )}
     >
-      <CotsyLogo className="animate-costy-pulse motion-reduce:animate-none will-change-transform" />
+      <CotsyLogo className="animate-costy-pulse will-change-transform motion-reduce:animate-none" />
     </div>
   );
 }
