@@ -63,7 +63,9 @@ export function PostOptionsMenu({
     setOpen(false);
     switch (id) {
       case 'copy': {
-        const path = hasVideo ? `/reel/${postId}` : `/?post=${postId}`;
+        const path = hasVideo
+          ? `/reel/${postId}`
+          : `/${post?.author.username ?? 'user'}/post/${postId}`;
         const url = `${window.location.origin}${path}`;
         void navigator.clipboard.writeText(url).then(
           () => toast.success('Đã sao chép liên kết'),
