@@ -20,7 +20,7 @@ async function scheduleRepeatableJobs(): Promise<void> {
       {},
       {
         repeat: { pattern: '0 * * * *' },
-        jobId: 'e2ee-media-cleanup',
+        jobId: 'chat-media-cleanup',
       },
     );
     await trendingHashtagsQueue.add(

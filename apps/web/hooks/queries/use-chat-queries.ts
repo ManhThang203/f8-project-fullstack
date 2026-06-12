@@ -42,13 +42,11 @@ export function useRoomMessages(roomId: string | null, enabled = true) {
 export function useCreateChatRoomMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: {
-      isGroup?: boolean;
-      name?: string;
-      memberUserIds: string[];
-      encryptedRoomKeys: Record<string, string>;
-    }) =>
-      apiQueryData<{ id: string }>('/chat/rooms', {
+    mutationFn: (body: { isGroup?: boolean; name?: string; memberUserIds: string[] }) =>
+      apiQueryData<{
+        id: string;
+        members: { userId: string }[];
+      }>('/chat/rooms', {
         method: 'POST',
         body: JSON.stringify(body),
       }),

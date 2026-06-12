@@ -2,12 +2,12 @@ import { ok } from '@costy/shared';
 import { Router } from 'express';
 import { z } from 'zod';
 
+import { getRealtimeIo } from '../../lib/realtime.js';
 import { mintSocketToken } from '../../lib/socket-token.js';
 import { requireAuth } from '../../middleware/auth.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
 
 import * as chatService from './chat.service.js';
-import { prisma } from '@costy/db';
 
 const router = Router();
 
@@ -24,15 +24,6 @@ const createRoomBody = z.object({
   isGroup: z.boolean().optional(),
   name: z.string().max(191).optional(),
   memberUserIds: z.array(z.string().min(1)).min(1),
-  encryptedRoomKeys: z.record(z.string()), // userId -> encrypted AES key
-});
-
-const uploadPublicKeyBody = z.object({
-  publicKey: z.string().min(1),
-});
-
-const getPublicKeysBody = z.object({
-  userIds: z.array(z.string()),
 });
 
 /** POST — token handshake cho Socket.io `/chat` */
@@ -88,7 +79,7 @@ router.post(
   },
 );
 
-/** POST — Tạo phòng (kèm mã hóa room key) */
+/** POST — Tạo phòng chat 1-1 hoặc nhóm */
 router.post('/rooms', requireAuth, validate(createRoomBody), async (req, res, next) => {
   try {
     const body = req.body as z.infer<typeof createRoomBody>;
@@ -97,35 +88,19 @@ router.post('/rooms', requireAuth, validate(createRoomBody), async (req, res, ne
       isGroup: body.isGroup,
       name: body.name,
       memberUserIds: body.memberUserIds,
-      encryptedRoomKeys: body.encryptedRoomKeys,
     });
+
+    // Báo realtime cho các thành viên khác đang online để họ subscribe phòng mới
+    const io = getRealtimeIo();
+    if (io) {
+      for (const m of room.members) {
+        if (m.userId !== req.auth!.userId) {
+          io.of('/chat').to(`user:${m.userId}`).emit('room:created', { roomId: room.id });
+        }
+      }
+    }
+
     res.status(201).json(ok(room));
-  } catch (e) {
-    next(e);
-  }
-});
-
-/** POST — Tải lên Public Key (RSA) của user */
-router.post('/keys', requireAuth, validate(uploadPublicKeyBody), async (req, res, next) => {
-  try {
-    const { publicKey } = req.body as z.infer<typeof uploadPublicKeyBody>;
-    await prisma.userPublicKey.upsert({
-      where: { userId: req.auth!.userId },
-      update: { publicKey },
-      create: { userId: req.auth!.userId, publicKey },
-    });
-    res.json(ok({ success: true }));
-  } catch (e) {
-    next(e);
-  }
-});
-
-/** POST — Lấy Public Keys của danh sách user */
-router.post('/keys/fetch', requireAuth, validate(getPublicKeysBody), async (req, res, next) => {
-  try {
-    const { userIds } = req.body as z.infer<typeof getPublicKeysBody>;
-    const keys = await chatService.getPublicKeys(userIds);
-    res.json(ok(keys));
   } catch (e) {
     next(e);
   }
