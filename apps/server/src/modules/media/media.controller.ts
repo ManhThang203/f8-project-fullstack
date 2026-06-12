@@ -19,10 +19,9 @@ export const handleUploadMedia = async (req: Request, res: Response, next: NextF
     expiresAt.setDate(expiresAt.getDate() + 7); // Hết hạn sau 7 ngày
 
     for (const file of files) {
-      // Vì là file mã hóa E2EE, chúng ta có thể gán tạm kind là IMAGE hoặc file (tùy mime)
-      // Dù mã hóa, nhưng ta cứ set kind chung là IMAGE hoặc kiểm tra từ client
       const isVideo = file.mimetype.startsWith('video');
       const kind = isVideo ? 'VIDEO' : 'IMAGE';
+      const publicUrl = `/api/v1/media/uploads/${file.filename}`;
 
       const mediaRecord = await prisma.media.create({
         data: {
@@ -32,14 +31,14 @@ export const handleUploadMedia = async (req: Request, res: Response, next: NextF
           mimeType: file.mimetype || 'application/octet-stream',
           sizeBytes: file.size,
           storagePath: file.filename, // Chỉ lưu filename, thư mục là uploads/
+          publicUrl, // URL tĩnh để client render trực tiếp (mount static folder trong app.ts)
           expiresAt,
         },
       });
 
       uploadedMedia.push({
         mediaId: mediaRecord.id,
-        // Cung cấp URL tĩnh (phải mount static folder trong app.ts)
-        url: `/api/v1/media/uploads/${file.filename}`,
+        url: publicUrl,
         expiresAt,
       });
     }

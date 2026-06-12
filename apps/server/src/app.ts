@@ -108,7 +108,7 @@ export function buildApp(): Express {
   app.use('/api/v1/me', meRouter);
   app.use('/api/v1/admin', adminRouter);
 
-  // Phục vụ tĩnh các file tải lên cho E2EE Chat
+  // Phục vụ tĩnh các file tải lên cho Chat
   app.use('/api/v1/media/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
   // Phải nằm cuối cùng: error middleware có 4 tham số `(err, req, res, next)`

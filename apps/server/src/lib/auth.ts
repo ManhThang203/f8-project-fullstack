@@ -11,7 +11,7 @@ import { prisma } from '@costy/db';
 
 import { env } from '../config/env.js';
 import { logger } from './logger.js';
-import { sendPasswordResetEmail } from './mail.js';
+import { sendPasswordResetEmail, sendVerificationEmail } from './mail.js';
 
 function slugFromEmail(email: string): string {
   const local = email.split('@')[0] ?? 'user';
@@ -48,6 +48,8 @@ const authRateLimit = env.AUTH_RATE_LIMIT_DISABLED
         '/sign-in/identifier': { window: 60, max: 200 },
         '/sign-up/email': { window: 60, max: 100 },
         '/request-password-reset': { window: 300, max: 50 },
+        '/send-verification-email': { window: 300, max: 50 },
+        '/verify-email': { window: 60, max: 100 },
         /** Session checks are high-volume; skip dedicated rule (global bucket applies). */
         '/get-session': false as const,
       },
@@ -126,11 +128,37 @@ export function createAppAuth({
     emailAndPassword: {
       enabled: true,
       autoSignIn: true,
+      requireEmailVerification: true,
       revokeSessionsOnPasswordReset: true,
       sendResetPassword: async ({ user, url }) => {
         if (!user.email) return;
         void sendPasswordResetEmail(user.email, url).catch((err: unknown) => {
           logger.error({ err }, 'sendResetPassword mail failed');
+        });
+      },
+    },
+    emailVerification: {
+      sendOnSignUp: true,
+      autoSignInAfterVerification: true,
+      expiresIn: 60 * 60,
+      sendVerificationEmail: async ({ user, url }) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7600/ingest/7e460ad4-e57b-4c68-a427-7775819b3418', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'df72aa' },
+          body: JSON.stringify({
+            sessionId: 'df72aa',
+            hypothesisId: 'D',
+            location: 'auth.ts:144',
+            message: 'sendVerificationEmail callback fired',
+            data: { hasEmail: Boolean(user.email), hasUrl: Boolean(url) },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
+        if (!user.email) return;
+        void sendVerificationEmail(user.email, url).catch((err: unknown) => {
+          logger.error({ err }, 'sendVerificationEmail mail failed');
         });
       },
     },

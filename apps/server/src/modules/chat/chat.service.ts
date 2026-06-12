@@ -1,4 +1,5 @@
 import { prisma } from '@costy/db';
+
 import { AppError } from '../../lib/errors.js';
 
 type ListMsgOpts = { limit?: number; beforeId?: string };
@@ -10,8 +11,16 @@ const userSelect = {
   image: true,
 } as const;
 
+const mediaSelect = {
+  id: true,
+  publicUrl: true,
+  mimeType: true,
+  width: true,
+  height: true,
+} as const;
+
 /**
- * Lịch sử tin nhắn trong một phòng E2EE
+ * Lịch sử tin nhắn trong một phòng chat (kèm media, reply, reactions)
  */
 export async function listRoomMessages(userId: string, roomId: string, opts: ListMsgOpts = {}) {
   const limit = Math.min(Math.max(Number(opts.limit) || 40, 1), 200);
@@ -36,11 +45,11 @@ export async function listRoomMessages(userId: string, roomId: string, opts: Lis
     take: limit,
     include: {
       reactions: true,
-      replyTo: true,
+      media: { select: mediaSelect },
+      replyTo: { include: { media: { select: mediaSelect } } },
     },
   });
 
-  // Map to exclude database specifics if needed, but for now just return
   const mapped = rows.map((r) => ({
     ...r,
     replyToMessage: r.replyTo,
@@ -66,15 +75,13 @@ export async function markRoomRead(userId: string, roomId: string) {
 }
 
 /**
- * Tạo phòng chat E2EE (1-1 hoặc Group)
+ * Tạo phòng chat 1-1 hoặc nhóm; phòng 1-1 đã tồn tại thì trả về phòng cũ.
  */
 export async function createChatRoom(input: {
   creatorId: string;
   isGroup?: boolean;
   name?: string;
   memberUserIds: string[];
-  // Map userId -> encryptedRoomKey (AES key mã hóa bằng Public Key của user đó)
-  encryptedRoomKeys: Record<string, string>;
 }) {
   const isGroup = Boolean(input.isGroup);
   const name = input.name?.trim() || null;
@@ -92,7 +99,7 @@ export async function createChatRoom(input: {
 
   const users = await prisma.user.findMany({
     where: { id: { in: allIds }, deletedAt: null },
-    select: { id: true },
+    select: { id: true, name: true, username: true },
   });
   if (users.length !== allIds.length) {
     throw AppError.badRequest('Thành viên không hợp lệ.');
@@ -119,16 +126,24 @@ export async function createChatRoom(input: {
     }
   }
 
-  // Tạo mới
+  // Nhóm không nhập tên → tự sinh từ tên các thành viên
+  const groupName =
+    isGroup && !name
+      ? users
+          .map((u) => u.name?.trim() || u.username)
+          .slice(0, 3)
+          .join(', ')
+      : name;
+
   return prisma.chatRoom.create({
     data: {
       type: isGroup ? 'GROUP' : 'DIRECT',
-      name,
+      name: isGroup ? groupName : null,
       createdById: creatorId,
       members: {
         create: allIds.map((userId) => ({
           userId,
-          encryptedRoomKey: input.encryptedRoomKeys[userId] || null,
+          role: isGroup && userId === creatorId ? 'ADMIN' : 'MEMBER',
         })),
       },
     },
@@ -139,7 +154,7 @@ export async function createChatRoom(input: {
 }
 
 /**
- * Lấy danh sách hội thoại của user
+ * Lấy danh sách hội thoại của user (kèm tin nhắn cuối + số chưa đọc)
  */
 export async function listConversationsForUser(userId: string) {
   const memberships = await prisma.chatRoomMember.findMany({
@@ -189,20 +204,9 @@ export async function listConversationsForUser(userId: string) {
         lastMessage: lastMsg,
         unreadCount,
         updatedAt: lastMsg?.createdAt || room.createdAt,
-
-        // Trả về cả roomKey mã hóa cho user hiện tại
-        encryptedRoomKey: m.encryptedRoomKey,
       };
     }),
   );
 
   return items.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
-}
-
-/** Lấy public key của một danh sách users */
-export async function getPublicKeys(userIds: string[]) {
-  const keys = await prisma.userPublicKey.findMany({
-    where: { userId: { in: userIds } },
-  });
-  return keys;
 }
