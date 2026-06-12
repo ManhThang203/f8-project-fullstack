@@ -722,6 +722,7 @@ export async function setPostReaction(postId: string, userId: string, reactionTy
         type: 'POST_LIKED',
         entityType: 'post',
         entityId: postId,
+        reactionType,
       });
     }
   } else {
