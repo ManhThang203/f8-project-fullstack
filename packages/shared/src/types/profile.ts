@@ -1,3 +1,5 @@
+import type { FriendStatus } from './friend.js';
+
 /** Profile header payload for GET /users/:username */
 export interface ProfileDto {
   id: string;
@@ -5,21 +7,27 @@ export interface ProfileDto {
   name: string | null;
   bio: string | null;
   image: string | null;
+  coverImage: string | null;
   createdAt: string;
   deletedAt: string | null;
   counts: {
     posts: number;
     followers: number;
     following: number;
+    friends: number;
   };
   isOwner: boolean;
   isFollowing: boolean;
+  friendStatus: FriendStatus;
 }
 
 /** Single tile in profile media grid */
 export interface ProfileGridItemDto {
   postId: string;
+  /** URL hiển thị trên ô grid (ảnh hoặc thumbnail JPG của video). */
   thumbnailUrl: string;
+  /** URL gốc media — dùng phát video trong lightbox. */
+  mediaUrl: string;
   mediaCount: number;
   likeCount: number;
   replyCount: number;

@@ -19,16 +19,21 @@ export interface PostMediaDto {
   position: number;
 }
 
+export type PostVisibilityDto = 'PUBLIC' | 'FRIENDS' | 'PRIVATE';
+
 /** Single item in the home feed. */
 export interface PostFeedItemDto {
   id: string;
   parentId: string | null;
   content: string;
   createdAt: string;
+  visibility: PostVisibilityDto;
   author: PostAuthorDto;
   replyCount: number;
   likeCount: number;
+  shareCount: number;
   myReaction: string | null;
+  savedByMe: boolean;
   media: PostMediaDto[];
 }
 
@@ -44,6 +49,9 @@ export interface ReelsFeedItemDto {
   author: PostAuthorDto;
   replyCount: number;
   likeCount: number;
+  shareCount: number;
+  myReaction: string | null;
+  savedByMe: boolean;
   isFollowing: boolean;
   video: PostMediaDto;
 }

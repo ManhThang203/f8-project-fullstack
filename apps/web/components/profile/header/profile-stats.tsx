@@ -47,12 +47,15 @@ type Props = {
   posts: number;
   followers: number;
   following: number;
+  friends: number;
+  isOwner: boolean;
 };
 
-export function ProfileStats({ username, posts, followers, following }: Props) {
+export function ProfileStats({ username, posts, followers, following, friends, isOwner }: Props) {
   return (
-    <div className="flex items-center justify-around gap-2 md:justify-start md:gap-6">
+    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:justify-start md:gap-6">
       <StatButton count={posts} label="Bài viết" />
+      <StatButton count={friends} label="Bạn bè" href={isOwner ? '/friends' : undefined} />
       <StatButton
         count={followers}
         label="Người theo dõi"

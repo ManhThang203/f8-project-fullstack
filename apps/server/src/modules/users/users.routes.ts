@@ -1,9 +1,11 @@
 import {
+  cursorPageQuerySchema,
   ok,
   profileListQuerySchema,
   profilePostsQuerySchema,
   userIdParamSchema,
   usernameParamSchema,
+  type CursorPageQuery,
   type ProfileListQuery,
   type ProfilePostsQuery,
 } from '@costy/shared';
@@ -32,6 +34,27 @@ router.get('/', requireAuth, validate(listQuerySchema, 'query'), async (req, res
   }
 });
 
+// GET /users/:username/feed — feed đầy đủ bài viết trên trang cá nhân.
+router.get(
+  '/:username/feed',
+  validate(usernameParamSchema, 'params'),
+  validate(cursorPageQuerySchema, 'query'),
+  async (req, res, next) => {
+    try {
+      const { username } = req.params as z.infer<typeof usernameParamSchema>;
+      const viewerId = req.auth?.userId ?? null;
+      const { items, nextCursor } = await usersService.listProfileFeed(
+        username,
+        req.query as unknown as CursorPageQuery,
+        viewerId,
+      );
+      res.json(ok(items, { nextCursor }));
+    } catch (e) {
+      next(e);
+    }
+  },
+);
+
 // GET /users/:username/posts — danh sách bài viết grid (ảnh/video) của user.
 router.get(
   '/:username/posts',
@@ -40,9 +63,11 @@ router.get(
   async (req, res, next) => {
     try {
       const { username } = req.params as z.infer<typeof usernameParamSchema>;
+      const viewerId = req.auth?.userId ?? null;
       const { items, nextCursor } = await usersService.listProfilePosts(
         username,
         req.query as unknown as ProfilePostsQuery,
+        viewerId,
       );
       res.json(ok(items, { nextCursor }));
     } catch (e) {

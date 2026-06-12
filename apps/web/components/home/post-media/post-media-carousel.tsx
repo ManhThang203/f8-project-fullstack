@@ -58,6 +58,12 @@ function MediaPreview({
   width?: number | null;
   height?: number | null;
 }) {
+  const [errored, setErrored] = useState(false);
+
+  if (!url.trim() || errored) {
+    return <div className={cn('bg-muted min-h-[120px] w-full rounded-xl', className)} aria-hidden />;
+  }
+
   if (type === 'video') {
     if (feedVideo && postId) {
       return (
@@ -71,9 +77,27 @@ function MediaPreview({
         />
       );
     }
-    return <video src={url} className={className} preload="metadata" playsInline muted />;
+    return (
+      <video
+        src={url}
+        className={className}
+        preload="metadata"
+        playsInline
+        muted
+        onError={() => setErrored(true)}
+      />
+    );
   }
-  return <img src={url} alt="" loading="lazy" className={className} draggable={false} />;
+  return (
+    <img
+      src={url}
+      alt=""
+      loading="lazy"
+      className={className}
+      draggable={false}
+      onError={() => setErrored(true)}
+    />
+  );
 }
 
 /** Horizontal scroll + mouse drag (native touch scroll unchanged). */
@@ -141,7 +165,7 @@ function HorizontalScroller({ children }: { children: ReactNode }) {
 export function PostMediaCarousel(props: Props) {
   const displayItems: DisplayItem[] =
     props.mode === 'feed'
-      ? props.items.map((d) => ({ kind: 'posted', data: d }))
+      ? props.items.filter((d) => d.url.trim()).map((d) => ({ kind: 'posted', data: d }))
       : props.items.map((d) => ({ kind: 'draft', data: d }));
 
   if (displayItems.length === 0) return null;

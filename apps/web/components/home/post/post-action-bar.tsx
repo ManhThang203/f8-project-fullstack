@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { PostFooter } from './post-footer';
 import { ReactionFace, type PostReactionId } from './reaction-face';
 
+import { useSharePost, useToggleSavePost } from '@/hooks/queries/use-save-post';
 import { useReactPost } from '@/hooks/use-react-post';
 import { cn } from '@/lib/utils';
 
@@ -29,6 +30,8 @@ type Props = {
   replyCount: number;
   initialLikeCount: number;
   initialReaction: PostReactionId | null;
+  initialShareCount?: number;
+  initialSavedByMe?: boolean;
   onCommentClick?: () => void;
 };
 
@@ -47,12 +50,17 @@ export function PostActionBar({
   replyCount,
   initialLikeCount,
   initialReaction,
+  initialShareCount = 0,
+  initialSavedByMe = false,
   onCommentClick,
 }: Props) {
-  const [shareCount, setShareCount] = useState(0);
+  const [shareCount, setShareCount] = useState(initialShareCount);
+  const [saved, setSaved] = useState(initialSavedByMe);
   const [showPicker, setShowPicker] = useState(false);
 
   const reactMutation = useReactPost();
+  const saveMutation = useToggleSavePost();
+  const shareMutation = useSharePost();
 
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -114,19 +122,48 @@ export function PostActionBar({
     }
   }
 
+  /** Toggle lưu bài với optimistic update, revert khi lỗi. */
+  function handleSave() {
+    const next = !saved;
+    setSaved(next);
+    saveMutation.mutate(
+      { postId, save: next },
+      {
+        onSuccess: (data) => {
+          setSaved(data.savedByMe);
+          toast.success(data.savedByMe ? 'Đã lưu bài viết' : 'Đã bỏ lưu');
+        },
+        onError: () => {
+          setSaved(!next);
+          toast.error('Có lỗi xảy ra, vui lòng thử lại');
+        },
+      },
+    );
+  }
+
+  /** Chia sẻ bài: copy link + ghi nhận lượt chia sẻ ở backend. */
   async function handleShare() {
-    const url = window.location.href;
+    const path = `${window.location.origin}/?post=${postId}`;
+    let sharedNatively = false;
     if (typeof navigator.share === 'function') {
       try {
-        await navigator.share({ title: 'Costy', url });
-        setShareCount((c) => c + 1);
-        return;
+        await navigator.share({ title: 'Costy', url: path });
+        sharedNatively = true;
       } catch {
         /* cancelled */
       }
     }
-    toast.message('Chia sẻ — tính năng sắp có');
-    setShareCount((c) => c + 1);
+    if (!sharedNatively) {
+      try {
+        await navigator.clipboard.writeText(path);
+        toast.success('Đã sao chép liên kết');
+      } catch {
+        toast.error('Không thể sao chép liên kết');
+      }
+    }
+    shareMutation.mutate(postId, {
+      onSuccess: (data) => setShareCount(data.shareCount),
+    });
   }
 
   const summaryReactions = useMemo(
@@ -193,6 +230,8 @@ export function PostActionBar({
             longPressRef.current = null;
           }
         }}
+        onSaveClick={handleSave}
+        saved={saved}
         currentReaction={initialReaction}
       />
     </div>

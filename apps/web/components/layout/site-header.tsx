@@ -7,14 +7,15 @@ import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { NotificationDropdown } from './notification-dropdown';
+import { AccountMenu } from './account-menu';
 
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
-import { Avatar } from '@/components/shared/avatar';
 import { iconButtonClass } from '@/components/shared/icon-button';
 import { NotificationBadge } from '@/components/shared/notification-badge';
 import { authClient } from '@/lib/auth-client';
 import type { ServerAuthUser } from '@/lib/auth-user.types';
 import { resetChatSocket } from '@/lib/chat-socket';
+import { subscribeAvatarUpdated } from '@/lib/profile-image-sync';
 import { cn } from '@/lib/utils';
 
 const showGoogleAuth = Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
@@ -25,13 +26,14 @@ type Props = {
 };
 
 function normalizeUser(
-  u: { id: string; username?: string | null; name?: string | null } | null | undefined,
+  u: { id: string; username?: string | null; name?: string | null; image?: string | null } | null | undefined,
 ) {
   if (!u) return null;
   return {
     id: u.id,
     username: (u as { username?: string | null }).username ?? '',
     name: u.name ?? null,
+    image: (u as { image?: string | null }).image ?? null,
   };
 }
 
@@ -109,6 +111,7 @@ export function SiteHeader({ initialUser }: Props) {
   const { data: session, refetch } = authClient.useSession();
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
+  const [avatarOverride, setAvatarOverride] = useState<string | null>(null);
   /** Ngay sau signOut: hiện nav khách, không chờ RSC / nano store bắt kịp. */
   const [forceGuestNav, setForceGuestNav] = useState(false);
   const chatUnreadTotal = 0; // TODO: fetch unread from query
@@ -116,6 +119,13 @@ export function SiteHeader({ initialUser }: Props) {
   useEffect(() => {
     void refetch();
   }, [pathname, refetch]);
+
+  useEffect(() => subscribeAvatarUpdated(setAvatarOverride), []);
+
+  useEffect(() => {
+    const sessionImage = (session?.user as { image?: string | null } | undefined)?.image;
+    if (sessionImage) setAvatarOverride(null);
+  }, [session?.user]);
 
   useEffect(() => {
     if (!forceGuestNav) return;
@@ -131,7 +141,10 @@ export function SiteHeader({ initialUser }: Props) {
     return fromClient ?? fromServer ?? null;
   }, [forceGuestNav, session?.user, initialUser]);
 
-  const avatarLabel = me?.username || me?.name || (me ? me.id.slice(0, 8) : '');
+  const accountUser = useMemo(() => {
+    if (!me) return null;
+    return { ...me, image: avatarOverride ?? me.image };
+  }, [me, avatarOverride]);
 
   async function onLogout() {
     setLogoutError(null);
@@ -175,7 +188,15 @@ export function SiteHeader({ initialUser }: Props) {
             <CotsyLogo className="h-8 w-8" priority />
             Cotsy
           </Link>
-          <div className="relative min-h-10 min-w-0 max-w-xs flex-1">
+          <form
+            role="search"
+            className="relative min-h-10 min-w-0 max-w-xs flex-1"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const value = new FormData(e.currentTarget).get('q')?.toString().trim() ?? '';
+              if (value.length >= 2) router.push(`/search?q=${encodeURIComponent(value)}`);
+            }}
+          >
             <label htmlFor="site-header-search" className="sr-only">
               Tìm kiếm
             </label>
@@ -185,12 +206,13 @@ export function SiteHeader({ initialUser }: Props) {
             />
             <input
               id="site-header-search"
+              name="q"
               type="search"
               placeholder="Tìm kiếm…"
               autoComplete="off"
               className="border-border bg-muted/60 text-foreground placeholder:text-muted-foreground hover:bg-muted focus-visible:bg-background focus-visible:ring-ring h-10 w-full rounded-full border py-2 pl-9 pr-3 text-sm transition-[box-shadow,background-color] focus-visible:outline-none focus-visible:ring-2"
             />
-          </div>
+          </form>
         </div>
 
         {/* Giữa: Home / Reels / Friends */}
@@ -221,7 +243,7 @@ export function SiteHeader({ initialUser }: Props) {
         <div className="flex min-w-0 flex-1 items-center justify-end gap-1 sm:gap-2">
           {me ? (
             <>
-              <details className="relative">
+              <details className="relative md:hidden">
                 <summary
                   className={cn(
                     'cursor-pointer list-none marker:hidden [&::-webkit-details-marker]:hidden',
@@ -254,34 +276,13 @@ export function SiteHeader({ initialUser }: Props) {
                 <ChatTrigger unreadCount={chatUnreadTotal} chatDock={null} />
               ) : null}
 
-              <details className="relative">
-                <summary
-                  className={cn(
-                    'cursor-pointer list-none marker:hidden [&::-webkit-details-marker]:hidden',
-                    iconButtonClass({ shape: 'circle' }),
-                  )}
-                  aria-label={`Tài khoản: ${avatarLabel}`}
-                >
-                  <Avatar as="span" size="md" name={me.name} username={me.username} />
-                </summary>
-                <div
-                  className="border-border bg-card absolute right-0 top-full z-[60] mt-2 w-56 rounded-xl border py-2 text-sm shadow-md"
-                  role="menu"
-                >
-                  <p className="border-border text-muted-foreground border-b px-4 py-3 text-xs">
-                    @{me.username || me.name || me.id.slice(0, 8)}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => void onLogout()}
-                    disabled={loggingOut}
-                    className="text-foreground hover:bg-muted focus-visible:bg-muted w-full px-4 py-3 text-left font-medium transition-colors focus-visible:outline-none disabled:opacity-40"
-                    role="menuitem"
-                  >
-                    {loggingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}
-                  </button>
-                </div>
-              </details>
+              {accountUser ? (
+                <AccountMenu
+                  me={accountUser}
+                  loggingOut={loggingOut}
+                  onLogout={() => void onLogout()}
+                />
+              ) : null}
             </>
           ) : (
             <nav aria-label="Tài khoản" className="flex flex-wrap items-center justify-end gap-2">

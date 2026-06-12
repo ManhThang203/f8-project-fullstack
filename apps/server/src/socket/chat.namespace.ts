@@ -15,6 +15,24 @@ import type { Namespace, Socket } from 'socket.io';
 import { authWeb } from '../lib/auth.js';
 import { logger } from '../lib/logger.js';
 import { verifySocketToken } from '../lib/socket-token.js';
+import { createNotification } from '../modules/notifications/notifications.service.js';
+
+/** Tạo notification "tin nhắn mới" cho các thành viên khác trong phòng (fire-and-forget). */
+async function notifyRoomMessage(roomId: string, senderId: string): Promise<void> {
+  const members = await prisma.chatRoomMember.findMany({
+    where: { roomId, userId: { not: senderId } },
+    select: { userId: true },
+  });
+  for (const m of members) {
+    await createNotification({
+      recipientId: m.userId,
+      actorId: senderId,
+      type: 'MESSAGE_RECEIVED',
+      entityType: 'room',
+      entityId: roomId,
+    });
+  }
+}
 /**
  * Middleware xác thực namespace `/chat`.
  * Ưu tiên token HMAC (handshake.auth.token), fallback về cookie session Better Auth.
@@ -167,6 +185,10 @@ export function registerChatNamespace(chatNs: Namespace) {
             createdAt: saved.createdAt.toISOString(),
           },
         });
+
+        void notifyRoomMessage(roomId, userId).catch((err: unknown) =>
+          logger.warn({ err, roomId }, 'notifyRoomMessage failed'),
+        );
       } catch (err) {
         logger.warn({ err, userId }, 'chat:send failed');
         ack?.({ ok: false, error: err instanceof Error ? err.message : 'send failed' });

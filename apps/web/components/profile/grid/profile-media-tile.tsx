@@ -1,8 +1,10 @@
 'use client';
 
 import type { ProfileGridItemDto } from '@costy/shared';
+import { profileGridPreviewUrl } from '@costy/shared';
 import { Copy, Heart, MessageCircle, Play } from 'lucide-react';
 import { useReducedMotion } from 'motion/react';
+import { useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -14,7 +16,12 @@ type Props = {
 
 export function ProfileMediaTile({ item, username, onClick }: Props) {
   const reduceMotion = useReducedMotion();
+  const [previewFailed, setPreviewFailed] = useState(false);
   const label = `Bài viết của @${username}, ${item.likeCount} lượt thích, ${item.replyCount} phản hồi`;
+  const previewUrl =
+    item.thumbnailUrl ||
+    profileGridPreviewUrl(item.mediaUrl ?? '', item.isVideo);
+  const videoSrc = item.mediaUrl || item.thumbnailUrl;
 
   return (
     <button
@@ -27,8 +34,25 @@ export function ProfileMediaTile({ item, username, onClick }: Props) {
         !reduceMotion && 'transition-transform duration-150 hover:scale-[1.02]',
       )}
     >
-      {item.thumbnailUrl ? (
-        <img src={item.thumbnailUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+      {item.isVideo && previewFailed && videoSrc ? (
+        <video
+          src={videoSrc}
+          className="h-full w-full object-cover"
+          muted
+          playsInline
+          preload="metadata"
+          aria-hidden
+        />
+      ) : previewUrl ? (
+        <img
+          src={previewUrl}
+          alt=""
+          className="h-full w-full object-cover"
+          loading="lazy"
+          onError={() => {
+            if (item.isVideo) setPreviewFailed(true);
+          }}
+        />
       ) : (
         <div className="bg-muted h-full w-full" />
       )}

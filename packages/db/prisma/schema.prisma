@@ -255,6 +255,7 @@ model User {
   name          String?
   bio           String?
   image         String?
+  coverImage    String?
 
   role          Role       @default(USER)
   status        UserStatus @default(ACTIVE)
@@ -267,11 +268,16 @@ model User {
 
   posts         Post[]         @relation("PostAuthor")
   likes         PostLike[]
+  postSaves     PostSave[]
+  postShares    PostShare[]
   mediaUploads  Media[]        @relation("MediaOwner")
   notifications Notification[] @relation("NotificationRecipient")
   notifyActions Notification[] @relation("NotificationActor")
   followers     Follow[]       @relation("UserFollowers")
   following     Follow[]       @relation("UserFollowing")
+
+  friendshipsSent     Friendship[] @relation("FriendshipRequester")
+  friendshipsReceived Friendship[] @relation("FriendshipAddressee")
 
   displayUsername String?
   sessions        Session[]
@@ -416,15 +422,46 @@ model Follow {
   @@map("follows")
 }
 
+enum FriendStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Friendship {
+  id          String       @id @default(cuid())
+  requesterId String
+  addresseeId String
+  status      FriendStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  requester User @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId, status])
+  @@index([requesterId, status])
+  @@map("friendships")
+}
+
 // ───────────────────────────── Posts ─────────────────────────────
 
 /// DB-only (migration 20260526120000): search_vector tsvector GENERATED ALWAYS
 /// AS (to_tsvector('simple', content)) STORED + GIN index. Query FTS chỉ qua raw SQL.
+enum PostVisibility {
+  PUBLIC
+  FRIENDS
+  PRIVATE
+}
+
 model Post {
   id       String  @id @default(cuid())
   authorId String
   content  String
   parentId String?
+
+  visibility PostVisibility @default(PUBLIC)
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -438,6 +475,8 @@ model Post {
   media     Media[]
   embedding PostEmbedding?
   hashtags  PostHashtag[]
+  saves     PostSave[]
+  shares    PostShare[]
 
   @@index([authorId, createdAt(sort: Desc)])
   @@index([parentId])
@@ -459,6 +498,34 @@ model PostLike {
   @@id([userId, postId])
   @@index([postId])
   @@map("post_likes")
+}
+
+model PostSave {
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([postId])
+  @@map("post_saves")
+}
+
+model PostShare {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("post_shares")
 }
 
 // pgvector-backed embeddings for semantic search. 1536 = OpenAI ada / 3-small dim.
@@ -526,7 +593,10 @@ enum NotificationType {
   POST_REPLIED
   POST_COMMENTED_FOLLOWED
   USER_FOLLOWED
+  FRIEND_REQUEST
+  FRIEND_ACCEPTED
   MENTION
+  MESSAGE_RECEIVED
   SYSTEM
   REPORT_RESOLVED
   MODERATION_ACTION

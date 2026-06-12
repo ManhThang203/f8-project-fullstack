@@ -1,6 +1,8 @@
 import { MediaStatus, prisma } from '@costy/db';
 import type {
+  CursorPageQuery,
   FollowStateDto,
+  PostFeedItemDto,
   ProfileDto,
   ProfileGridItemDto,
   ProfileListQuery,
@@ -16,7 +18,9 @@ import {
   mapUserToSummaryDto,
   profilePostMediaKind,
 } from './users.mapper.js';
+import { areFriends, countFriends, getFriendStatus } from '../friends/friends.service.js';
 import { createNotification } from '../notifications/notifications.service.js';
+import { listAuthorFeed } from '../posts/posts.service.js';
 
 // ── Cursor helpers ─────────────────────────────────────────────────────────────
 
@@ -70,6 +74,7 @@ async function findUserByUsername(username: string) {
       name: true,
       bio: true,
       image: true,
+      coverImage: true,
       createdAt: true,
       deletedAt: true,
       _count: {
@@ -104,14 +109,43 @@ export async function getProfile(username: string, viewerId: string | null): Pro
 
   const isOwner = viewerId === user.id;
   const isFollowing = await isViewerFollowing(viewerId, user.id);
+  const [friendStatus, friendsCount] = await Promise.all([
+    getFriendStatus(viewerId, user.id),
+    countFriends(user.id),
+  ]);
 
-  return mapUserToProfileDto(user, { isOwner, isFollowing });
+  return mapUserToProfileDto(user, { isOwner, isFollowing, friendStatus, friendsCount });
+}
+
+/** Danh sách visibility mà viewer được phép xem trên profile của một user. */
+async function allowedVisibilitiesFor(
+  viewerId: string | null,
+  authorId: string,
+): Promise<Array<'PUBLIC' | 'FRIENDS' | 'PRIVATE'>> {
+  if (viewerId === authorId) return ['PUBLIC', 'FRIENDS', 'PRIVATE'];
+  if (viewerId && (await areFriends(viewerId, authorId))) return ['PUBLIC', 'FRIENDS'];
+  return ['PUBLIC'];
+}
+
+/** Feed đầy đủ bài viết trên trang cá nhân (cả text-only), phân trang cursor. */
+export async function listProfileFeed(
+  username: string,
+  query: CursorPageQuery,
+  viewerId: string | null = null,
+): Promise<{ items: PostFeedItemDto[]; nextCursor: string | null }> {
+  const user = await findUserByUsername(username);
+  if (!user) throw AppError.notFound('Không tìm thấy người dùng này');
+  if (user.deletedAt) return { items: [], nextCursor: null };
+
+  const allowedVisibilities = await allowedVisibilitiesFor(viewerId, user.id);
+  return listAuthorFeed(user.id, allowedVisibilities, query, viewerId);
 }
 
 /** Danh sách bài viết dạng grid (ảnh hoặc video) của một user, phân trang cursor. */
 export async function listProfilePosts(
   username: string,
   query: ProfilePostsQuery,
+  viewerId: string | null = null,
 ): Promise<{ items: ProfileGridItemDto[]; nextCursor: string | null }> {
   const user = await findUserByUsername(username);
   if (!user) throw AppError.notFound('Không tìm thấy người dùng này');
@@ -119,11 +153,13 @@ export async function listProfilePosts(
 
   const mediaKind = profilePostMediaKind(query.kind);
   const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
+  const allowedVisibilities = await allowedVisibilitiesFor(viewerId, user.id);
 
   const baseWhere = {
     authorId: user.id,
     deletedAt: null,
     parentId: null,
+    visibility: { in: allowedVisibilities },
     media: { some: { kind: mediaKind, status: MediaStatus.READY } },
   };
 
@@ -385,6 +421,41 @@ export async function unfollowUser(followerId: string, targetId: string): Promis
     where: { followerId, followingId: targetId },
   });
   return { isFollowing: false };
+}
+
+/** Cập nhật tên / tiểu sử của chính mình, trả về ProfileDto mới. */
+export async function updateMyProfile(
+  userId: string,
+  body: { name?: string; bio?: string | null },
+): Promise<ProfileDto> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { username: true },
+  });
+  if (!user) throw AppError.notFound('Không tìm thấy người dùng này');
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      ...(body.name !== undefined ? { name: body.name } : {}),
+      ...(body.bio !== undefined ? { bio: body.bio } : {}),
+    },
+  });
+
+  return getProfile(user.username, userId);
+}
+
+/** Cập nhật URL ảnh đại diện hoặc ảnh bìa cho user. */
+export async function setProfileImage(
+  userId: string,
+  field: 'image' | 'coverImage',
+  url: string,
+): Promise<{ url: string }> {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { [field]: url },
+  });
+  return { url };
 }
 
 export { listUsersForPicker } from './users.service.picker.js';

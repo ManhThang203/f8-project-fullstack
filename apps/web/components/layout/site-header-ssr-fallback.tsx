@@ -15,7 +15,7 @@ export function SiteHeaderSsrFallback() {
           <div className="bg-muted/50 h-11 w-11 rounded-lg" />
         </div>
         <div className="flex min-w-0 flex-1 justify-end gap-1 sm:gap-2" aria-hidden>
-          <div className="bg-muted/50 h-11 w-11 rounded-full" />
+          <div className="bg-muted/50 h-11 w-11 rounded-full md:hidden" />
           <div className="bg-muted/50 h-11 w-11 rounded-full" />
           <div className="bg-muted/50 h-11 w-11 rounded-full" />
           <div className="bg-muted/50 h-11 w-11 rounded-full" />

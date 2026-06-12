@@ -1,9 +1,12 @@
 import {
   createPostBodySchema,
   cursorPageQuerySchema,
+  feedQuerySchema,
   ok,
   reelsFeedQuerySchema,
+  updatePostBodySchema,
   type CursorPageQuery,
+  type FeedQuery,
   type ReelsFeedQuery,
 } from '@costy/shared';
 import { Router } from 'express';
@@ -70,11 +73,11 @@ router.get('/reels', validate(reelsFeedQuerySchema, 'query'), async (req, res, n
  *       200:
  *         description: Paginated feed
  */
-router.get('/', validate(cursorPageQuerySchema, 'query'), async (req, res, next) => {
+router.get('/', validate(feedQuerySchema, 'query'), async (req, res, next) => {
   try {
     const viewerId = req.auth?.userId ?? null;
     const { items, nextCursor } = await postsService.listFeed(
-      req.query as unknown as CursorPageQuery,
+      req.query as unknown as FeedQuery,
       viewerId,
     );
     res.json(ok(items, { nextCursor }));
@@ -271,6 +274,76 @@ router.get('/:postId/comments', validate(commentQuerySchema, 'query'), async (re
       viewerId,
     );
     res.json(ok(items, { nextCursor }));
+  } catch (e) {
+    next(e);
+  }
+});
+
+/**
+ * @openapi
+ * /posts/{postId}:
+ *   put:
+ *     summary: Sửa nội dung / chế độ riêng tư bài viết
+ *     tags: [Posts]
+ */
+router.put(
+  '/:postId',
+  requireAuth,
+  realtimeBroadcast({ namespace: '/feed', event: 'post:updated' }),
+  async (req, res, next) => {
+    try {
+      const body = updatePostBodySchema.parse(req.body);
+      const post = await postsService.editPost(req.params.postId as string, req.auth!.userId, body);
+      res.json(ok(post));
+    } catch (e) {
+      next(e);
+    }
+  },
+);
+
+/**
+ * @openapi
+ * /posts/{postId}/save:
+ *   post:
+ *     summary: Lưu bài viết
+ *     tags: [Posts]
+ */
+router.post('/:postId/save', requireAuth, async (req, res, next) => {
+  try {
+    const result = await postsService.savePost(req.params.postId as string, req.auth!.userId);
+    res.json(ok(result));
+  } catch (e) {
+    next(e);
+  }
+});
+
+/**
+ * @openapi
+ * /posts/{postId}/save:
+ *   delete:
+ *     summary: Bỏ lưu bài viết
+ *     tags: [Posts]
+ */
+router.delete('/:postId/save', requireAuth, async (req, res, next) => {
+  try {
+    const result = await postsService.unsavePost(req.params.postId as string, req.auth!.userId);
+    res.json(ok(result));
+  } catch (e) {
+    next(e);
+  }
+});
+
+/**
+ * @openapi
+ * /posts/{postId}/share:
+ *   post:
+ *     summary: Chia sẻ bài viết (đếm lượt chia sẻ)
+ *     tags: [Posts]
+ */
+router.post('/:postId/share', requireAuth, async (req, res, next) => {
+  try {
+    const result = await postsService.sharePost(req.params.postId as string, req.auth!.userId);
+    res.json(ok(result));
   } catch (e) {
     next(e);
   }

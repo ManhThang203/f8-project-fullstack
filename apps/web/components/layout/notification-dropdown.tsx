@@ -55,6 +55,9 @@ function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose:
     POST_REPLIED: <MessageCircle className="h-4 w-4 text-blue-500" />,
     POST_COMMENTED_FOLLOWED: <MessageCircle className="h-4 w-4 text-blue-400" />,
     USER_FOLLOWED: <UserPlus className="h-4 w-4 text-green-500" />,
+    FRIEND_REQUEST: <UserPlus className="h-4 w-4 text-blue-500" />,
+    FRIEND_ACCEPTED: <CheckCircle className="h-4 w-4 text-green-500" />,
+    MESSAGE_RECEIVED: <MessageCircle className="h-4 w-4 text-blue-500" />,
     MENTION: <Info className="h-4 w-4 text-yellow-500" />,
     SYSTEM: <Info className="h-4 w-4 text-gray-500" />,
     MODERATION_ACTION: <ShieldAlert className="h-4 w-4 text-orange-500" />,
@@ -68,6 +71,9 @@ function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose:
     POST_REPLIED: 'đã trả lời bài viết của bạn',
     POST_COMMENTED_FOLLOWED: 'đã bình luận một bài viết mà bạn đang theo dõi',
     USER_FOLLOWED: 'đã bắt đầu theo dõi bạn',
+    FRIEND_REQUEST: 'đã gửi cho bạn lời mời kết bạn',
+    FRIEND_ACCEPTED: 'đã chấp nhận lời mời kết bạn',
+    MESSAGE_RECEIVED: 'đã gửi cho bạn một tin nhắn',
     MENTION: 'đã nhắc đến bạn',
     SYSTEM: 'thông báo hệ thống',
     MODERATION_ACTION: 'đã xử lý nội dung của bạn',
@@ -91,10 +97,14 @@ function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose:
       return `/moderation/${notif.entityId}`;
     }
     if (notif.type === 'USER_FOLLOWED' && notif.actor) return `/${notif.actor.username}`;
+    if (notif.type === 'FRIEND_REQUEST') return '/friends';
+    if (notif.type === 'FRIEND_ACCEPTED' && notif.actor) return `/${notif.actor.username}`;
+    if (notif.type === 'MESSAGE_RECEIVED') return '/messages';
     if (
       (notif.type === 'POST_LIKED' ||
         notif.type === 'POST_REPLIED' ||
-        notif.type === 'POST_COMMENTED_FOLLOWED') &&
+        notif.type === 'POST_COMMENTED_FOLLOWED' ||
+        notif.type === 'MENTION') &&
       notif.entityId
     ) {
       return `/${notif.actor?.username || 'post'}/post/${notif.entityId}`;

@@ -34,36 +34,39 @@ export function useReactPost() {
     },
     onMutate: async ({ postId, type }) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.posts.feed });
-      const previousData = queryClient.getQueryData(queryKeys.posts.feed);
+      // Lưu snapshot mọi biến thể feed (recent/top, all/following) để rollback khi lỗi.
+      const previous = queryClient.getQueriesData<FeedCache>({ queryKey: queryKeys.posts.feed });
 
-      queryClient.setQueryData(queryKeys.posts.feed, (old: FeedCache | undefined) => {
-        if (!old) return old;
-        return {
-          ...old,
-          pages: old.pages.map((page) => ({
-            ...page,
-            data: page.data.map((p) => {
-              if (p.id === postId) {
-                // Tính toán likeCount giả định
-                const wasLiked = p.myReaction !== null;
-                const isLikedNow = type !== null;
-                let newLikeCount = p.likeCount;
-                if (!wasLiked && isLikedNow) newLikeCount++;
-                if (wasLiked && !isLikedNow) newLikeCount = Math.max(0, newLikeCount - 1);
+      queryClient.setQueriesData<FeedCache>(
+        { queryKey: queryKeys.posts.feed },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              data: page.data.map((p) => {
+                if (p.id === postId) {
+                  const wasLiked = p.myReaction !== null;
+                  const isLikedNow = type !== null;
+                  let newLikeCount = p.likeCount;
+                  if (!wasLiked && isLikedNow) newLikeCount++;
+                  if (wasLiked && !isLikedNow) newLikeCount = Math.max(0, newLikeCount - 1);
 
-                return { ...p, myReaction: type, likeCount: newLikeCount };
-              }
-              return p;
-            }),
-          })),
-        };
-      });
+                  return { ...p, myReaction: type, likeCount: newLikeCount };
+                }
+                return p;
+              }),
+            })),
+          };
+        },
+      );
 
-      return { previousData };
+      return { previous };
     },
     onError: (err, newTodo, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(queryKeys.posts.feed, context.previousData);
+      for (const [key, data] of context?.previous ?? []) {
+        queryClient.setQueryData(key, data);
       }
     },
     // We do not invalidate queries on settled because the socket will broadcast the exact likeCount anyway
