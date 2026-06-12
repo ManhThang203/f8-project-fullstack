@@ -20,6 +20,7 @@ export interface NotificationDto {
   type: NotificationType;
   entityType: string | null;
   entityId: string | null;
+  reactionType?: string | null;
   readAt: string | null;
   createdAt: string;
   actor?: {

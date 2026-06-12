@@ -2,6 +2,13 @@ import { prisma } from '@costy/db';
 import type { NotificationType } from '@costy/db';
 import { getRealtimeIo } from '../../lib/realtime.js';
 
+const actorSelect = {
+  id: true,
+  name: true,
+  username: true,
+  image: true,
+} as const;
+
 export async function listNotifications(userId: string, limit = 20, cursor?: string) {
   const notifications = await prisma.notification.findMany({
     where: { recipientId: userId },
@@ -10,12 +17,7 @@ export async function listNotifications(userId: string, limit = 20, cursor?: str
     orderBy: { createdAt: 'desc' },
     include: {
       actor: {
-        select: {
-          id: true,
-          name: true,
-          username: true,
-          image: true,
-        },
+        select: actorSelect,
       },
     },
   });
@@ -54,7 +56,19 @@ type CreateNotificationInput = {
   type: NotificationType;
   entityType?: string;
   entityId?: string;
+  reactionType?: string | null;
 };
+
+/** Phát sự kiện realtime khi có thông báo mới hoặc cập nhật. */
+function emitNotificationNew(
+  recipientId: string,
+  notification: Awaited<ReturnType<typeof prisma.notification.create>>,
+) {
+  const io = getRealtimeIo();
+  if (io) {
+    io.of('/chat').to(`user:${recipientId}`).emit('notification:new', notification);
+  }
+}
 
 export async function createNotification(input: CreateNotificationInput) {
   const actorId = input.actorId ?? null;
@@ -69,8 +83,21 @@ export async function createNotification(input: CreateNotificationInput) {
       },
     });
     if (existing) {
-      // Just update the createdAt so it moves to top, or do nothing.
-      return existing;
+      const updated = await prisma.notification.update({
+        where: { id: existing.id },
+        data: {
+          reactionType: input.reactionType ?? null,
+          readAt: null,
+          createdAt: new Date(),
+        },
+        include: {
+          actor: {
+            select: actorSelect,
+          },
+        },
+      });
+      emitNotificationNew(input.recipientId, updated);
+      return updated;
     }
   }
 
@@ -81,24 +108,16 @@ export async function createNotification(input: CreateNotificationInput) {
       type: input.type,
       entityType: input.entityType,
       entityId: input.entityId,
+      reactionType: input.reactionType ?? null,
     },
     include: {
       actor: {
-        select: {
-          id: true,
-          name: true,
-          username: true,
-          image: true,
-        },
+        select: actorSelect,
       },
     },
   });
 
-  // Emit realtime socket event
-  const io = getRealtimeIo();
-  if (io) {
-    io.of('/chat').to(`user:${input.recipientId}`).emit('notification:new', notification);
-  }
+  emitNotificationNew(input.recipientId, notification);
 
   return notification;
 }

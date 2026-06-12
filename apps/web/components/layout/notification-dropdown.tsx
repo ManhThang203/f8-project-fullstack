@@ -16,6 +16,10 @@ import Link from 'next/link';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Socket } from 'socket.io-client';
 
+import {
+  ReactionFace,
+  type PostReactionId,
+} from '@/components/home/post/reaction-face';
 import { Avatar } from '@/components/shared/avatar';
 import { iconButtonClass } from '@/components/shared/icon-button';
 import { NotificationBadge } from '@/components/shared/notification-badge';
@@ -44,6 +48,28 @@ function getRelativeTime(dateString: string) {
 function getSystemNotificationText(notif: NotificationDto): string | null {
   if (notif.type !== 'SYSTEM') return null;
   return null;
+}
+
+const REACTION_NOTIFICATION_TEXT: Record<PostReactionId, string> = {
+  like: 'đã thích bài viết của bạn',
+  love: 'đã yêu thích bài viết của bạn',
+  care: 'đã thương thương bài viết của bạn',
+  haha: 'đã haha bài viết của bạn',
+  wow: 'đã wow bài viết của bạn',
+  sad: 'đã buồn về bài viết của bạn',
+  angry: 'đã phẫn nộ bài viết của bạn',
+};
+
+function isPostReactionId(value: string | null | undefined): value is PostReactionId {
+  return (
+    value === 'like' ||
+    value === 'love' ||
+    value === 'care' ||
+    value === 'haha' ||
+    value === 'wow' ||
+    value === 'sad' ||
+    value === 'angry'
+  );
 }
 
 function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose: () => void }) {
@@ -81,6 +107,20 @@ function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose:
     APPEAL_REJECTED: 'kháng nghị của bạn đã bị từ chối',
     REPORT_RESOLVED: 'báo cáo của bạn đã được xử lý',
   };
+
+  function getNotificationBodyText(): string {
+    if (notif.type === 'POST_LIKED' && isPostReactionId(notif.reactionType)) {
+      return REACTION_NOTIFICATION_TEXT[notif.reactionType];
+    }
+    return textMap[notif.type] ?? textMap['SYSTEM'] ?? 'thông báo hệ thống';
+  }
+
+  function getTypeBadgeIcon(): ReactNode {
+    if (notif.type === 'POST_LIKED' && isPostReactionId(notif.reactionType)) {
+      return <ReactionFace id={notif.reactionType} size="sm" className="h-4 w-4 min-h-4 min-w-4" />;
+    }
+    return iconMap[notif.type];
+  }
 
   const isSystemNotification =
     notif.type === 'MODERATION_ACTION' ||
@@ -125,9 +165,15 @@ function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose:
       )}
     >
       <div className="relative shrink-0">
-        <Avatar name={notif.actor?.name || null} username={notif.actor?.username || ''} size="md" />
+        <Avatar
+          as="span"
+          src={notif.actor?.image}
+          name={notif.actor?.name || null}
+          username={notif.actor?.username || ''}
+          size="md"
+        />
         <div className="bg-background absolute -bottom-1 -right-1 rounded-full p-0.5">
-          {iconMap[notif.type]}
+          {getTypeBadgeIcon()}
         </div>
       </div>
       <div className="min-w-0 flex-1">
@@ -144,9 +190,7 @@ function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose:
               <span className="text-foreground font-semibold">
                 {notif.actor?.name || notif.actor?.username || 'Hệ thống'}
               </span>{' '}
-              <span className="text-muted-foreground">
-                {textMap[notif.type] || textMap['SYSTEM']}
-              </span>
+              <span className="text-muted-foreground">{getNotificationBodyText()}</span>
             </>
           )}
         </p>

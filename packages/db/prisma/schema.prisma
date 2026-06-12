@@ -286,7 +286,6 @@ model User {
   chatMessagesSent       ChatMessage[]            @relation("ChatMessageSender")
   chatRoomsCreated       ChatRoom[]               @relation("ChatRoomCreator")
   chatRoomMemberships    ChatRoomMember[]
-  userPublicKey          UserPublicKey?
   messageReactions       MessageReaction[]
 
   reportsSubmitted       Report[]         @relation("ReportReporter")
@@ -305,7 +304,7 @@ model User {
   @@map("users")
 }
 
-// ───────────────────────────── E2EE Chat (Unified) ─────────────────
+// ───────────────────────────── Chat (1-1 & Group) ─────────────────
 
 enum RoomType {
   DIRECT
@@ -323,13 +322,8 @@ model ChatRoom {
   members   ChatRoomMember[]
   messages  ChatMessage[]
 
-  // Khóa đối xứng mã hóa Room (nếu dùng chung cho cả group)
-  // Trong thực tế E2EE group có thể dùng Sender Keys (Signal)
-  // Ở đây lưu trữ tạm nếu dùng chung 1 khóa AES cho phòng
-  // encryptedRoomKey String? 
-
   @@index([createdById])
-  @@map("e2ee_chat_rooms")
+  @@map("chat_rooms")
 }
 
 model ChatRoomMember {
@@ -340,32 +334,28 @@ model ChatRoomMember {
   lastReadAt DateTime?
   lastDeliveredAt DateTime?
 
-  // Khóa AES của Room được mã hóa bằng Public Key của User này
-  encryptedRoomKey String? @db.Text
-
   room ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
   user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([roomId, userId])
   @@index([userId])
-  @@map("e2ee_chat_room_members")
+  @@map("chat_room_members")
 }
 
 model ChatMessage {
   id        String   @id @default(cuid())
   roomId    String
   senderId  String
-  
-  // Loại tin nhắn: text, image, video, file, sticker, emoji
+
+  // Loại tin nhắn: text, media, sticker
   type      String   @default("text")
 
-  // Chứa nội dung text, thông tin sticker, hoặc khóa giải mã Media
-  // Đã được mã hóa bằng khóa AES của Room
-  encryptedPayload String @db.Text
+  // Nội dung text (type=text) hoặc stickerId (type=sticker); null nếu chỉ có media
+  content   String?  @db.Text
 
   mediaId   String?  // Foreign key đến bảng Media (cho phép server biết để tự động dọn dẹp)
   replyToId String?  // ID của tin nhắn đang reply
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -374,14 +364,14 @@ model ChatMessage {
   media   Media?       @relation(fields: [mediaId], references: [id], onDelete: SetNull)
   replyTo ChatMessage? @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
   replies ChatMessage[] @relation("MessageReplies")
-  
+
   isUnsent   Boolean  @default(false)
   deletedFor String[] @default([]) // Mảng các userId đã xoá tin nhắn này ở local
   reactions  MessageReaction[] @relation("MessageReactions")
 
   @@index([roomId, createdAt(sort: Desc)])
   @@index([senderId])
-  @@map("e2ee_chat_messages")
+  @@map("chat_messages")
 }
 
 model MessageReaction {
@@ -396,17 +386,6 @@ model MessageReaction {
 
   @@unique([messageId, userId, emoji])
   @@map("message_reactions")
-}
-
-// User Public Keys cho E2EE
-model UserPublicKey {
-  userId    String   @id
-  publicKey String   @db.Text
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("user_public_keys")
 }
 
 model Follow {
@@ -611,6 +590,7 @@ model Notification {
   type        NotificationType
   entityType  String?
   entityId    String?
+  reactionType String?
   readAt      DateTime?
 
   createdAt DateTime @default(now())
