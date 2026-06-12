@@ -112,6 +112,8 @@ export function PostCard({ post, onDismiss, disableCommentClick, onCommentClick,
 
           <PostActionBar
             postId={post.id}
+            authorUsername={post.author.username}
+            hasVideo={post.media.some((m) => m.type === 'video')}
             replyCount={post.replyCount}
             initialLikeCount={post.likeCount}
             initialReaction={post.myReaction as PostReactionId | null}
