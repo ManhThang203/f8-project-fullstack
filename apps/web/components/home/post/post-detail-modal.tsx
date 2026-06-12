@@ -17,7 +17,7 @@ import { IconButton } from '@/components/shared/icon-button';
 import { Modal } from '@/components/shared/modal';
 import { usePostComments } from '@/hooks/queries/use-post-comments';
 import { createPostWithMedia } from '@/lib/create-post';
-import { ACCEPT_MEDIA, isImageMime, isVideoMime, validateFiles } from '@/lib/media-validation';
+import { isImageMime, isVideoMime, validateFiles } from '@/lib/media-validation';
 import { queryKeys } from '@/lib/query-keys';
 import { cn } from '@/lib/utils';
 
@@ -63,7 +63,17 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
 
   function handleFiles(files: FileList | null) {
     if (!files || busy) return;
-    const incoming = Array.from(files);
+    if (drafts.length >= 1) {
+      setError('Bình luận chỉ được đính kèm 1 ảnh');
+      return;
+    }
+    const incoming = Array.from(files)
+      .slice(0, 1)
+      .filter((file) => isImageMime(file.type));
+    if (incoming.length === 0) {
+      setError('Chỉ được chọn ảnh cho bình luận');
+      return;
+    }
     const { ok, errors } = validateFiles(incoming, { images: imageCount, videos: videoCount });
     if (errors.length > 0) {
       setError(errors[0]!);
@@ -73,7 +83,7 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
       tempId: nextTempId(),
       url: URL.createObjectURL(file),
       file,
-      mediaType: isVideoMime(file.type) ? 'video' : 'image',
+      mediaType: 'image',
       progress: 0,
       status: 'done' as const,
     }));
@@ -163,6 +173,7 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
           <PostCard
             post={post}
             onDismiss={() => {}}
+            hideDismiss
             onCommentClick={() => textareaRef.current?.focus()}
           />
 
@@ -221,6 +232,7 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
                 <div className="mt-2">
                   <PostMediaCarousel
                     mode="editable"
+                    compact
                     items={drafts}
                     onRemove={(id) => !busy && removeDraft(id)}
                   />
@@ -231,18 +243,23 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
 
               <div className="border-border/50 mt-2 flex items-center justify-between border-t pt-2">
                 <div className="flex items-center gap-1">
-                  <label className="hover:bg-muted text-muted-foreground cursor-pointer rounded-full p-1.5 transition-colors">
+                  <label
+                    className={cn(
+                      'hover:bg-muted text-muted-foreground rounded-full p-1.5 transition-colors',
+                      drafts.length >= 1 ? 'pointer-events-none opacity-40' : 'cursor-pointer',
+                    )}
+                  >
                     <Image className="h-4 w-4" />
                     <input
                       type="file"
-                      accept={ACCEPT_MEDIA}
-                      multiple={videoCount === 0}
+                      accept="image/*"
+                      multiple={false}
                       className="sr-only"
                       onChange={(e) => handleFiles(e.target.files)}
                       onClick={(e) => {
                         (e.currentTarget as HTMLInputElement).value = '';
                       }}
-                      disabled={busy}
+                      disabled={busy || drafts.length >= 1}
                     />
                   </label>
                   <IconButton shape="circle" size="sm" disabled={busy}>

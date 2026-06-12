@@ -27,6 +27,8 @@ const LONG_PRESS_MS = 400;
 
 type Props = {
   postId: string;
+  authorUsername: string;
+  hasVideo?: boolean;
   replyCount: number;
   initialLikeCount: number;
   initialReaction: PostReactionId | null;
@@ -47,6 +49,8 @@ function reactionSummaryStack(
 
 export function PostActionBar({
   postId,
+  authorUsername,
+  hasVideo = false,
   replyCount,
   initialLikeCount,
   initialReaction,
@@ -143,7 +147,10 @@ export function PostActionBar({
 
   /** Chia sẻ bài: copy link + ghi nhận lượt chia sẻ ở backend. */
   async function handleShare() {
-    const path = `${window.location.origin}/?post=${postId}`;
+    const sharePath = hasVideo
+      ? `/reel/${postId}`
+      : `/${authorUsername}/post/${postId}`;
+    const path = `${window.location.origin}${sharePath}`;
     let sharedNatively = false;
     if (typeof navigator.share === 'function') {
       try {
