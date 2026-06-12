@@ -10,6 +10,7 @@ import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
 
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
+import { PasswordInput } from '@/components/auth/password-input';
 import { authClient } from '@/lib/auth-client';
 import { sanitizeReturnTo } from '@/lib/auth-guard';
 import { cn } from '@/lib/utils';
@@ -114,15 +115,34 @@ export function LoginForm() {
 
     if (!res.ok) {
       let message = 'Đăng nhập thất bại';
+      let code: string | undefined;
       try {
-        const j = (await res.json()) as { message?: string; error?: { message?: string } };
+        const j = (await res.json()) as {
+          message?: string;
+          code?: string;
+          error?: { message?: string; code?: string };
+        };
         message =
           (typeof j.message === 'string' && j.message) ||
           (typeof j.error?.message === 'string' && j.error.message) ||
           message;
+        code = j.code ?? j.error?.code;
       } catch {
         /* body không phải JSON */
       }
+
+      const unverified =
+        res.status === 403 ||
+        code === 'EMAIL_NOT_VERIFIED' ||
+        /verif|xác thực/i.test(message);
+      if (unverified) {
+        setError('root', {
+          message:
+            'Email chưa được xác thực. Chúng tôi đã gửi lại liên kết xác thực, vui lòng kiểm tra hộp thư (và thư mục spam).',
+        });
+        return;
+      }
+
       setError('root', { message });
       return;
     }
@@ -193,10 +213,10 @@ export function LoginForm() {
                 <label className="text-muted-foreground text-xs font-medium" htmlFor="password">
                   Mật khẩu
                 </label>
-                <input
+                <PasswordInput
                   id="password"
-                  type="password"
-                  className={cn('mt-2', inputClass)}
+                  wrapperClassName="mt-2"
+                  className={inputClass}
                   autoComplete="current-password"
                   {...register('password')}
                 />
