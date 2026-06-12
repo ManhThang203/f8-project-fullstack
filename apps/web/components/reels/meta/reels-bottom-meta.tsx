@@ -69,8 +69,10 @@ export function ReelsBottomMeta({
   return (
     <div
       className={cn(
-        'absolute bottom-10 left-3 z-20 flex flex-col gap-1 pb-[env(safe-area-inset-bottom)]',
-        layoutMode === 'immersive' ? 'reels-immersive-meta right-16' : 'right-14',
+        'absolute left-3 z-20 flex flex-col gap-1',
+        layoutMode === 'immersive'
+          ? 'reels-immersive-meta bottom-12 right-16'
+          : 'bottom-10 right-14 pb-[env(safe-area-inset-bottom)]',
       )}
     >
       <div className="flex items-center gap-2">
@@ -85,7 +87,13 @@ export function ReelsBottomMeta({
         />
 
         <div className="flex min-w-0 flex-wrap items-center gap-1">
-          <span className="truncate text-sm font-semibold text-white">{displayName}</span>
+          <button
+            type="button"
+            className="truncate text-sm font-semibold text-white transition-opacity duration-150 hover:underline"
+            onClick={onAvatarClick}
+          >
+            {displayName}
+          </button>
           <Globe className="h-3.5 w-3.5 shrink-0 text-white/80" aria-hidden />
           {onFollowClick ? (
             <>
