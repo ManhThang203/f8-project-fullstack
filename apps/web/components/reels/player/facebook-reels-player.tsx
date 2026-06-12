@@ -1,5 +1,6 @@
 'use client';
 
+import type { PostFeedItemDto } from '@costy/shared';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -20,6 +21,7 @@ import type { ReelsPlayerProps } from '../reels-types';
 
 import { ReelsVideoSurface } from './reels-video-surface';
 
+import { PostDetailModal } from '@/components/home/post/post-detail-modal';
 import { useFollowMutation } from '@/hooks/queries/use-follow-mutation';
 import { useSharePost, useToggleSavePost } from '@/hooks/queries/use-save-post';
 import { useReactPost } from '@/hooks/use-react-post';
@@ -75,6 +77,9 @@ export function FacebookReelsPlayer({ item, isActive }: ReelsPlayerProps) {
   const [saved, setSaved] = useState(item.savedByMe);
   const [shareCount, setShareCount] = useState(item.shareCount);
   const [isFollowing, setIsFollowing] = useState(item.isFollowing);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+
+  const me = session?.user;
 
   const followMutation = useFollowMutation({
     onError: (err) => toast.error(err.message),
@@ -161,6 +166,33 @@ export function FacebookReelsPlayer({ item, isActive }: ReelsPlayerProps) {
     setSaved(item.savedByMe);
     setShareCount(item.shareCount);
   }, [item.id, item.isFollowing, item.myReaction, item.likeCount, item.savedByMe, item.shareCount]);
+
+  useEffect(() => {
+    if (commentsOpen) {
+      pause();
+    } else if (isActive && !userPausedRef.current) {
+      play();
+    }
+  }, [commentsOpen, isActive, pause, play]);
+
+  /** Map reel item sang PostFeedItemDto để mở modal bình luận. */
+  const postForModal = useMemo<PostFeedItemDto>(
+    () => ({
+      id: item.id,
+      parentId: null,
+      content: item.content,
+      createdAt: item.createdAt,
+      visibility: 'PUBLIC',
+      author: item.author,
+      replyCount: item.replyCount,
+      likeCount,
+      shareCount,
+      myReaction: isLiked ? 'like' : null,
+      savedByMe: saved,
+      media: [item.video],
+    }),
+    [item, likeCount, shareCount, isLiked, saved],
+  );
 
   function onVideoPlay() {
     setIsPlaying(true);
@@ -254,7 +286,7 @@ export function FacebookReelsPlayer({ item, isActive }: ReelsPlayerProps) {
 
   function handleComment(e: React.MouseEvent) {
     e.stopPropagation();
-    router.push(`/${item.author.username}/post/${item.id}`);
+    setCommentsOpen(true);
   }
 
   /** Chia sẻ reel: copy link + ghi nhận lượt chia sẻ ở backend. */
@@ -410,13 +442,22 @@ export function FacebookReelsPlayer({ item, isActive }: ReelsPlayerProps) {
           {isImmersive ? (
             <ReelsActionRail
               {...railProps}
-              className="reels-immersive-rail absolute bottom-16 right-2 pb-[env(safe-area-inset-bottom)]"
+              className="reels-immersive-rail absolute bottom-[4.5rem] right-2"
             />
           ) : null}
         </div>
 
         {!isImmersive ? <ReelsActionRail {...railProps} className="mr-2 shrink-0 lg:mr-4" /> : null}
       </div>
+
+      {commentsOpen ? (
+        <PostDetailModal
+          open={commentsOpen}
+          onClose={() => setCommentsOpen(false)}
+          post={postForModal}
+          me={me}
+        />
+      ) : null}
     </div>
   );
 }
