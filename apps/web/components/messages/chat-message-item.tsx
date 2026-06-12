@@ -1,31 +1,23 @@
 'use client';
 
 import { Check, CheckCheck, Reply, Forward, SmilePlus, Trash2, XCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
 
 import { ChatMediaViewer } from './chat-media-viewer';
 import { MOCK_STICKERS } from './emoji-sticker-picker';
 
-import { decryptPayloadWithAES } from '@/lib/e2ee/crypto-utils';
 import { cn } from '@/lib/utils';
 import type { ChatMessageDto } from '@/types/chat';
 
-export type DecryptedPayload = {
-  text?: string;
-  stickerId?: string;
-  mediaId?: string;
-  mediaUrl?: string;
-  width?: number;
-  height?: number;
-  blurDataUrl?: string;
-  iv?: string;
-  fileName?: string;
-  fileType?: string;
-};
+// Tóm tắt nội dung tin nhắn được reply để hiển thị trong bubble
+function replyPreview(msg: ChatMessageDto) {
+  if (msg.isUnsent) return 'Đã thu hồi';
+  if (msg.type === 'sticker') return '[Nhãn dán]';
+  if (msg.mediaId) return '[Hình ảnh/Tệp đính kèm]';
+  return msg.content || 'Tin nhắn';
+}
 
 export function ChatMessageItem({
   message,
-  roomKey,
   isMine,
   senderInfo,
   readStatus,
@@ -38,7 +30,6 @@ export function ChatMessageItem({
   isPulsing,
 }: {
   message: ChatMessageDto;
-  roomKey: CryptoKey | null;
   isMine: boolean;
   senderInfo?: { name: string | null; username: string; image: string | null };
   readStatus?: 'sent' | 'delivered' | 'read';
@@ -50,67 +41,15 @@ export function ChatMessageItem({
   onScrollToMessage?: (msgId: string) => void;
   isPulsing?: boolean;
 }) {
-  const [payload, setPayload] = useState<DecryptedPayload | null>(null);
-  const [replyPayload, setReplyPayload] = useState<DecryptedPayload | null>(null);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    if (!roomKey) return;
-    let cancelled = false;
-
-    decryptPayloadWithAES(message.encryptedPayload, roomKey)
-      .then((str) => {
-        if (cancelled) return;
-        try {
-          const parsed = JSON.parse(str);
-          setPayload(parsed);
-        } catch {
-          // Fallback if not JSON
-          setPayload({ text: str });
-        }
-      })
-      .catch((err) => {
-        console.error('Lỗi giải mã tin nhắn', err);
-        if (!cancelled) setError(true);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [message.encryptedPayload, roomKey]);
-
-  useEffect(() => {
-    if (!roomKey || !message.replyToMessage || message.replyToMessage.isUnsent) return;
-    let cancelled = false;
-
-    decryptPayloadWithAES(message.replyToMessage.encryptedPayload, roomKey)
-      .then((str) => {
-        if (cancelled) return;
-        try {
-          const parsed = JSON.parse(str);
-          setReplyPayload(parsed);
-        } catch {
-          setReplyPayload({ text: str });
-        }
-      })
-      .catch((err) => {
-        console.error('Lỗi giải mã tin nhắn reply', err);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [message.replyToMessage, roomKey]);
-
   const timeStr = new Date(message.createdAt).toLocaleTimeString(undefined, {
     hour: '2-digit',
     minute: '2-digit',
   });
 
-  if (message.deletedFor?.includes(isMine ? 'me' : 'them')) {
-    // We already filter this on the server, but just in case
-    return null;
-  }
+  const sticker =
+    message.type === 'sticker' && message.content
+      ? MOCK_STICKERS.find((s) => s.id === message.content)
+      : null;
 
   const renderStatus = () => {
     if (!isMine) return null;
@@ -148,7 +87,6 @@ export function ChatMessageItem({
           className={cn(
             'min-w-0 break-words break-all rounded-2xl px-3 py-2 text-sm transition-colors duration-500',
             isMine ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground',
-            error && 'bg-destructive text-destructive-foreground opacity-50',
             isPulsing &&
               (isMine
                 ? 'bg-primary/80 animate-pulse ring-2 ring-white/50'
@@ -164,56 +102,33 @@ export function ChatMessageItem({
               )}
             >
               <span className="mb-0.5 font-semibold">Trả lời:</span>
-              <span className="truncate">
-                {message.replyToMessage.isUnsent
-                  ? 'Đã thu hồi'
-                  : replyPayload?.text ||
-                    (replyPayload?.mediaId
-                      ? '[Hình ảnh/Tệp đính kèm]'
-                      : replyPayload?.stickerId
-                        ? '[Nhãn dán]'
-                        : 'Tin nhắn')}
-              </span>
+              <span className="truncate">{replyPreview(message.replyToMessage)}</span>
             </div>
           )}
           {message.isUnsent ? (
             <p className="flex items-center gap-1 italic opacity-60">Tin nhắn đã bị thu hồi</p>
-          ) : !roomKey ? (
-            <p className="italic opacity-50">Đang giải mã khóa...</p>
-          ) : error ? (
-            <p className="italic">Không thể giải mã tin nhắn</p>
-          ) : !payload ? (
-            <p className="italic opacity-50">Đang giải mã...</p>
           ) : (
             <>
-              {payload.text ? (
-                <p className="whitespace-pre-wrap break-words break-all">{payload.text}</p>
+              {message.type === 'text' && message.content ? (
+                <p className="whitespace-pre-wrap break-words break-all">{message.content}</p>
               ) : null}
-              {payload.stickerId ? (
-                MOCK_STICKERS.find((s) => s.id === payload.stickerId) ? (
-                  <img
-                    src={MOCK_STICKERS.find((s) => s.id === payload.stickerId)!.url}
-                    alt="Sticker"
-                    className="h-24 w-24 object-contain"
-                  />
+              {message.type === 'sticker' ? (
+                sticker ? (
+                  <img src={sticker.url} alt="Sticker" className="h-24 w-24 object-contain" />
                 ) : (
-                  <p className="italic opacity-80">[Nhãn dán: {payload.stickerId}]</p>
+                  <p className="italic opacity-80">[Nhãn dán: {message.content}]</p>
                 )
               ) : null}
-              {payload.mediaId ? (
-                payload.mediaUrl && payload.iv ? (
+              {message.mediaId ? (
+                message.media?.publicUrl ? (
                   <ChatMediaViewer
-                    mediaUrl={payload.mediaUrl}
-                    blurDataUrl={payload.blurDataUrl}
-                    width={payload.width}
-                    height={payload.height}
-                    iv={payload.iv}
-                    roomKey={roomKey}
-                    fileName={payload.fileName}
-                    fileType={payload.fileType}
+                    mediaUrl={message.media.publicUrl}
+                    width={message.media.width}
+                    height={message.media.height}
+                    mimeType={message.media.mimeType}
                   />
                 ) : (
-                  <p className="italic opacity-80">[Tệp đính kèm: {payload.mediaId}]</p>
+                  <p className="italic opacity-80">[Tệp đính kèm không còn khả dụng]</p>
                 )
               ) : null}
             </>

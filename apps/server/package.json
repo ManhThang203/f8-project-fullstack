@@ -13,6 +13,7 @@
     "type-check": "tsc --noEmit",
     "clean": "rimraf dist .turbo",
     "promote": "tsx src/scripts/promote.ts",
+    "backfill:email-verified": "tsx src/scripts/backfill-email-verified.ts",
     "backfill-embeddings": "tsx scripts/backfill-post-embeddings.ts"
   },
   "dependencies": {
