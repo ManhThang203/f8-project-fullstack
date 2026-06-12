@@ -7,7 +7,9 @@ import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
 
+import { PasswordInput } from '@/components/auth/password-input';
 import { authClient } from '@/lib/auth-client';
+import { cn } from '@/lib/utils';
 
 const inputClass =
   'w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring';
@@ -121,10 +123,10 @@ export function ResetPasswordForm() {
             <label className="text-muted-foreground text-xs font-medium" htmlFor="new-password">
               Mật khẩu mới
             </label>
-            <input
+            <PasswordInput
               id="new-password"
-              type="password"
-              className={`mt-1 ${inputClass}`}
+              wrapperClassName="mt-1"
+              className={inputClass}
               autoComplete="new-password"
               aria-invalid={errors.password ? true : undefined}
               {...register('password')}
@@ -138,10 +140,10 @@ export function ResetPasswordForm() {
             <label className="text-muted-foreground text-xs font-medium" htmlFor="confirm-password">
               Nhập lại mật khẩu
             </label>
-            <input
+            <PasswordInput
               id="confirm-password"
-              type="password"
-              className={`mt-1 ${inputClass}`}
+              wrapperClassName="mt-1"
+              className={inputClass}
               autoComplete="new-password"
               aria-invalid={errors.confirmPassword ? true : undefined}
               {...register('confirmPassword')}
