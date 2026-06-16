@@ -1,6 +1,7 @@
 'use client';
 
 import type { ButtonHTMLAttributes } from 'react';
+import { useEffect, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -41,12 +42,24 @@ function getInitial(name?: string | null, username?: string | null) {
 }
 
 const baseClass =
-  'bg-muted text-muted-foreground inline-flex shrink-0 self-start items-center justify-center overflow-hidden rounded-full p-0 font-semibold aspect-square';
+  'bg-muted text-muted-foreground relative inline-flex shrink-0 grow-0 items-center justify-center overflow-hidden rounded-full p-0 font-semibold';
 
 function AvatarInner({ src, name, username }: BaseProps) {
   const initial = getInitial(name, username);
-  return src ? (
-    <img src={src} alt="" className="h-full w-full rounded-full object-cover" />
+  const [errored, setErrored] = useState(false);
+  const showImage = Boolean(src?.trim()) && !errored;
+
+  useEffect(() => {
+    setErrored(false);
+  }, [src]);
+
+  return showImage ? (
+    <img
+      src={src!}
+      alt=""
+      className="absolute inset-0 h-full w-full object-cover"
+      onError={() => setErrored(true)}
+    />
   ) : (
     <span className="flex h-full w-full items-center justify-center">{initial}</span>
   );
@@ -69,20 +82,33 @@ export function Avatar(props: Props) {
     );
   }
 
-  const { label, ...rest } = props as ButtonProps;
+  const {
+    label,
+    onClick,
+    disabled,
+    src: _src,
+    name: _name,
+    username: _username,
+    size: _size,
+    as: _as,
+    className: _className,
+    ...rest
+  } = props as ButtonProps;
   const ariaLabel = label ?? `Ảnh đại diện của ${name ?? username ?? 'người dùng'}`;
 
   return (
     <button
       type="button"
       aria-label={ariaLabel}
+      onClick={onClick}
+      disabled={disabled}
       className={cn(
         baseClass,
         'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
         sizeClass,
         className,
       )}
-      {...(rest as ButtonHTMLAttributes<HTMLButtonElement>)}
+      {...rest}
     >
       <AvatarInner src={src} name={name} username={username} />
     </button>

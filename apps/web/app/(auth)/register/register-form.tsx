@@ -5,11 +5,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
 
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
+import { PasswordInput } from '@/components/auth/password-input';
 import { authClient } from '@/lib/auth-client';
 import { sanitizeReturnTo } from '@/lib/auth-guard';
 import { cn } from '@/lib/utils';
@@ -92,6 +93,8 @@ export function RegisterForm() {
     router.replace(sanitizeReturnTo(nextParam));
   }, [session, sessionPending, router, nextParam]);
 
+  const [sentEmail, setSentEmail] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -104,17 +107,20 @@ export function RegisterForm() {
 
   async function onSubmit(data: RegisterFormValues) {
     const name = (data.name?.trim() || data.username).trim() || 'Người dùng';
+    const nextQ =
+      nextParam != null && nextParam !== '' ? `?next=${encodeURIComponent(nextParam)}` : '';
+    const callbackURL = `${window.location.origin}/verify-email${nextQ}`;
 
     const res = await authClient.signUp.email({
       email: data.email,
       password: data.password,
       name,
       username: data.username,
+      callbackURL,
     });
 
     if (!res.error) {
-      const to = sanitizeReturnTo(nextParam);
-      window.location.assign(to);
+      setSentEmail(data.email);
       return;
     }
 
@@ -181,11 +187,21 @@ export function RegisterForm() {
               Đăng ký
             </h2>
 
-            <form
-              className="mt-6 flex flex-col gap-4 sm:mt-8"
-              onSubmit={handleSubmit(onSubmit)}
-              noValidate
-            >
+            {sentEmail ? (
+              <p
+                className="text-foreground mt-6 text-sm leading-relaxed sm:mt-8"
+                role="status"
+              >
+                Chúng tôi đã gửi liên kết xác thực tới <strong>{sentEmail}</strong>. Hãy mở email
+                (kể cả thư mục spam) và bấm liên kết để kích hoạt tài khoản trước khi đăng nhập.
+              </p>
+            ) : (
+              <>
+                <form
+                  className="mt-6 flex flex-col gap-4 sm:mt-8"
+                  onSubmit={handleSubmit(onSubmit)}
+                  noValidate
+                >
               {errors.root ? (
                 <p className="text-sm text-red-600 dark:text-red-400" role="alert">
                   {errors.root.message}
@@ -242,10 +258,10 @@ export function RegisterForm() {
                 <label className="text-muted-foreground text-xs font-medium" htmlFor="password">
                   Mật khẩu
                 </label>
-                <input
+                <PasswordInput
                   id="password"
-                  type="password"
-                  className={cn('mt-2', inputClass)}
+                  wrapperClassName="mt-2"
+                  className={inputClass}
                   autoComplete="new-password"
                   {...register('password')}
                 />
@@ -281,6 +297,8 @@ export function RegisterForm() {
                 />
               </>
             ) : null}
+              </>
+            )}
 
             <p className="text-muted-foreground mt-6 text-center text-sm sm:mt-8">
               Đã có tài khoản?{' '}

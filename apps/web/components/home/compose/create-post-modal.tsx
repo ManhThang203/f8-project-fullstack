@@ -1,12 +1,13 @@
 'use client';
 
-import type { PostFeedItemDto } from '@costy/shared';
+import type { PostFeedItemDto, PostVisibilityDto } from '@costy/shared';
 import { Image, MapPin, MoreHorizontal, Smile, Sticker, UserPlus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { DraftMedia } from '../post-media/post-media-carousel';
 import { PostMediaCarousel } from '../post-media/post-media-carousel';
+import { VisibilitySelect } from './visibility-select';
 
 import { Avatar } from '@/components/shared/avatar';
 import { IconButton } from '@/components/shared/icon-button';
@@ -46,6 +47,7 @@ export function CreatePostModal({
   onPosted,
 }: Props) {
   const [content, setContent] = useState('');
+  const [visibility, setVisibility] = useState<PostVisibilityDto>('PUBLIC');
   const [drafts, setDrafts] = useState<DraftEntry[]>([]);
   const [phase, setPhase] = useState<ComposePhase>('idle');
   const [uploadLabel, setUploadLabel] = useState<string | null>(null);
@@ -75,6 +77,7 @@ export function CreatePostModal({
   useEffect(() => {
     if (!open) {
       setContent('');
+      setVisibility('PUBLIC');
       for (const d of drafts) {
         if (d.url.startsWith('blob:')) URL.revokeObjectURL(d.url);
       }
@@ -127,6 +130,7 @@ export function CreatePostModal({
       content: text,
       files,
       parentId: parentPost?.id,
+      visibility: parentPost ? undefined : visibility,
       onUploadProgress: (fileIndex, percent, fileName) => {
         setUploadLabel(fileName);
         setDrafts((prev) =>
@@ -245,6 +249,11 @@ export function CreatePostModal({
         </div>
 
         <div className="border-border shrink-0 border-t px-4 py-3">
+          {!parentPost && (
+            <div className="mb-3">
+              <VisibilitySelect value={visibility} onChange={setVisibility} disabled={busy} />
+            </div>
+          )}
           <div className="border-border mb-3 flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 sm:px-4">
             <span className="text-muted-foreground hidden text-sm sm:inline">
               Thêm vào bài viết của bạn

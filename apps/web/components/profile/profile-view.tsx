@@ -6,9 +6,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CreatePostModal } from '@/components/home/compose/create-post-modal';
+import { ProfileFeed } from '@/components/profile/feed/profile-feed';
 import { MediaLightbox } from '@/components/profile/grid/media-lightbox';
 import { ProfileMediaGrid } from '@/components/profile/grid/profile-media-grid';
-import { AvatarLightbox } from '@/components/profile/header/avatar-lightbox';
+import { ProfileImageLightbox } from '@/components/profile/header/avatar-lightbox';
 import { ProfileActions } from '@/components/profile/header/profile-actions';
 import { ProfileHeader } from '@/components/profile/header/profile-header';
 import { ProfileStats } from '@/components/profile/header/profile-stats';
@@ -42,6 +43,7 @@ function ProfileViewInner({ username, initialUser }: Props) {
   } = useProfile(username);
 
   const [avatarOpen, setAvatarOpen] = useState(false);
+  const [coverOpen, setCoverOpen] = useState(false);
   const [lightboxItem, setLightboxItem] = useState<ProfileGridItemDto | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -129,6 +131,7 @@ function ProfileViewInner({ username, initialUser }: Props) {
       <ProfileHeader
         profile={profile}
         onAvatarClick={() => profile.image && setAvatarOpen(true)}
+        onCoverClick={() => profile.coverImage && setCoverOpen(true)}
         actions={<ProfileActions profile={profile} onFollowChange={handleFollowChange} />}
         stats={
           <ProfileStats
@@ -136,6 +139,8 @@ function ProfileViewInner({ username, initialUser }: Props) {
             posts={profile.counts.posts}
             followers={profile.counts.followers}
             following={profile.counts.following}
+            friends={profile.counts.friends}
+            isOwner={profile.isOwner}
           />
         }
       />
@@ -149,17 +154,27 @@ function ProfileViewInner({ username, initialUser }: Props) {
           />
           <div
             role="tabpanel"
-            id="profile-grid-panel"
-            aria-label={`${activeTab === 'posts' ? 'Bài viết' : activeTab === 'reels' ? 'Reels' : 'Đã thích'}`}
+            id="profile-content-panel"
+            aria-labelledby={`profile-tab-${activeTab}`}
+            className="min-h-[200px]"
           >
-            <ProfileMediaGrid
-              username={profile.username}
-              tab={activeTab}
-              isOwner={profile.isOwner}
-              isDeleted={isDeleted}
-              onTileClick={setLightboxItem}
-              onCreatePost={() => setCreateOpen(true)}
-            />
+            {activeTab === 'posts' ? (
+              <ProfileFeed
+                username={profile.username}
+                isOwner={profile.isOwner}
+                isDeleted={isDeleted}
+                onCreatePost={() => setCreateOpen(true)}
+              />
+            ) : (
+              <ProfileMediaGrid
+                username={profile.username}
+                tab={activeTab}
+                isOwner={profile.isOwner}
+                isDeleted={isDeleted}
+                onTileClick={setLightboxItem}
+                onCreatePost={() => setCreateOpen(true)}
+              />
+            )}
           </div>
         </>
       ) : (
@@ -168,11 +183,19 @@ function ProfileViewInner({ username, initialUser }: Props) {
         </p>
       )}
 
-      <AvatarLightbox
+      <ProfileImageLightbox
         open={avatarOpen}
         src={profile.image}
-        name={profile.name}
+        alt={profile.name ? `Ảnh đại diện của ${profile.name}` : 'Ảnh đại diện'}
+        variant="avatar"
         onClose={() => setAvatarOpen(false)}
+      />
+      <ProfileImageLightbox
+        open={coverOpen}
+        src={profile.coverImage}
+        alt={profile.name ? `Ảnh bìa của ${profile.name}` : 'Ảnh bìa'}
+        variant="cover"
+        onClose={() => setCoverOpen(false)}
       />
       <MediaLightbox
         item={lightboxItem}
@@ -190,6 +213,9 @@ function ProfileViewInner({ username, initialUser }: Props) {
           onPosted={() => {
             setCreateOpen(false);
             void refetchProfile();
+            void queryClient.invalidateQueries({
+              queryKey: queryKeys.users.feed(profile.username),
+            });
             void queryClient.invalidateQueries({
               queryKey: queryKeys.users.grid(profile.username, activeTab),
             });

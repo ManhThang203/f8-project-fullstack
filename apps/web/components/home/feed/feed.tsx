@@ -10,11 +10,17 @@ import { PostCard } from '../post/post-card';
 
 import { FeedSkeletonList } from './feed-skeleton-list';
 
-import { flattenPostsFeedPages, usePostsFeed } from '@/hooks/queries/use-posts-feed';
+import {
+  flattenPostsFeedPages,
+  usePostsFeed,
+  type FeedScope,
+  type FeedSort,
+} from '@/hooks/queries/use-posts-feed';
 import { authClient } from '@/lib/auth-client';
 import type { ServerAuthUser } from '@/lib/auth-user.types';
 import { queryKeys } from '@/lib/query-keys';
 import { getSocket } from '@/lib/socket';
+import { cn } from '@/lib/utils';
 
 type FeedUser = {
   id: string;
@@ -37,12 +43,41 @@ type Props = {
   initialUser: ServerAuthUser | null;
 };
 
+function FeedToggleButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        'min-h-9 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
+        'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
+        active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted',
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function HomeFeed({ initialUser }: Props) {
   const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
 
+  const [sort, setSort] = useState<FeedSort>('recent');
+  const [scope, setScope] = useState<FeedScope>('all');
+  const feedKey = useMemo(() => [...queryKeys.posts.feed, sort, scope], [sort, scope]);
+
   const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    usePostsFeed();
+    usePostsFeed({ sort, scope });
 
   const me = useMemo<FeedUser | null>(() => {
     const fromClient = session?.user
@@ -95,7 +130,7 @@ export function HomeFeed({ initialUser }: Props) {
   }
 
   function handlePosted(post: PostFeedItemDto) {
-    queryClient.setQueryData(queryKeys.posts.feed, (old: typeof data) => {
+    queryClient.setQueryData(feedKey, (old: typeof data) => {
       if (!old) return old;
       return {
         ...old,
@@ -110,18 +145,21 @@ export function HomeFeed({ initialUser }: Props) {
     const socket = getSocket('/feed');
 
     function onPostReacted(payload: { postId: string; likeCount: number }) {
-      queryClient.setQueryData(queryKeys.posts.feed, (old: typeof data) => {
-        if (!old) return old;
-        return {
-          ...old,
-          pages: old.pages.map((page) => ({
-            ...page,
-            data: page.data.map((p) =>
-              p.id === payload.postId ? { ...p, likeCount: payload.likeCount } : p,
-            ),
-          })),
-        };
-      });
+      queryClient.setQueriesData<typeof data>(
+        { queryKey: queryKeys.posts.feed },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              data: page.data.map((p) =>
+                p.id === payload.postId ? { ...p, likeCount: payload.likeCount } : p,
+              ),
+            })),
+          };
+        },
+      );
     }
 
     socket.on('post:reacted', onPostReacted);
@@ -152,6 +190,30 @@ export function HomeFeed({ initialUser }: Props) {
         onPosted={handlePosted}
       />
 
+      {me ? (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <div className="border-border flex items-center gap-1 rounded-xl border p-1">
+            <FeedToggleButton active={sort === 'recent'} onClick={() => setSort('recent')}>
+              Mới nhất
+            </FeedToggleButton>
+            <FeedToggleButton active={sort === 'top'} onClick={() => setSort('top')}>
+              Phổ biến
+            </FeedToggleButton>
+          </div>
+          <div className="border-border flex items-center gap-1 rounded-xl border p-1">
+            <FeedToggleButton active={scope === 'all'} onClick={() => setScope('all')}>
+              Tất cả
+            </FeedToggleButton>
+            <FeedToggleButton
+              active={scope === 'following'}
+              onClick={() => setScope('following')}
+            >
+              Bạn bè & đang theo dõi
+            </FeedToggleButton>
+          </div>
+        </div>
+      ) : null}
+
       {errorMessage ? (
         <p className="mb-4 text-sm text-red-600 dark:text-red-400" role="alert">
           {errorMessage}
@@ -165,7 +227,9 @@ export function HomeFeed({ initialUser }: Props) {
           <p className="text-muted-foreground text-sm">
             {posts.length > 0
               ? 'Không còn bài hiển thị. Tải lại trang để xem lại feed.'
-              : 'Chưa có bài đăng. Hãy chạy seed hoặc viết bài mới.'}
+              : scope === 'following'
+                ? 'Chưa có bài từ bạn bè hoặc người bạn theo dõi. Hãy kết bạn / theo dõi thêm nhé.'
+                : 'Chưa có bài đăng. Hãy chạy seed hoặc viết bài mới.'}
           </p>
         ) : (
           <>

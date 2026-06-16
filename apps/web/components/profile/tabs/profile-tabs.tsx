@@ -1,6 +1,6 @@
 'use client';
 
-import { Grid2X2, Heart, Play } from 'lucide-react';
+import { Heart, LayoutList, Play } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useId } from 'react';
 
@@ -13,8 +13,8 @@ type Props = {
   activeTab: ProfileTab;
 };
 
-const TABS: { id: ProfileTab; label: string; icon: typeof Grid2X2 }[] = [
-  { id: 'posts', label: 'Bài viết', icon: Grid2X2 },
+const TABS: { id: ProfileTab; label: string; icon: typeof LayoutList }[] = [
+  { id: 'posts', label: 'Bài viết', icon: LayoutList },
   { id: 'reels', label: 'Reels', icon: Play },
   { id: 'liked', label: 'Đã thích', icon: Heart },
 ];
@@ -68,9 +68,9 @@ export function ProfileTabs({ username, isOwner, activeTab }: Props) {
               key={tab.id}
               type="button"
               role="tab"
-              id={`${tablistId}-${tab.id}`}
+              id={`profile-tab-${tab.id}`}
               aria-selected={selected}
-              aria-controls={`${tablistId}-panel`}
+              aria-controls="profile-content-panel"
               tabIndex={selected ? 0 : -1}
               onClick={() => navigate(tab.id)}
               onKeyDown={(e) => onKeyDown(e, index)}

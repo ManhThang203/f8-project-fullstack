@@ -3,11 +3,17 @@
  */
 
 import { MediaKind, type Follow, type Media, type Post, type User } from '@costy/db';
-import type { ProfileDto, ProfileGridItemDto, UserSummaryDto } from '@costy/shared';
+import {
+  profileGridPreviewUrl,
+  type FriendStatus,
+  type ProfileDto,
+  type ProfileGridItemDto,
+  type UserSummaryDto,
+} from '@costy/shared';
 
 type UserProfileRow = Pick<
   User,
-  'id' | 'username' | 'name' | 'bio' | 'image' | 'createdAt' | 'deletedAt'
+  'id' | 'username' | 'name' | 'bio' | 'image' | 'coverImage' | 'createdAt' | 'deletedAt'
 > & {
   _count: {
     posts: number;
@@ -19,7 +25,12 @@ type UserProfileRow = Pick<
 /** Chuyển user row + trạng thái quan hệ viewer thành ProfileDto trả về client. */
 export function mapUserToProfileDto(
   user: UserProfileRow,
-  opts: { isOwner: boolean; isFollowing: boolean },
+  opts: {
+    isOwner: boolean;
+    isFollowing: boolean;
+    friendStatus: FriendStatus;
+    friendsCount: number;
+  },
 ): ProfileDto {
   return {
     id: user.id,
@@ -27,15 +38,18 @@ export function mapUserToProfileDto(
     name: user.name,
     bio: user.bio,
     image: user.image,
+    coverImage: user.coverImage,
     createdAt: user.createdAt.toISOString(),
     deletedAt: user.deletedAt?.toISOString() ?? null,
     counts: {
       posts: user._count.posts,
       followers: user._count.followers,
       following: user._count.following,
+      friends: opts.friendsCount,
     },
     isOwner: opts.isOwner,
     isFollowing: opts.isFollowing,
+    friendStatus: opts.friendStatus,
   };
 }
 
@@ -47,9 +61,11 @@ type PostGridRow = Post & {
 /** Chuyển post row thành một ô grid (thumbnail + số lượng like/reply/media). */
 export function mapPostToGridItemDto(post: PostGridRow, isVideo: boolean): ProfileGridItemDto {
   const thumb = post.media[0];
+  const mediaUrl = thumb?.publicUrl ?? '';
   return {
     postId: post.id,
-    thumbnailUrl: thumb?.publicUrl ?? '',
+    mediaUrl,
+    thumbnailUrl: profileGridPreviewUrl(mediaUrl, isVideo),
     mediaCount: post._count.media,
     likeCount: post._count.likes,
     replyCount: post._count.replies,

@@ -11,6 +11,12 @@ export const reelsFeedQuerySchema = cursorPageQuerySchema.extend({
 });
 export type ReelsFeedQuery = z.infer<typeof reelsFeedQuerySchema>;
 
+export const feedQuerySchema = cursorPageQuerySchema.extend({
+  sort: z.enum(['recent', 'top']).default('recent'),
+  scope: z.enum(['all', 'following']).default('all'),
+});
+export type FeedQuery = z.infer<typeof feedQuerySchema>;
+
 export const offsetPageQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),

@@ -4,6 +4,7 @@ import { Router } from 'express';
 
 import { validate } from '../../middleware/validate.middleware.js';
 
+import { searchHashtags, searchUsers } from './search.extra.js';
 import { hybridSearch } from './search.service.js';
 
 const router = Router();
@@ -41,6 +42,41 @@ router.get('/', validate(searchQuerySchema, 'query'), async (req, res, next) => 
         searchMode,
       } satisfies { total: number; query: string; searchMode: SearchMode }),
     );
+  } catch (e) {
+    next(e);
+  }
+});
+
+/**
+ * @openapi
+ * /search/users:
+ *   get:
+ *     summary: Tìm người dùng theo tên / username
+ *     tags: [Search]
+ */
+router.get('/users', validate(searchQuerySchema, 'query'), async (req, res, next) => {
+  try {
+    const { q, limit } = req.query as unknown as SearchQuery;
+    const viewerId = req.auth?.userId ?? null;
+    const results = await searchUsers(q, limit, viewerId);
+    res.json(ok(results, { total: results.length, query: q }));
+  } catch (e) {
+    next(e);
+  }
+});
+
+/**
+ * @openapi
+ * /search/hashtags:
+ *   get:
+ *     summary: Tìm hashtag theo chuỗi
+ *     tags: [Search]
+ */
+router.get('/hashtags', validate(searchQuerySchema, 'query'), async (req, res, next) => {
+  try {
+    const { q, limit } = req.query as unknown as SearchQuery;
+    const results = await searchHashtags(q, limit);
+    res.json(ok(results, { total: results.length, query: q }));
   } catch (e) {
     next(e);
   }

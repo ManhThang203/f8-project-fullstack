@@ -3,6 +3,7 @@ export * from './auth.js';
 export * from './pagination.js';
 export * from './post.js';
 export * from './profile.js';
+export * from './friend.js';
 export * from './notification.js';
 export * from './admin.js';
 export * from './moderation.js';

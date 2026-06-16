@@ -6,12 +6,19 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { apiQuery } from '@/lib/api-query';
 import { queryKeys } from '@/lib/query-keys';
 
-export function usePostsFeed() {
+export type FeedSort = 'recent' | 'top';
+export type FeedScope = 'all' | 'following';
+
+export function usePostsFeed(options?: { sort?: FeedSort; scope?: FeedScope }) {
+  const sort = options?.sort ?? 'recent';
+  const scope = options?.scope ?? 'all';
+
   return useInfiniteQuery({
-    queryKey: queryKeys.posts.feed,
+    queryKey: [...queryKeys.posts.feed, sort, scope],
     queryFn: ({ pageParam }) => {
-      const qs = pageParam ? `?cursor=${encodeURIComponent(pageParam)}` : '';
-      return apiQuery<PostFeedItemDto[], PostFeedMeta>(`/posts${qs}`);
+      const params = new URLSearchParams({ sort, scope });
+      if (pageParam) params.set('cursor', pageParam);
+      return apiQuery<PostFeedItemDto[], PostFeedMeta>(`/posts?${params}`);
     },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.meta?.nextCursor ?? undefined,

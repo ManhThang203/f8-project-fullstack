@@ -27,3 +27,13 @@ export const profileListQuerySchema = z.object({
   q: z.string().optional(),
 });
 export type ProfileListQuery = z.infer<typeof profileListQuerySchema>;
+
+export const updateMyProfileSchema = z
+  .object({
+    name: z.string().trim().min(1).max(50).optional(),
+    bio: z.string().trim().max(160).nullable().optional(),
+  })
+  .refine((d) => d.name !== undefined || d.bio !== undefined, {
+    message: 'Không có thay đổi nào',
+  });
+export type UpdateMyProfileBody = z.infer<typeof updateMyProfileSchema>;

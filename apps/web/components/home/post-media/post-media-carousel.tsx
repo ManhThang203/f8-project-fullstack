@@ -35,6 +35,8 @@ type Props =
       mode: 'editable';
       items: DraftMedia[];
       onRemove: (tempId: string) => void;
+      /** Thumbnail nhỏ cho ô nhập bình luận (kiểu Facebook). */
+      compact?: boolean;
     };
 
 type DragScrollSession = { startX: number; scrollLeft: number; pointerId: number };
@@ -58,6 +60,12 @@ function MediaPreview({
   width?: number | null;
   height?: number | null;
 }) {
+  const [errored, setErrored] = useState(false);
+
+  if (!url.trim() || errored) {
+    return <div className={cn('bg-muted min-h-[120px] w-full rounded-xl', className)} aria-hidden />;
+  }
+
   if (type === 'video') {
     if (feedVideo && postId) {
       return (
@@ -71,9 +79,27 @@ function MediaPreview({
         />
       );
     }
-    return <video src={url} className={className} preload="metadata" playsInline muted />;
+    return (
+      <video
+        src={url}
+        className={className}
+        preload="metadata"
+        playsInline
+        muted
+        onError={() => setErrored(true)}
+      />
+    );
   }
-  return <img src={url} alt="" loading="lazy" className={className} draggable={false} />;
+  return (
+    <img
+      src={url}
+      alt=""
+      loading="lazy"
+      className={className}
+      draggable={false}
+      onError={() => setErrored(true)}
+    />
+  );
 }
 
 /** Horizontal scroll + mouse drag (native touch scroll unchanged). */
@@ -141,8 +167,10 @@ function HorizontalScroller({ children }: { children: ReactNode }) {
 export function PostMediaCarousel(props: Props) {
   const displayItems: DisplayItem[] =
     props.mode === 'feed'
-      ? props.items.map((d) => ({ kind: 'posted', data: d }))
+      ? props.items.filter((d) => d.url.trim()).map((d) => ({ kind: 'posted', data: d }))
       : props.items.map((d) => ({ kind: 'draft', data: d }));
+
+  const isCompactEditable = props.mode === 'editable' && props.compact;
 
   if (displayItems.length === 0) return null;
 
@@ -157,7 +185,10 @@ export function PostMediaCarousel(props: Props) {
     return (
       <motion.div
         className={cn(
-          'bg-muted relative mt-3 flex w-full justify-center overflow-hidden rounded-xl',
+          'bg-muted relative overflow-hidden rounded-xl',
+          isCompactEditable
+            ? 'mt-2 h-20 w-20 shrink-0'
+            : 'mt-3 flex w-full justify-center',
         )}
       >
         <MediaPreview
@@ -169,12 +200,14 @@ export function PostMediaCarousel(props: Props) {
           width={item.data.width}
           height={item.data.height}
           className={cn(
-            'rounded-xl',
+            isCompactEditable ? 'h-20 w-20 rounded-lg object-cover' : 'rounded-xl',
             props.mode === 'feed'
               ? mediaType === 'video'
                 ? 'w-full'
                 : 'max-h-[520px] w-auto max-w-full object-contain'
-              : 'h-auto max-h-[360px] w-auto max-w-full object-contain',
+              : isCompactEditable
+                ? ''
+                : 'h-auto max-h-[360px] w-auto max-w-full object-contain',
           )}
         />
         {isDraft && draft && (
@@ -192,9 +225,14 @@ export function PostMediaCarousel(props: Props) {
                 type="button"
                 onClick={() => props.onRemove(draft.tempId)}
                 aria-label="Xóa ảnh"
-                className="focus-visible:ring-ring absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2"
+                className={cn(
+                  'focus-visible:ring-ring absolute flex items-center justify-center rounded-full bg-black/60 text-white transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2',
+                  isCompactEditable
+                    ? 'right-1 top-1 h-5 w-5'
+                    : 'right-2 top-2 h-7 w-7',
+                )}
               >
-                <X className="h-4 w-4" aria-hidden />
+                <X className={isCompactEditable ? 'h-3 w-3' : 'h-4 w-4'} aria-hidden />
               </button>
             )}
           </>
@@ -212,7 +250,13 @@ export function PostMediaCarousel(props: Props) {
     const draft = isDraft ? (item.data as DraftMedia) : null;
 
     return (
-      <div key={key} className="bg-muted relative shrink-0 overflow-hidden rounded-xl">
+      <div
+        key={key}
+        className={cn(
+          'bg-muted relative shrink-0 overflow-hidden rounded-xl',
+          isCompactEditable && 'h-20 w-20',
+        )}
+      >
         <MediaPreview
           type={mediaType}
           url={url}
@@ -224,7 +268,11 @@ export function PostMediaCarousel(props: Props) {
           className={
             props.mode === 'feed' && mediaType === 'video'
               ? 'w-full rounded-xl'
-              : 'h-[420px] w-auto select-none object-contain'
+              : isCompactEditable
+                ? 'h-20 w-20 select-none rounded-lg object-cover'
+                : props.mode === 'editable'
+                  ? 'h-[420px] w-auto select-none object-contain'
+                  : 'h-[420px] w-auto select-none object-contain'
           }
         />
 
@@ -248,9 +296,14 @@ export function PostMediaCarousel(props: Props) {
                 type="button"
                 onClick={() => props.onRemove(draft.tempId)}
                 aria-label="Xóa ảnh"
-                className="focus-visible:ring-ring absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2"
+                className={cn(
+                  'focus-visible:ring-ring absolute flex items-center justify-center rounded-full bg-black/60 text-white transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2',
+                  isCompactEditable
+                    ? 'right-1 top-1 h-5 w-5'
+                    : 'right-2 top-2 h-7 w-7',
+                )}
               >
-                <X className="h-4 w-4" aria-hidden />
+                <X className={isCompactEditable ? 'h-3 w-3' : 'h-4 w-4'} aria-hidden />
               </button>
             )}
           </>
@@ -258,6 +311,17 @@ export function PostMediaCarousel(props: Props) {
       </div>
     );
   });
+
+  if (isCompactEditable) {
+    return (
+      <div
+        className="mt-2 flex flex-wrap gap-2"
+        aria-label="Ảnh đính kèm bình luận"
+      >
+        {slides}
+      </div>
+    );
+  }
 
   return <HorizontalScroller>{slides}</HorizontalScroller>;
 }
