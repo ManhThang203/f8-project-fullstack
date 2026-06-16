@@ -3,7 +3,10 @@ export type NotificationType =
   | 'POST_REPLIED'
   | 'POST_COMMENTED_FOLLOWED'
   | 'USER_FOLLOWED'
+  | 'FRIEND_REQUEST'
+  | 'FRIEND_ACCEPTED'
   | 'MENTION'
+  | 'MESSAGE_RECEIVED'
   | 'SYSTEM'
   | 'REPORT_RESOLVED'
   | 'MODERATION_ACTION'
@@ -17,6 +20,7 @@ export interface NotificationDto {
   type: NotificationType;
   entityType: string | null;
   entityId: string | null;
+  reactionType?: string | null;
   readAt: string | null;
   createdAt: string;
   actor?: {

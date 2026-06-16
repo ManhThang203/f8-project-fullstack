@@ -1,13 +1,17 @@
 'use client';
 
-import type { ProfileDto } from '@costy/shared';
-import { ChevronDown, Settings } from 'lucide-react';
+import type { FriendStatus, ProfileDto } from '@costy/shared';
+import { ChevronDown, Flag, Settings, UserCheck, UserPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+import { EditProfileModal } from './edit-profile-modal';
+
 import { Button } from '@/components/shared/button';
+import { ReportModal } from '@/components/shared/report-modal';
 import { useFollowMutation } from '@/hooks/queries/use-follow-mutation';
+import { useFriendMutation, type FriendAction } from '@/hooks/queries/use-friend-mutation';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -19,10 +23,34 @@ export function ProfileActions({ profile, onFollowChange }: Props) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [friendStatus, setFriendStatus] = useState<FriendStatus>(profile.friendStatus);
+
+  useEffect(() => {
+    setFriendStatus(profile.friendStatus);
+  }, [profile.friendStatus]);
+
+  const friendMutation = useFriendMutation({
+    onError: (err) => toast.error(err.message),
+  });
 
   const followMutation = useFollowMutation({
     onError: (err) => toast.error(err.message),
   });
+
+  /** Gọi API kết bạn với optimistic update, revert nếu lỗi. */
+  function runFriend(action: FriendAction, optimistic: FriendStatus) {
+    const prev = friendStatus;
+    setFriendStatus(optimistic);
+    friendMutation.mutate(
+      { userId: profile.id, action },
+      {
+        onSuccess: (data) => setFriendStatus(data.status),
+        onError: () => setFriendStatus(prev),
+      },
+    );
+  }
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -39,17 +67,18 @@ export function ProfileActions({ profile, onFollowChange }: Props) {
 
   if (profile.isOwner) {
     return (
-      <div className="flex flex-wrap items-center gap-2">
-        <Button variant="secondary" size="md" disabled aria-disabled>
+      <>
+        <Button variant="secondary" size="md" onClick={() => setEditOpen(true)}>
           Chỉnh sửa trang cá nhân
         </Button>
-        <Button variant="secondary" size="md" disabled aria-disabled>
-          Xem kho lưu trữ
+        <Button variant="secondary" size="md" onClick={() => router.push('/saved')}>
+          Bài viết đã lưu
         </Button>
         <Button variant="ghost" size="icon-md" aria-label="Cài đặt" disabled>
           <Settings className="h-5 w-5" aria-hidden />
         </Button>
-      </div>
+        <EditProfileModal open={editOpen} onClose={() => setEditOpen(false)} profile={profile} />
+      </>
     );
   }
 
@@ -72,9 +101,66 @@ export function ProfileActions({ profile, onFollowChange }: Props) {
   }
 
   const followLoading = followMutation.isPending;
+  const friendLoading = friendMutation.isPending;
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <>
+      {friendStatus === 'none' ? (
+        <Button
+          variant="primary"
+          size="md"
+          loading={friendLoading}
+          onClick={() => runFriend('request', 'request_sent')}
+        >
+          <UserPlus className="h-4 w-4" aria-hidden />
+          Kết bạn
+        </Button>
+      ) : null}
+
+      {friendStatus === 'request_sent' ? (
+        <Button
+          variant="secondary"
+          size="md"
+          loading={friendLoading}
+          onClick={() => runFriend('cancel', 'none')}
+        >
+          Đã gửi lời mời
+        </Button>
+      ) : null}
+
+      {friendStatus === 'request_received' ? (
+        <>
+          <Button
+            variant="primary"
+            size="md"
+            loading={friendLoading}
+            onClick={() => runFriend('accept', 'friends')}
+          >
+            Chấp nhận
+          </Button>
+          <Button
+            variant="secondary"
+            size="md"
+            disabled={friendLoading}
+            onClick={() => runFriend('reject', 'none')}
+          >
+            Từ chối
+          </Button>
+        </>
+      ) : null}
+
+      {friendStatus === 'friends' ? (
+        <Button
+          variant="secondary"
+          size="md"
+          loading={friendLoading}
+          onClick={() => runFriend('unfriend', 'none')}
+        >
+          <UserCheck className="h-4 w-4" aria-hidden />
+          Bạn bè
+        </Button>
+      ) : null}
+
       {profile.isFollowing ? (
         <div className="relative" ref={menuRef}>
           <Button
@@ -120,6 +206,21 @@ export function ProfileActions({ profile, onFollowChange }: Props) {
       <Button variant="secondary" size="md" onClick={handleMessage}>
         Nhắn tin
       </Button>
-    </div>
+      <Button
+        variant="ghost"
+        size="icon-md"
+        aria-label="Báo cáo người dùng"
+        onClick={() => setReportOpen(true)}
+      >
+        <Flag className="h-5 w-5" aria-hidden />
+      </Button>
+
+      <ReportModal
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        targetType="USER"
+        targetId={profile.id}
+      />
+    </>
   );
 }

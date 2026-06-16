@@ -1,8 +1,11 @@
 'use client';
 
+import type { PostFeedItemDto } from '@costy/shared';
 import { MoreHorizontal } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { toast } from 'sonner';
+
+import { EditPostModal } from './edit-post-modal';
 
 import { ReportModal } from '@/components/shared/report-modal';
 import { cn } from '@/lib/utils';
@@ -12,10 +15,12 @@ type Props = {
   hasVideo?: boolean;
   onHidePost?: () => void;
   isOwnPost?: boolean;
+  post?: PostFeedItemDto;
 };
 
 const MENU_ITEMS = [
   { id: 'copy', label: 'Sao chép liên kết' },
+  { id: 'edit', label: 'Chỉnh sửa bài viết' },
   { id: 'report', label: 'Báo cáo bài viết' },
   { id: 'hide', label: 'Ẩn bài viết' },
 ] as const;
@@ -25,9 +30,11 @@ export function PostOptionsMenu({
   hasVideo = false,
   onHidePost,
   isOwnPost = false,
+  post,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
 
@@ -56,7 +63,9 @@ export function PostOptionsMenu({
     setOpen(false);
     switch (id) {
       case 'copy': {
-        const path = hasVideo ? `/reel/${postId}` : `/?post=${postId}`;
+        const path = hasVideo
+          ? `/reel/${postId}`
+          : `/${post?.author.username ?? 'user'}/post/${postId}`;
         const url = `${window.location.origin}${path}`;
         void navigator.clipboard.writeText(url).then(
           () => toast.success('Đã sao chép liên kết'),
@@ -64,6 +73,9 @@ export function PostOptionsMenu({
         );
         break;
       }
+      case 'edit':
+        setEditModalOpen(true);
+        break;
       case 'report':
         setReportModalOpen(true);
         break;
@@ -101,7 +113,11 @@ export function PostOptionsMenu({
             'rounded-xl border py-1 shadow-lg',
           )}
         >
-          {MENU_ITEMS.filter((item) => !(item.id === 'report' && isOwnPost)).map((item) => (
+          {MENU_ITEMS.filter(
+            (item) =>
+              !(item.id === 'report' && isOwnPost) &&
+              !(item.id === 'edit' && !(isOwnPost && post)),
+          ).map((item) => (
             <button
               key={item.id}
               type="button"
@@ -125,6 +141,10 @@ export function PostOptionsMenu({
         targetType="POST"
         targetId={postId}
       />
+
+      {post && (
+        <EditPostModal open={editModalOpen} onClose={() => setEditModalOpen(false)} post={post} />
+      )}
     </div>
   );
 }

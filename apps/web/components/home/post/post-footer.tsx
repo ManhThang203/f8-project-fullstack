@@ -1,6 +1,6 @@
 'use client';
 
-import { MessageCircle, Share2, ThumbsUp } from 'lucide-react';
+import { Bookmark, MessageCircle, Share2, ThumbsUp } from 'lucide-react';
 
 import { ActionButton } from './action-button';
 import {
@@ -25,6 +25,8 @@ type Props = {
   onLikePointerDown?: () => void;
   onLikePointerUp?: () => void;
   onLikePointerLeave?: () => void;
+  onSaveClick?: () => void;
+  saved?: boolean;
   currentReaction?: PostReactionId | null;
 };
 
@@ -41,6 +43,8 @@ export function PostFooter({
   onLikePointerDown,
   onLikePointerUp,
   onLikePointerLeave,
+  onSaveClick,
+  saved,
   currentReaction,
 }: Props) {
   const isLiked = currentReaction === 'like';
@@ -103,6 +107,15 @@ export function PostFooter({
           count={shareCount > 0 ? shareCount : undefined}
           label="Chia sẻ"
           onClick={onShareClick}
+        />
+
+        <ActionButton
+          icon={
+            <Bookmark className={cn('h-4 w-4', saved && 'fill-current')} strokeWidth={1.75} />
+          }
+          label={saved ? 'Đã lưu' : 'Lưu'}
+          onClick={onSaveClick}
+          className={saved ? 'text-primary' : ''}
         />
       </div>
 

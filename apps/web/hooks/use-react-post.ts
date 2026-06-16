@@ -2,10 +2,12 @@ import type { PostFeedItemDto } from '@costy/shared';
 import { useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 
 import { apiFetch } from '@/lib/api-client';
-import { queryKeys } from '@/lib/query-keys';
 
 type FeedPage = { data: PostFeedItemDto[] };
 type FeedCache = InfiniteData<FeedPage>;
+type FlatFeedCache = { data: PostFeedItemDto[] };
+type CommentsPage = { items: PostFeedItemDto[]; nextCursor: string | null };
+type CommentsCache = InfiniteData<CommentsPage>;
 
 type ReactPostVariables = {
   postId: string;
@@ -17,6 +19,95 @@ type ReactPostResponse = {
   reactionType: string | null;
   likeCount: number;
 };
+
+/** Cập nhật reaction/likeCount cho một post trong danh sách feed. */
+function patchPostReaction(
+  post: PostFeedItemDto,
+  postId: string,
+  type: string | null,
+): PostFeedItemDto {
+  if (post.id !== postId) return post;
+
+  const wasLiked = post.myReaction !== null;
+  const isLikedNow = type !== null;
+  let newLikeCount = post.likeCount;
+  if (!wasLiked && isLikedNow) newLikeCount++;
+  if (wasLiked && !isLikedNow) newLikeCount = Math.max(0, newLikeCount - 1);
+
+  return { ...post, myReaction: type, likeCount: newLikeCount };
+}
+
+function patchInfiniteFeedCache(
+  old: FeedCache,
+  postId: string,
+  type: string | null,
+): FeedCache {
+  return {
+    ...old,
+    pages: old.pages.map((page) => ({
+      ...page,
+      data: page.data.map((p) => patchPostReaction(p, postId, type)),
+    })),
+  };
+}
+
+function patchFlatFeedCache(
+  old: FlatFeedCache,
+  postId: string,
+  type: string | null,
+): FlatFeedCache {
+  return {
+    ...old,
+    data: old.data.map((p) => patchPostReaction(p, postId, type)),
+  };
+}
+
+function patchCommentsCache(
+  old: CommentsCache,
+  postId: string,
+  type: string | null,
+): CommentsCache {
+  return {
+    ...old,
+    pages: old.pages.map((page) => ({
+      ...page,
+      items: page.items.map((p) => patchPostReaction(p, postId, type)),
+    })),
+  };
+}
+
+/** Patch mọi cache chứa PostFeedItemDto (feed, trang chi tiết, comments). */
+function patchAllCaches(old: unknown, postId: string, type: string | null): unknown {
+  if (!old || typeof old !== 'object') return old;
+
+  if ('pages' in old && Array.isArray((old as { pages: unknown[] }).pages)) {
+    const firstPage = (old as { pages: Record<string, unknown>[] }).pages[0];
+    if (firstPage && 'data' in firstPage) {
+      return patchInfiniteFeedCache(old as FeedCache, postId, type);
+    }
+    if (firstPage && 'items' in firstPage) {
+      return patchCommentsCache(old as CommentsCache, postId, type);
+    }
+    return old;
+  }
+
+  if ('data' in old && Array.isArray((old as FlatFeedCache).data)) {
+    return patchFlatFeedCache(old as FlatFeedCache, postId, type);
+  }
+
+  if ('id' in old && 'likeCount' in old) {
+    return patchPostReaction(old as PostFeedItemDto, postId, type);
+  }
+
+  return old;
+}
+
+const REACT_QUERY_PREFIXES = [
+  ['posts'] as const,
+  ['users', 'feed'] as const,
+  ['me', 'saved'] as const,
+  ['search', 'posts'] as const,
+];
 
 export function useReactPost() {
   const queryClient = useQueryClient();
@@ -33,37 +124,23 @@ export function useReactPost() {
       return res.data;
     },
     onMutate: async ({ postId, type }) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.posts.feed });
-      const previousData = queryClient.getQueryData(queryKeys.posts.feed);
+      const previous: Array<[readonly unknown[], unknown]> = [];
 
-      queryClient.setQueryData(queryKeys.posts.feed, (old: FeedCache | undefined) => {
-        if (!old) return old;
-        return {
-          ...old,
-          pages: old.pages.map((page) => ({
-            ...page,
-            data: page.data.map((p) => {
-              if (p.id === postId) {
-                // Tính toán likeCount giả định
-                const wasLiked = p.myReaction !== null;
-                const isLikedNow = type !== null;
-                let newLikeCount = p.likeCount;
-                if (!wasLiked && isLikedNow) newLikeCount++;
-                if (wasLiked && !isLikedNow) newLikeCount = Math.max(0, newLikeCount - 1);
+      for (const prefix of REACT_QUERY_PREFIXES) {
+        await queryClient.cancelQueries({ queryKey: prefix });
+        const snapshots = queryClient.getQueriesData({ queryKey: prefix });
+        previous.push(...snapshots);
 
-                return { ...p, myReaction: type, likeCount: newLikeCount };
-              }
-              return p;
-            }),
-          })),
-        };
-      });
+        queryClient.setQueriesData({ queryKey: prefix }, (old) =>
+          patchAllCaches(old, postId, type),
+        );
+      }
 
-      return { previousData };
+      return { previous };
     },
-    onError: (err, newTodo, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(queryKeys.posts.feed, context.previousData);
+    onError: (_err, _vars, context) => {
+      for (const [key, data] of context?.previous ?? []) {
+        queryClient.setQueryData(key, data);
       }
     },
     // We do not invalidate queries on settled because the socket will broadcast the exact likeCount anyway

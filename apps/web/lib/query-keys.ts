@@ -5,6 +5,7 @@ export const queryKeys = {
   },
   users: {
     profile: (username: string) => ['users', 'profile', username] as const,
+    feed: (username: string) => ['users', 'feed', username] as const,
     grid: (username: string, tab: string) => ['users', 'grid', username, tab] as const,
     followList: (username: string, mode: string, q: string) =>
       ['users', mode, username, q] as const,
@@ -18,5 +19,9 @@ export const queryKeys = {
   notifications: {
     all: () => ['notifications'] as const,
     unreadCount: () => ['notifications', 'unreadCount'] as const,
+  },
+  friends: {
+    list: (q: string) => ['friends', 'list', q] as const,
+    requests: (type: 'incoming' | 'outgoing') => ['friends', 'requests', type] as const,
   },
 } as const;

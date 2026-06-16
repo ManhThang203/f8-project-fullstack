@@ -6,7 +6,7 @@ import { uploadLocalMedia } from '../../middleware/local-upload.middleware.js';
 
 export const mediaRouter = Router();
 
-// Endpoint upload dành riêng cho E2EE Chat (lưu tại VPS)
+// Endpoint upload media cho Chat (lưu tại VPS)
 mediaRouter.post(
   '/upload',
   attachWebAuthSession, // Đảm bảo user đã đăng nhập

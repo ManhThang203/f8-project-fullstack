@@ -15,6 +15,26 @@ const upload = multer({
 // Upload nhiều media lên server
 const rawUpload = upload.array('files', 10);
 
+// Upload 1 ảnh đơn (avatar / cover), giới hạn 10MB
+const rawSingleImage = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024, files: 1 },
+}).single('file');
+
+/** Middleware nhận 1 ảnh (field 'file') cho avatar / ảnh bìa. */
+export const uploadSingleImage: RequestHandler = (req, res, next) => {
+  rawSingleImage(req, res, (err) => {
+    if (!err) return next();
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return next(AppError.badRequest('Ảnh quá lớn (tối đa 10MB)'));
+      }
+      return next(AppError.badRequest(err.message));
+    }
+    return next(err);
+  });
+};
+
 // Middleware upload media lên server
 export const uploadPostMedia: RequestHandler = (req, res, next) => {
   rawUpload(req, res, (err) => {

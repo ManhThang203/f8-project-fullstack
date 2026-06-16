@@ -4,13 +4,22 @@ export type MessageReactionDto = {
   userId: string;
 };
 
+export type ChatMediaDto = {
+  id: string;
+  publicUrl: string | null;
+  mimeType: string;
+  width: number | null;
+  height: number | null;
+};
+
 export type ChatMessageDto = {
   id: string;
   roomId: string;
   senderId: string;
   type: string;
-  encryptedPayload: string;
+  content: string | null;
   mediaId: string | null;
+  media?: ChatMediaDto | null;
   replyToId: string | null;
   replyToMessage?: ChatMessageDto | null;
   createdAt: string;
@@ -36,5 +45,4 @@ export type Conversation = {
   lastMessage: ChatMessageDto | null;
   unreadCount: number;
   updatedAt: string;
-  encryptedRoomKey: string | null;
 };

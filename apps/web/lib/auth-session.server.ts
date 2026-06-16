@@ -77,6 +77,12 @@ export async function getServerSession(): Promise<{ user: ServerAuthUser } | nul
           : user.username === null || user.username === undefined
             ? null
             : String(user.username),
+      image:
+        user.image === null || user.image === undefined
+          ? null
+          : typeof user.image === 'string'
+            ? user.image
+            : String(user.image),
     },
   };
 }

@@ -36,7 +36,7 @@ export function startWorkers(): Worker[] {
         const fs = await import('fs');
         const path = await import('path');
 
-        logger.info({ jobId: job.id }, 'Bắt đầu dọn dẹp media E2EE hết hạn');
+        logger.info({ jobId: job.id }, 'Bắt đầu dọn dẹp media chat hết hạn');
 
         // Lấy tất cả media đã hết hạn (expiresAt < now)
         const expiredMedia = await prisma.media.findMany({

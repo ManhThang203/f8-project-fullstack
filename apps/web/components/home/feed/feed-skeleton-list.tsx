@@ -11,9 +11,12 @@ const fakePostNoMedia: PostFeedItemDto = {
   content:
     'Đây là một đoạn nội dung bài đăng mẫu dùng để tạo bộ khung loading. Nó chiếm khoảng hai đến ba dòng để giao diện trông tự nhiên hơn.',
   createdAt: new Date().toISOString(),
+  visibility: 'PUBLIC',
   replyCount: 0,
   likeCount: 0,
+  shareCount: 0,
   myReaction: null,
+  savedByMe: false,
   media: [],
   parentId: null,
 };

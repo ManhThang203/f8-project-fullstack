@@ -20,16 +20,17 @@ export function MediaLightbox({ item, username, onClose }: Props) {
         {item ? (
           <>
             <div className="bg-muted aspect-square max-h-[70dvh] w-full">
-              {item.thumbnailUrl ? (
-                item.isVideo ? (
+              {item.isVideo ? (
+                item.mediaUrl ? (
                   <video
-                    src={item.thumbnailUrl}
+                    src={item.mediaUrl}
                     controls
                     className="h-full w-full object-contain"
+                    playsInline
                   />
-                ) : (
-                  <img src={item.thumbnailUrl} alt="" className="h-full w-full object-contain" />
-                )
+                ) : null
+              ) : item.thumbnailUrl ? (
+                <img src={item.thumbnailUrl} alt="" className="h-full w-full object-contain" />
               ) : null}
             </div>
             <div className="text-muted-foreground flex items-center gap-4 px-4 py-3 text-sm">

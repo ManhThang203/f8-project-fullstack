@@ -15,6 +15,24 @@ import type { Namespace, Socket } from 'socket.io';
 import { authWeb } from '../lib/auth.js';
 import { logger } from '../lib/logger.js';
 import { verifySocketToken } from '../lib/socket-token.js';
+import { createNotification } from '../modules/notifications/notifications.service.js';
+
+/** Tạo notification "tin nhắn mới" cho các thành viên khác trong phòng (fire-and-forget). */
+async function notifyRoomMessage(roomId: string, senderId: string): Promise<void> {
+  const members = await prisma.chatRoomMember.findMany({
+    where: { roomId, userId: { not: senderId } },
+    select: { userId: true },
+  });
+  for (const m of members) {
+    await createNotification({
+      recipientId: m.userId,
+      actorId: senderId,
+      type: 'MESSAGE_RECEIVED',
+      entityType: 'room',
+      entityId: roomId,
+    });
+  }
+}
 /**
  * Middleware xác thực namespace `/chat`.
  * Ưu tiên token HMAC (handshake.auth.token), fallback về cookie session Better Auth.
@@ -92,21 +110,22 @@ export function registerChatNamespace(chatNs: Namespace) {
     });
 
     /**
-     * Relay tin nhắn E2EE: client gửi encryptedPayload, server lưu DB và broadcast
+     * Gửi tin nhắn: lưu DB rồi broadcast tới các thành viên trong phòng.
      */
     socket.on('chat:send', async (payload: unknown, ack: (r: unknown) => void) => {
       try {
         const p = payload as {
           roomId?: string;
-          encryptedPayload?: string;
+          content?: string;
           type?: string;
           mediaId?: string;
           replyToId?: string;
         };
-        const { roomId, encryptedPayload, type = 'text', mediaId, replyToId } = p;
+        const { roomId, type = 'text', mediaId, replyToId } = p;
+        const content = typeof p.content === 'string' ? p.content.trim() : '';
 
-        if (!roomId || !encryptedPayload) {
-          ack?.({ ok: false, error: 'Thiếu dữ liệu E2EE message' });
+        if (!roomId || (!content && !mediaId)) {
+          ack?.({ ok: false, error: 'Thiếu nội dung tin nhắn' });
           return;
         }
 
@@ -119,54 +138,47 @@ export function registerChatNamespace(chatNs: Namespace) {
           return;
         }
 
-        // Lưu vào DB (server mù, không biết nội dung là gì)
         const saved = await prisma.chatMessage.create({
           data: {
             roomId,
             senderId: userId,
-            encryptedPayload,
+            content: content || null,
             type,
             mediaId,
             replyToId,
           },
           include: {
+            media: {
+              select: { id: true, publicUrl: true, mimeType: true, width: true, height: true },
+            },
             replyTo: true,
           },
         });
 
-        // Phát tới tất cả mọi người trong phòng (trừ sender, trừ khi client muốn tự nhận)
-        socket.to(`room:${roomId}`).emit('chat:message', {
+        const messageDto = {
           id: saved.id,
           roomId: saved.roomId,
           senderId: saved.senderId,
-          encryptedPayload: saved.encryptedPayload,
+          content: saved.content,
           type: saved.type,
           mediaId: saved.mediaId,
+          media: saved.media,
           replyToId: saved.replyToId,
           replyToMessage: saved.replyTo,
           isUnsent: saved.isUnsent,
           deletedFor: saved.deletedFor,
           reactions: [],
           createdAt: saved.createdAt.toISOString(),
-        });
+        };
 
-        ack?.({
-          ok: true,
-          message: {
-            id: saved.id,
-            roomId: saved.roomId,
-            senderId: saved.senderId,
-            encryptedPayload: saved.encryptedPayload,
-            type: saved.type,
-            mediaId: saved.mediaId,
-            replyToId: saved.replyToId,
-            replyToMessage: saved.replyTo,
-            isUnsent: saved.isUnsent,
-            deletedFor: saved.deletedFor,
-            reactions: [],
-            createdAt: saved.createdAt.toISOString(),
-          },
-        });
+        // Phát tới tất cả mọi người trong phòng (trừ sender, trừ khi client muốn tự nhận)
+        socket.to(`room:${roomId}`).emit('chat:message', messageDto);
+
+        ack?.({ ok: true, message: messageDto });
+
+        void notifyRoomMessage(roomId, userId).catch((err: unknown) =>
+          logger.warn({ err, roomId }, 'notifyRoomMessage failed'),
+        );
       } catch (err) {
         logger.warn({ err, userId }, 'chat:send failed');
         ack?.({ ok: false, error: err instanceof Error ? err.message : 'send failed' });

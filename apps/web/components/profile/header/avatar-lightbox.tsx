@@ -4,16 +4,31 @@ import { X } from 'lucide-react';
 
 import { IconButton } from '@/components/shared/icon-button';
 import { Modal } from '@/components/shared/modal';
+import { cn } from '@/lib/utils';
+
+type Variant = 'avatar' | 'cover';
 
 type Props = {
   open: boolean;
   src: string | null;
-  name: string | null;
+  alt: string;
   onClose: () => void;
+  variant?: Variant;
 };
 
-/** Lightbox fullscreen cho ảnh đại diện — không có panel khung, chỉ ảnh + backdrop tối. */
-export function AvatarLightbox({ open, src, name, onClose }: Props) {
+const maxWidthClass: Record<Variant, string> = {
+  avatar: 'max-w-[min(100%,32rem)]',
+  cover: 'max-w-[min(100%,56rem)]',
+};
+
+/** Lightbox fullscreen cho ảnh profile (avatar / ảnh bìa) — backdrop tối, hiển thị toàn bộ ảnh. */
+export function ProfileImageLightbox({
+  open,
+  src,
+  alt,
+  onClose,
+  variant = 'avatar',
+}: Props) {
   if (!src) return null;
 
   return (
@@ -25,16 +40,42 @@ export function AvatarLightbox({ open, src, name, onClose }: Props) {
           tone="inverted"
           aria-label="Đóng"
           onClick={onClose}
-          className="pointer-events-auto absolute right-4 top-4"
+          className="pointer-events-auto absolute right-4 top-4 z-20"
         >
           <X className="h-6 w-6" aria-hidden />
         </IconButton>
         <img
           src={src}
-          alt={name ? `Ảnh đại diện của ${name}` : 'Ảnh đại diện'}
-          className="pointer-events-auto relative z-10 max-h-[80dvh] max-w-full rounded-full object-cover"
+          alt={alt}
+          className={cn(
+            'pointer-events-auto relative z-10 h-auto max-h-[90dvh] w-auto object-contain',
+            maxWidthClass[variant],
+          )}
         />
       </Modal.Content>
     </Modal>
+  );
+}
+
+/** @deprecated Dùng ProfileImageLightbox — giữ alias tương thích. */
+export function AvatarLightbox({
+  open,
+  src,
+  name,
+  onClose,
+}: {
+  open: boolean;
+  src: string | null;
+  name: string | null;
+  onClose: () => void;
+}) {
+  return (
+    <ProfileImageLightbox
+      open={open}
+      src={src}
+      alt={name ? `Ảnh đại diện của ${name}` : 'Ảnh đại diện'}
+      variant="avatar"
+      onClose={onClose}
+    />
   );
 }

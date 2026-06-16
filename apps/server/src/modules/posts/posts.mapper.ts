@@ -10,7 +10,7 @@ import type {
 type PostWithAuthorAndMedia = Post & {
   author: Pick<User, 'id' | 'username' | 'name' | 'image'>;
   media: Media[];
-  _count: { replies: number; likes: number };
+  _count: { replies: number; likes: number; shares?: number };
 };
 
 function mediaKindToType(kind: MediaKind): PostMediaType {
@@ -33,14 +33,18 @@ function mapMediaRow(m: Media, position: number): PostMediaDto {
 export function mapPostToFeedItemDto(
   post: PostWithAuthorAndMedia,
   myReaction: string | null = null,
+  savedByMe = false,
 ): PostFeedItemDto {
-  const sortedMedia = [...post.media].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  const sortedMedia = [...post.media]
+    .filter((m) => Boolean(m.publicUrl?.trim()))
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
   return {
     id: post.id,
     parentId: post.parentId,
     content: post.content,
     createdAt: post.createdAt.toISOString(),
+    visibility: post.visibility,
     author: {
       id: post.author.id,
       username: post.author.username,
@@ -49,7 +53,9 @@ export function mapPostToFeedItemDto(
     },
     replyCount: post._count.replies,
     likeCount: post._count.likes ?? 0,
+    shareCount: post._count.shares ?? 0,
     myReaction,
+    savedByMe,
     media: sortedMedia.map((m, index) => mapMediaRow(m, index)),
   };
 }
@@ -57,13 +63,15 @@ export function mapPostToFeedItemDto(
 type PostReelRow = Post & {
   author: Pick<User, 'id' | 'username' | 'name' | 'image'>;
   media: Media[];
-  _count: { replies: number; likes: number };
+  _count: { replies: number; likes: number; shares?: number };
 };
 
 /** Mapper for reels feed — requires at least one VIDEO media. Returns null if no video found. */
 export function mapPostToReelsFeedItemDto(
   post: PostReelRow,
   isFollowing: boolean,
+  myReaction: string | null = null,
+  savedByMe = false,
 ): ReelsFeedItemDto | null {
   const videoMedia = post.media
     .filter((m) => m.kind === MediaKind.VIDEO)
@@ -85,6 +93,9 @@ export function mapPostToReelsFeedItemDto(
     author,
     replyCount: post._count.replies,
     likeCount: post._count.likes,
+    shareCount: post._count.shares ?? 0,
+    myReaction,
+    savedByMe,
     isFollowing,
     video: mapMediaRow(videoMedia, 0),
   };
@@ -98,7 +109,7 @@ export const postReelInclude = {
     where: { kind: MediaKind.VIDEO, status: MediaStatus.READY },
     orderBy: { createdAt: 'asc' as const },
   },
-  _count: { select: { replies: true, likes: true } },
+  _count: { select: { replies: true, likes: true, shares: true } },
 } as const;
 
 export const postFeedInclude = {
@@ -109,5 +120,5 @@ export const postFeedInclude = {
     where: { status: { not: MediaStatus.FAILED } },
     orderBy: { createdAt: 'asc' as const },
   },
-  _count: { select: { replies: true, likes: true } },
+  _count: { select: { replies: true, likes: true, shares: true } },
 } as const;

@@ -31,6 +31,7 @@ import { errorMiddleware } from './middleware/error.middleware.js';
 import { handleSignInIdentifier } from './modules/auth/identifier-auth.routes.js';
 import { healthRouter } from './modules/health/health.routes.js';
 import { chatRouter } from './modules/chat/chat.routes.js';
+import { friendsRouter } from './modules/friends/friends.routes.js';
 import { postsRouter } from './modules/posts/posts.routes.js';
 import { searchRouter } from './modules/search/search.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
@@ -99,6 +100,7 @@ export function buildApp(): Express {
   app.use('/api/v1/posts', postsRouter);
   app.use('/api/v1/search', searchRouter);
   app.use('/api/v1/chat', chatRouter);
+  app.use('/api/v1/friends', friendsRouter);
   app.use('/api/v1/users', usersRouter);
   app.use('/api/v1/media', mediaRouter);
   app.use('/api/v1/notifications', notificationsRouter);
@@ -106,7 +108,7 @@ export function buildApp(): Express {
   app.use('/api/v1/me', meRouter);
   app.use('/api/v1/admin', adminRouter);
 
-  // Phục vụ tĩnh các file tải lên cho E2EE Chat
+  // Phục vụ tĩnh các file tải lên cho Chat
   app.use('/api/v1/media/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
   // Phải nằm cuối cùng: error middleware có 4 tham số `(err, req, res, next)`
