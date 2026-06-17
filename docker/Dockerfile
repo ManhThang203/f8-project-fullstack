@@ -51,7 +51,7 @@ RUN pnpm turbo run build --filter=@costy/web --filter=@costy/server
 # ─── runner stage: minimal runtime image ────────────────────────────────────
 FROM node:22-alpine AS runner
 ENV NODE_ENV=production
-RUN apk add --no-cache ffmpeg tini
+RUN apk add --no-cache tini
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
@@ -82,6 +82,6 @@ COPY docker/api-entrypoint.sh /usr/local/bin/api-entrypoint.sh
 # Windows checkout có thể để CRLF → shebang hỏng trong Linux.
 RUN sed -i 's/\r$//' /usr/local/bin/api-entrypoint.sh && chmod +x /usr/local/bin/api-entrypoint.sh
 
-# tini reaps zombie children (workers, ffmpeg subprocesses).
+# tini reaps zombie children (workers, subprocesses).
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["pnpm", "--filter", "@costy/server", "start"]
