@@ -24,12 +24,6 @@ import { cn } from '@/lib/utils';
 
 type ActionType = 'KEEP' | 'REMOVE' | 'DISMISS';
 
-const ACTION_LABELS: Record<ActionType, string> = {
-  KEEP: 'Xác nhận vi phạm — giữ ẩn',
-  REMOVE: 'Gỡ bỏ nội dung',
-  DISMISS: 'Bỏ qua — không vi phạm, gỡ ẩn',
-};
-
 export default function ModerationCaseDetailPage() {
   const { t } = useTranslation();
   const params = useParams();
@@ -46,13 +40,15 @@ export default function ModerationCaseDetailPage() {
 
   const caseData = data?.data;
 
+  const actionLabel = (action: ActionType) => t(`moderation.actions.${action}`);
+
   const handleAction = () => {
     if (!caseData) return;
     resolveMutation.mutate(
       {
         id: caseData.id,
         action: selectedAction,
-        resolutionNote: resolutionNote || ACTION_LABELS[selectedAction],
+        resolutionNote: resolutionNote || actionLabel(selectedAction),
       },
       { onSuccess: () => router.push('/reports') },
     );
@@ -65,7 +61,9 @@ export default function ModerationCaseDetailPage() {
       decision,
       decisionNote:
         appealDecisionNote ||
-        (decision === 'APPROVED' ? 'Chấp nhận kháng nghị' : 'Từ chối kháng nghị'),
+        (decision === 'APPROVED'
+          ? t('moderation.appealApprovedDefault')
+          : t('moderation.appealRejectedDefault')),
     });
   };
 
@@ -198,7 +196,7 @@ export default function ModerationCaseDetailPage() {
                     : 'border-border text-muted-foreground hover:text-foreground',
                 )}
               >
-                {ACTION_LABELS[action]}
+                {actionLabel(action)}
               </button>
             ))}
           </div>

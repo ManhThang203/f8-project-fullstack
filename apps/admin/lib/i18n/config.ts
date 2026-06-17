@@ -19,6 +19,7 @@ export function initI18n() {
     fallbackLng: 'vi',
     interpolation: { escapeValue: false },
     react: { useSuspense: false },
+    nsSeparator: false,
   });
 
   return i18n;

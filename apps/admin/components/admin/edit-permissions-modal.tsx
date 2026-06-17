@@ -167,10 +167,7 @@ export function EditPermissionsModal({ isOpen, onClose, user }: Props) {
           {isSuperAdmin && (
             <div className="border-warning/30 bg-warning/10 text-warning-foreground flex items-start gap-2.5 rounded-xl border p-3.5 text-sm">
               <ShieldAlert className="text-warning size-5 shrink-0" />
-              <p>
-                {t('moderators.saveError')}: Không thể chỉnh sửa quyền hạn của tài khoản Super
-                Admin. Tài khoản Super Admin mặc định sở hữu toàn bộ đặc quyền trên hệ thống.
-              </p>
+              <p>{t('moderators.superAdminWarning')}</p>
             </div>
           )}
 
@@ -233,7 +230,7 @@ export function EditPermissionsModal({ isOpen, onClose, user }: Props) {
                             <div className="flex-1 space-y-0.5">
                               <div className="flex flex-wrap items-center gap-1.5">
                                 <span className="text-foreground text-sm font-medium">
-                                  {p.label}
+                                  {t(`permissions.${p.key}`, p.label)}
                                 </span>
                                 {badgeText && (
                                   <span

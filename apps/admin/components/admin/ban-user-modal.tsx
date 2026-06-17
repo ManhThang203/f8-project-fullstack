@@ -84,7 +84,7 @@ export function BanUserModal({ isOpen, onClose, user }: Props) {
     e.preventDefault();
 
     if (!reason.trim()) {
-      toast.error(t('users.reasonLabel') + ' ' + t('login.passwordRequired').toLowerCase()); // fallback translation helper
+      toast.error(t('users.reasonRequired'));
       return;
     }
 
