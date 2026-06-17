@@ -8,6 +8,7 @@ import type { ReelsFeedItemDto } from './reels-types';
 type Props = {
   item: ReelsFeedItemDto;
   index: number;
+  slideHeight: string;
   onBecomeActive?: (index: number) => void;
 };
 
@@ -15,7 +16,7 @@ type Props = {
  * One full-height slide in the reels feed.
  * Uses IntersectionObserver to detect when ≥50% visible → tells the player to autoplay.
  */
-export function ReelsSlide({ item, index, onBecomeActive }: Props) {
+export function ReelsSlide({ item, index, slideHeight, onBecomeActive }: Props) {
   const slideRef = useRef<HTMLDivElement>(null);
   const [isActive, setIsActive] = useState(false);
 
@@ -42,7 +43,8 @@ export function ReelsSlide({ item, index, onBecomeActive }: Props) {
     <div
       ref={slideRef}
       data-reels-slide
-      className="h-[calc(100dvh-3.5rem)] w-full shrink-0 snap-start"
+      className="w-full shrink-0 snap-start"
+      style={{ height: slideHeight }}
     >
       <FacebookReelsPlayer item={item} isActive={isActive} />
     </div>

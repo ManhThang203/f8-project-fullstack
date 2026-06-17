@@ -61,3 +61,36 @@ export function useReelsDeviceProfile(): ReelsDeviceProfile {
 
   return profile;
 }
+
+export const SITE_HEADER_HEIGHT_REM = 3.5;
+export const SITE_BOTTOM_NAV_HEIGHT_REM = 3.5;
+
+/** Tính chiều cao slide Reels theo viewport và có bottom nav hay không. */
+function buildReelsSlideHeight(hasBottomNav: boolean): string {
+  if (typeof window !== 'undefined' && window.matchMedia(REELS_STAGE_MIN_WIDTH_QUERY).matches) {
+    return `calc(100dvh - ${SITE_HEADER_HEIGHT_REM}rem)`;
+  }
+  if (hasBottomNav) {
+    return `calc(100dvh - ${SITE_HEADER_HEIGHT_REM}rem - ${SITE_BOTTOM_NAV_HEIGHT_REM}rem - env(safe-area-inset-bottom, 0px))`;
+  }
+  return `calc(100dvh - ${SITE_HEADER_HEIGHT_REM}rem)`;
+}
+
+/** Hook trả về chiều cao slide Reels (trừ header; trừ thêm bottom nav trên mobile khi đã đăng nhập). */
+export function useReelsSlideHeight(hasBottomNav: boolean): string {
+  const [height, setHeight] = useState(() =>
+    typeof window === 'undefined'
+      ? `calc(100dvh - ${SITE_HEADER_HEIGHT_REM}rem)`
+      : buildReelsSlideHeight(hasBottomNav),
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia(REELS_STAGE_MIN_WIDTH_QUERY);
+    const update = () => setHeight(buildReelsSlideHeight(hasBottomNav));
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, [hasBottomNav]);
+
+  return height;
+}

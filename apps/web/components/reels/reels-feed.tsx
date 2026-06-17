@@ -6,23 +6,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ReelsNavControls } from './controls/reels-nav-controls';
 import { ReelsAudioProvider } from './reels-audio-context';
+import { useReelsSlideHeight } from './reels-layout.utils';
 import { ReelsSkeleton } from './reels-skeleton';
 import { ReelsSlide } from './reels-slide';
 
 import { Button } from '@/components/shared/button';
 import { flattenReelsFeedPages, useReelsFeed } from '@/hooks/queries/use-reels-feed';
+import { authClient } from '@/lib/auth-client';
 import { isApiQueryError } from '@/lib/api-query';
 
-const SLIDE_HEIGHT = 'h-[calc(100dvh-3.5rem)]';
-
-const SCROLL_CONTAINER_CLASS = [
-  SLIDE_HEIGHT,
-  'overflow-y-auto snap-y snap-mandatory',
-  '[-ms-overflow-style:none]',
-  '[-webkit-overflow-scrolling:touch]',
-  '[scrollbar-width:none]',
-  '[&::-webkit-scrollbar]:hidden',
-].join(' ');
+const SCROLL_CONTAINER_BASE =
+  'overflow-y-auto snap-y snap-mandatory [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden';
 
 function syncReelUrl(postId: string) {
   const targetPath = `/reel/${postId}`;
@@ -36,6 +30,8 @@ type Props = {
 };
 
 export function ReelsFeed({ initialPostId }: Props) {
+  const { data: session } = authClient.useSession();
+  const slideHeight = useReelsSlideHeight(Boolean(session?.user));
   const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useReelsFeed(initialPostId);
 
@@ -114,7 +110,7 @@ export function ReelsFeed({ initialPostId }: Props) {
 
   if (isLoading) {
     return (
-      <div className={`${SLIDE_HEIGHT} w-full`}>
+      <div className="w-full" style={{ height: slideHeight }}>
         <ReelsSkeleton />
       </div>
     );
@@ -123,7 +119,8 @@ export function ReelsFeed({ initialPostId }: Props) {
   if (isError && !isNotFound) {
     return (
       <div
-        className={`flex ${SLIDE_HEIGHT} flex-col items-center justify-center gap-4 bg-black text-white`}
+        className="flex w-full flex-col items-center justify-center gap-4 bg-black text-white"
+        style={{ height: slideHeight }}
       >
         <p className="text-sm text-white/70">{error.message}</p>
         <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>
@@ -135,7 +132,10 @@ export function ReelsFeed({ initialPostId }: Props) {
 
   if (items.length === 0) {
     return (
-      <div className={`flex ${SLIDE_HEIGHT} flex-col items-center justify-center bg-black`}>
+      <div
+        className="flex w-full flex-col items-center justify-center bg-black"
+        style={{ height: slideHeight }}
+      >
         <p className="text-sm text-white/50">Chưa có Reels nào.</p>
       </div>
     );
@@ -144,12 +144,17 @@ export function ReelsFeed({ initialPostId }: Props) {
   return (
     <ReelsAudioProvider>
       <div className="relative">
-        <div ref={containerRef} className={SCROLL_CONTAINER_CLASS}>
+        <div
+          ref={containerRef}
+          className={SCROLL_CONTAINER_BASE}
+          style={{ height: slideHeight }}
+        >
           {items.map((item, index) => (
             <ReelsSlide
               key={item.id}
               item={item}
               index={index}
+              slideHeight={slideHeight}
               onBecomeActive={handleBecomeActive}
             />
           ))}
@@ -157,7 +162,7 @@ export function ReelsFeed({ initialPostId }: Props) {
           <div ref={loadMoreRef} className="h-px shrink-0" />
 
           {isFetchingNextPage && (
-            <div className={`${SLIDE_HEIGHT} w-full shrink-0 snap-start`}>
+            <div className="w-full shrink-0 snap-start" style={{ height: slideHeight }}>
               <ReelsSkeleton />
             </div>
           )}
