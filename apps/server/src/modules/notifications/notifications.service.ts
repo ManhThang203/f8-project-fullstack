@@ -66,7 +66,7 @@ function emitNotificationNew(
 ) {
   const io = getRealtimeIo();
   if (io) {
-    io.of('/chat').to(`user:${recipientId}`).emit('notification:new', notification);
+    io.of('/notifications').to(`user:${recipientId}`).emit('notification:new', notification);
   }
 }
 

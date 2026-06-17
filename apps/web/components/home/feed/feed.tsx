@@ -3,6 +3,7 @@
 import type { PostFeedItemDto } from '@costy/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { Socket } from 'socket.io-client';
 
 import { CreatePostModal } from '../compose/create-post-modal';
 import { CreatePostTrigger } from '../compose/create-post-trigger';
@@ -19,7 +20,7 @@ import {
 import { authClient } from '@/lib/auth-client';
 import type { ServerAuthUser } from '@/lib/auth-user.types';
 import { queryKeys } from '@/lib/query-keys';
-import { getSocket } from '@/lib/socket';
+import { getAuthedSocket } from '@/lib/socket';
 import { cn } from '@/lib/utils';
 
 type FeedUser = {
@@ -142,29 +143,51 @@ export function HomeFeed({ initialUser }: Props) {
   }
 
   useEffect(() => {
-    const socket = getSocket('/feed');
+    let cancelled = false;
+    let activeSocket: Socket | null = null;
 
-    function onPostReacted(payload: { postId: string; likeCount: number }) {
-      queryClient.setQueriesData<typeof data>(
-        { queryKey: queryKeys.posts.feed },
-        (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            pages: old.pages.map((page) => ({
-              ...page,
-              data: page.data.map((p) =>
-                p.id === payload.postId ? { ...p, likeCount: payload.likeCount } : p,
-              ),
-            })),
-          };
-        },
-      );
+    function onPostCreated(post: PostFeedItemDto) {
+      queryClient.setQueriesData<typeof data>({ queryKey: queryKeys.posts.feed }, (old) => {
+        if (!old) return old;
+        const exists = old.pages.some((page) => page.data.some((p) => p.id === post.id));
+        if (exists) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page, i) =>
+            i === 0 ? { ...page, data: [post, ...page.data] } : page,
+          ),
+        };
+      });
     }
 
-    socket.on('post:reacted', onPostReacted);
+    function onPostReacted(payload: { postId: string; likeCount: number }) {
+      queryClient.setQueriesData<typeof data>({ queryKey: queryKeys.posts.feed }, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            data: page.data.map((p) =>
+              p.id === payload.postId ? { ...p, likeCount: payload.likeCount } : p,
+            ),
+          })),
+        };
+      });
+    }
+
+    void getAuthedSocket('/feed').then((socket) => {
+      if (cancelled) return;
+      activeSocket = socket;
+      socket.on('post:created', onPostCreated);
+      socket.on('post:reacted', onPostReacted);
+    });
+
     return () => {
-      socket.off('post:reacted', onPostReacted);
+      cancelled = true;
+      if (activeSocket) {
+        activeSocket.off('post:created', onPostCreated);
+        activeSocket.off('post:reacted', onPostReacted);
+      }
     };
   }, [queryClient]);
 

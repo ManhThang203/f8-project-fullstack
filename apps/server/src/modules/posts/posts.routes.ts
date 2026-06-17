@@ -113,10 +113,6 @@ router.post(
   '/',
   requireAuth,
   uploadPostMedia,
-  realtimeBroadcast({
-    namespace: '/feed',
-    event: 'post:created',
-  }),
   async (req, res, next) => {
     try {
       const body = createPostBodySchema.parse(req.body);
