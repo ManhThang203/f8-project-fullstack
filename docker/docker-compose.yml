@@ -5,7 +5,7 @@
 #   docker compose -f docker/docker-compose.yml --env-file docker/.env.docker up --build
 # Hoặc: pnpm docker:up
 #
-# Chỉ infra (Postgres, Redis, MinIO): pnpm docker:infra:up
+# Chỉ infra (Postgres, Redis): pnpm docker:infra:up
 # Sau khi đổi NEXT_PUBLIC_*: build lại image (pnpm docker:rebuild).
 # =============================================================================
 
@@ -44,34 +44,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
-
-  # ─── MinIO — S3-compatible object storage (media uploads) ────────────────────
-  minio:
-    image: minio/minio:latest
-    container_name: costy-minio
-    restart: unless-stopped
-    command: server /data --console-address ":9001"
-    env_file:
-      - .env.docker
-    ports:
-      - '9000:9000' # S3 API
-      - '9001:9001' # Web console
-    volumes:
-      - minio-data:/data
-    healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ─── Mailhog — SMTP dev catcher (UI http://localhost:8025) ─────────────────
-  mailhog:
-    image: mailhog/mailhog:latest
-    container_name: costy-mailhog
-    restart: unless-stopped
-    ports:
-      - '1025:1025' # SMTP
-      - '8025:8025' # Web UI
 
   # ─── API — Express + BullMQ workers (cùng process, xem apps/server) ────────
   # Entrypoint: migrate DB rồi start server (docker/api-entrypoint.sh).
@@ -123,4 +95,3 @@ services:
 volumes:
   postgres-data:
   redis-data:
-  minio-data:
