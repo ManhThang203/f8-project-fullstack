@@ -10,6 +10,7 @@ import type {
 
 import {
   destroyMany,
+  getCloudinaryCloudName,
   isCloudinaryConfigured,
   uploadBuffer,
   type CloudinaryUploadResult,
@@ -586,7 +587,12 @@ export async function createPost(opts: {
       );
       const message = result.reason instanceof Error ? result.reason.message : 'Upload thất bại';
       logger.error({ err: result.reason }, 'Cloudinary upload failed during createPost');
-      throw AppError.badRequest(`Không tải được media: ${message}`);
+      const isAuthError = message.includes('Invalid cloud_name') || message.includes('(HTTP 401)');
+      throw AppError.badRequest(
+        isAuthError
+          ? `Cấu hình Cloudinary không hợp lệ. Cloud name "${getCloudinaryCloudName()}" bị Cloudinary từ chối (401). Lấy đúng Cloud name, API Key, API Secret từ Dashboard → Product environment credentials.`
+          : `Không tải được media: ${message}`,
+      );
     }
   }
 
