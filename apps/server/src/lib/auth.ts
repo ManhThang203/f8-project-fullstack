@@ -142,20 +142,6 @@ export function createAppAuth({
       autoSignInAfterVerification: true,
       expiresIn: 60 * 60,
       sendVerificationEmail: async ({ user, url }) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7600/ingest/7e460ad4-e57b-4c68-a427-7775819b3418', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'df72aa' },
-          body: JSON.stringify({
-            sessionId: 'df72aa',
-            hypothesisId: 'D',
-            location: 'auth.ts:144',
-            message: 'sendVerificationEmail callback fired',
-            data: { hasEmail: Boolean(user.email), hasUrl: Boolean(url) },
-            timestamp: Date.now(),
-          }),
-        }).catch(() => {});
-        // #endregion
         if (!user.email) return;
         void sendVerificationEmail(user.email, url).catch((err: unknown) => {
           logger.error({ err }, 'sendVerificationEmail mail failed');

@@ -6,16 +6,13 @@
  * - `group:{groupId}` → broadcast tin nhóm
  */
 
-import type { IncomingHttpHeaders } from 'node:http';
-
 import { prisma } from '@costy/db';
-import { fromNodeHeaders } from 'better-auth/node';
 import type { Namespace, Socket } from 'socket.io';
 
-import { authWeb } from '../lib/auth.js';
 import { logger } from '../lib/logger.js';
-import { verifySocketToken } from '../lib/socket-token.js';
 import { createNotification } from '../modules/notifications/notifications.service.js';
+
+import { authenticateSocket } from './socket-auth.js';
 
 /** Tạo notification "tin nhắn mới" cho các thành viên khác trong phòng (fire-and-forget). */
 async function notifyRoomMessage(roomId: string, senderId: string): Promise<void> {
@@ -33,38 +30,8 @@ async function notifyRoomMessage(roomId: string, senderId: string): Promise<void
     });
   }
 }
-/**
- * Middleware xác thực namespace `/chat`.
- * Ưu tiên token HMAC (handshake.auth.token), fallback về cookie session Better Auth.
- */
 function registerChatAuth(chatNs: Namespace) {
-  chatNs.use((socket, next) => {
-    const raw =
-      typeof socket.handshake.auth === 'object' && socket.handshake.auth !== null
-        ? (socket.handshake.auth as { token?: unknown }).token
-        : undefined;
-    if (typeof raw === 'string') {
-      const userId = verifySocketToken(raw);
-      if (userId) {
-        socket.data.userId = userId;
-        next();
-        return;
-      }
-    }
-    void authWeb.api
-      .getSession({
-        headers: fromNodeHeaders(socket.handshake.headers as IncomingHttpHeaders),
-      })
-      .then((session) => {
-        if (!session?.user?.id) {
-          next(new Error('unauthorized'));
-          return;
-        }
-        socket.data.userId = session.user.id;
-        next();
-      })
-      .catch(() => next(new Error('unauthorized')));
-  });
+  chatNs.use(authenticateSocket);
 }
 
 /** Join tất cả các phòng ChatRoom (cả 1-1 và Group) mà user đang là thành viên */
