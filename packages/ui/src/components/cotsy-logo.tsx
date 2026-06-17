@@ -14,11 +14,11 @@ export function CotsyLogo({ className, ...props }: CotsyLogoProps) {
     <Image
       src="/icon/Logo-app-2.webp"
       alt="Cotsy"
-      width={96}
-      height={96}
+      width={150}
+      height={150}
       priority
       unoptimized
-      className={cn('h-24 w-24 shrink-0 object-contain', className)}
+      className={cn('h-[150px] w-[150px] shrink-0 object-contain', className)}
       {...props}
     />
   );
