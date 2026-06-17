@@ -2,6 +2,7 @@
 
 import {
   Activity,
+  Bot,
   CalendarDays,
   CalendarRange,
   FileText,
@@ -74,18 +75,25 @@ export default function DashboardPage() {
           icon={ScanEye}
         />
         <KpiCard
-          title={t('dashboard.activeHashtags')}
-          value={stats?.activeHashtags ?? '—'}
-          href="/hashtags"
-          linkLabel={t('dashboard.linkHashtags')}
-          icon={Hash}
-        />
-        <KpiCard
           title={t('dashboard.reportResolutionRate')}
           value={stats ? `${stats.reportResolutionRate}%` : '—'}
           href="/reports"
           linkLabel={t('dashboard.linkReports')}
           icon={ShieldCheck}
+        />
+        <KpiCard
+          title={t('dashboard.moderationResolutionRate')}
+          value={stats ? `${stats.moderationResolutionRate}%` : '—'}
+          href="/reports?tab=ai-moderation"
+          linkLabel={t('dashboard.linkModeration')}
+          icon={Bot}
+        />
+        <KpiCard
+          title={t('dashboard.activeHashtags')}
+          value={stats?.activeHashtags ?? '—'}
+          href="/hashtags"
+          linkLabel={t('dashboard.linkHashtags')}
+          icon={Hash}
         />
       </div>
 
