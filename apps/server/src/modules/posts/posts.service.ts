@@ -35,6 +35,7 @@ import {
   postFeedInclude,
   postReelInclude,
 } from './posts.mapper.js';
+import { emitPostCreated } from './posts.realtime.js';
 
 const IMAGE_MAX_BYTES = 10 * 1024 * 1024; // 10MB
 const VIDEO_MAX_BYTES = 500 * 1024 * 1024; // 500MB
@@ -696,7 +697,12 @@ export async function createPost(opts: {
         .catch((err) => logger.error({ err, postId }, 'failed to enqueue embedding job'));
     }
 
-    return mapPostToFeedItemDto(row);
+    const dto = mapPostToFeedItemDto(row);
+    if (!opts.body.parentId) {
+      void emitPostCreated(opts.authorId, dto, row.visibility);
+    }
+
+    return dto;
   } catch (error) {
     if (uploaded.length > 0) {
       await destroyMany(

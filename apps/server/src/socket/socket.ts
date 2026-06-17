@@ -5,6 +5,8 @@ import { Server as SocketIOServer } from 'socket.io';
 import { env } from '../config/env.js';
 
 import { registerChatNamespace } from './chat.namespace.js';
+import { registerFeedNamespace } from './feed.namespace.js';
+import { registerNotificationsNamespace } from './notifications.namespace.js';
 
 /**
  * Gắn Socket.IO vào HTTP server và đăng ký các namespace.
@@ -16,7 +18,8 @@ export function initSocket(httpServer: HttpServer): SocketIOServer {
     cors: { origin: env.CORS_ORIGINS, credentials: true },
   });
 
-  // Namespace chat đầy đủ: auth, gửi tin, typing, nhóm.
+  registerNotificationsNamespace(io.of('/notifications'));
+  registerFeedNamespace(io.of('/feed'));
   registerChatNamespace(io.of('/chat'));
 
   return io;

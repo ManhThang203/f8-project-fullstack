@@ -28,7 +28,7 @@ import {
   useUnreadNotificationCount,
   useMarkNotificationReadMutation,
 } from '@/hooks/queries/use-notifications';
-import { getChatSocket } from '@/lib/chat-socket';
+import { getAuthedSocket } from '@/lib/socket';
 import { queryKeys } from '@/lib/query-keys';
 import { cn } from '@/lib/utils';
 
@@ -225,7 +225,7 @@ export function NotificationDropdown() {
   useEffect(() => {
     let activeSocket: Socket | null = null;
 
-    getChatSocket()
+    getAuthedSocket('/notifications')
       .then((s) => {
         activeSocket = s;
         const onNew = () => {
