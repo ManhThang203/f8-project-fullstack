@@ -3,7 +3,8 @@
 import type { PostFeedItemDto } from '@costy/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image, Sticker } from 'lucide-react';
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import type { Socket } from 'socket.io-client';
 import { toast } from 'sonner';
 
 import type { DraftMedia } from '../post-media/post-media-carousel';
@@ -16,11 +17,14 @@ import { Avatar } from '@/components/shared/avatar';
 import { IconButton } from '@/components/shared/icon-button';
 import { usePost } from '@/hooks/queries/use-post';
 import { usePostComments } from '@/hooks/queries/use-post-comments';
+import { useCommentRealtime } from '@/hooks/use-comment-realtime';
 import { authClient } from '@/lib/auth-client';
 import { createPostWithMedia } from '@/lib/create-post';
 import { isImageMime, isVideoMime, validateFiles } from '@/lib/media-validation';
 import { queryKeys } from '@/lib/query-keys';
+import { getAuthedSocket } from '@/lib/socket';
 import { cn } from '@/lib/utils';
+import { handleCommentEnterKey } from '@/lib/comment-input';
 
 type Props = {
   post: PostFeedItemDto;
@@ -42,6 +46,7 @@ export function PostDetailView({ post, highlightCommentId }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
+  const [replyCount, setReplyCount] = useState(post.replyCount);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const { data, fetchNextPage, hasNextPage, isLoading } = usePostComments(post.id);
@@ -55,12 +60,56 @@ export function PostDetailView({ post, highlightCommentId }: Props) {
   const videoCount = drafts.filter((d) => isVideoMime(d.file.type)).length;
 
   useEffect(() => {
+    setReplyCount(post.replyCount);
+  }, [post.id, post.replyCount]);
+
+  useEffect(() => {
     return () => {
       drafts.forEach((d) => {
         if (d.url.startsWith('blob:')) URL.revokeObjectURL(d.url);
       });
     };
+  }, [drafts]);
+
+  const handleCountDelta = useCallback((delta: number) => {
+    setReplyCount((prev) => Math.max(0, prev + delta));
   }, []);
+
+  useCommentRealtime({ postId: post.id, meId: me?.id, onCountDelta: handleCountDelta });
+
+  useEffect(() => {
+    let cancelled = false;
+    let activeSocket: Socket | null = null;
+
+    function onPostHidden(payload: { postId: string; parentId?: string | null }) {
+      if (payload.postId === post.id) {
+        toast.error('Bài viết đã bị ẩn do vi phạm quy tắc cộng đồng.');
+        return;
+      }
+      if (payload.parentId === post.id) {
+        setReplyCount((prev) => Math.max(0, prev - 1));
+      }
+      queryClient.invalidateQueries({ queryKey: ['posts', 'comments', post.id] });
+    }
+
+    void getAuthedSocket('/feed').then((socket) => {
+      if (cancelled) return;
+      activeSocket = socket;
+      socket.on('post:hidden', onPostHidden);
+    });
+
+    return () => {
+      cancelled = true;
+      activeSocket?.off('post:hidden', onPostHidden);
+    };
+  }, [post.id, queryClient]);
+
+  /** Giảm số bình luận hiển thị khi xóa comment cấp 1 của bài viết. */
+  function handleCommentDeleted(deletedComment: PostFeedItemDto) {
+    if (deletedComment.parentId === post.id) {
+      setReplyCount((prev) => Math.max(0, prev - 1));
+    }
+  }
 
   function handleFiles(files: FileList | null) {
     if (!files || busy) return;
@@ -133,6 +182,10 @@ export function PostDetailView({ post, highlightCommentId }: Props) {
     setDrafts([]);
     toast.success('Đã gửi bình luận');
 
+    if (!replyingToCommentId) {
+      setReplyCount((prev) => prev + 1);
+    }
+
     queryClient.invalidateQueries({ queryKey: ['posts', 'comments', post.id] });
 
     if (replyingToCommentId) {
@@ -155,6 +208,7 @@ export function PostDetailView({ post, highlightCommentId }: Props) {
           post={post}
           onDismiss={() => {}}
           onCommentClick={() => textareaRef.current?.focus()}
+          replyCountOverride={replyCount}
         />
 
         <div className="border-border mt-2 border-t" />
@@ -171,7 +225,7 @@ export function PostDetailView({ post, highlightCommentId }: Props) {
                     Đang tải bình luận...
                   </p>
                 ) : highlightedComment ? (
-                  <CommentItem comment={highlightedComment} onReply={handleReplyTo} />
+                  <CommentItem comment={highlightedComment} onReply={handleReplyTo} rootPostId={post.id} onDeleted={handleCommentDeleted} />
                 ) : (
                   <p className="text-muted-foreground py-4 text-center text-sm">
                     Không tìm thấy bình luận
@@ -192,7 +246,13 @@ export function PostDetailView({ post, highlightCommentId }: Props) {
           )}
           {comments.map((comment) =>
             comment.id === highlightCommentId ? null : (
-              <CommentItem key={comment.id} comment={comment} onReply={handleReplyTo} />
+                  <CommentItem
+                    key={comment.id}
+                    comment={comment}
+                    onReply={handleReplyTo}
+                    rootPostId={post.id}
+                    onDeleted={handleCommentDeleted}
+                  />
             ),
           )}
           {hasNextPage && (
@@ -224,6 +284,7 @@ export function PostDetailView({ post, highlightCommentId }: Props) {
                 setContent(e.target.value);
                 if (e.target.value.trim() === '') setReplyingToCommentId(null);
               }}
+              onKeyDown={(e) => handleCommentEnterKey(e, () => void handleSubmit())}
               placeholder="Viết bình luận..."
               className="placeholder:text-muted-foreground w-full resize-none bg-transparent text-sm outline-none"
               rows={drafts.length > 0 ? 2 : 1}

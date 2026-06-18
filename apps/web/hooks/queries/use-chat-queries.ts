@@ -1,8 +1,9 @@
 'use client';
 
+import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiQuery, apiQueryData } from '@/lib/api-query';
+import { apiQueryData } from '@/lib/api-query';
 import { queryKeys } from '@/lib/query-keys';
 import type { ChatMessageDto, Conversation } from '@/types/chat';
 
@@ -19,7 +20,10 @@ export function useChatConversations(enabled = true) {
 
 export function useInvalidateChatConversations() {
   const queryClient = useQueryClient();
-  return () => void queryClient.invalidateQueries({ queryKey: queryKeys.chat.conversations });
+  return useCallback(
+    () => void queryClient.invalidateQueries({ queryKey: queryKeys.chat.conversations }),
+    [queryClient],
+  );
 }
 
 export function useRoomMessages(roomId: string | null, enabled = true) {
@@ -27,13 +31,9 @@ export function useRoomMessages(roomId: string | null, enabled = true) {
     queryKey: queryKeys.chat.roomMessages(roomId ?? ''),
     queryFn: async () => {
       if (!roomId) return [];
-      const data = await apiQueryData<ChatMessageDto[]>(
+      return apiQueryData<ChatMessageDto[]>(
         `/chat/rooms/${encodeURIComponent(roomId)}/messages`,
       );
-      void apiQuery(`/chat/rooms/${encodeURIComponent(roomId)}/read`, {
-        method: 'POST',
-      }).catch(() => undefined);
-      return data;
     },
     enabled: enabled && Boolean(roomId),
   });

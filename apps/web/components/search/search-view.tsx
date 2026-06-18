@@ -90,13 +90,9 @@ export function SearchView() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const qParam = searchParams.get('q') ?? '';
-  const [input, setInput] = useState(qParam);
+  const [input, setInput] = useState('');
   const [tab, setTab] = useState<SearchTab>('posts');
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setInput(qParam);
-  }, [qParam]);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -113,6 +109,7 @@ export function SearchView() {
     e.preventDefault();
     const next = input.trim();
     if (next.length < 2) return;
+    setInput('');
     router.push(`/search?q=${encodeURIComponent(next)}`);
   }
 

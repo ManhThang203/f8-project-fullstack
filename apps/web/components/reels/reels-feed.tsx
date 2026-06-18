@@ -3,6 +3,7 @@
 import { ErrorCode } from '@costy/shared';
 import { notFound } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 
 import { ReelsNavControls } from './controls/reels-nav-controls';
 import { ReelsAudioProvider } from './reels-audio-context';
@@ -38,8 +39,8 @@ export function ReelsFeed({ initialPostId }: Props) {
   const items = flattenReelsFeedPages(data?.pages);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const scrollerRef = useRef<HTMLElement | null>(null);
   const itemsRef = useRef(items);
   itemsRef.current = items;
 
@@ -66,45 +67,39 @@ export function ReelsFeed({ initialPostId }: Props) {
   }, []);
 
   const scrollToSlide = useCallback((index: number) => {
-    const slides = containerRef.current?.querySelectorAll('[data-reels-slide]');
-    slides?.[index]?.scrollIntoView({ behavior: 'auto' });
+    virtuosoRef.current?.scrollToIndex({ index, behavior: 'auto' });
   }, []);
 
-  const handleBecomeActive = useCallback((index: number) => {
-    setActiveIndex(index);
-    const id = itemsRef.current[index]?.id;
-    if (id) syncReelUrl(id);
+  /** Tải trang reels tiếp theo khi cuộn tới cuối danh sách. */
+  const handleEndReached = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  /** Tính slide đang xem từ vị trí cuộn (mỗi slide cao đúng bằng viewport). */
+  const updateActiveFromScroll = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el || el.clientHeight === 0) return;
+    const index = Math.round(el.scrollTop / el.clientHeight);
+    setActiveIndex((prev) => (prev === index ? prev : index));
   }, []);
+
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', updateActiveFromScroll, { passive: true });
+    return () => el.removeEventListener('scroll', updateActiveFromScroll);
+  }, [updateActiveFromScroll, isLoading]);
+
+  useEffect(() => {
+    const id = itemsRef.current[activeIndex]?.id;
+    if (id) syncReelUrl(id);
+  }, [activeIndex]);
 
   useEffect(() => {
     if (isLoading || items.length === 0) return;
     const firstId = items[0]?.id;
     if (firstId) syncReelUrl(firstId);
   }, [isLoading, items]);
-
-  useEffect(() => {
-    if (isLoading || items.length === 0 || !initialPostId) return;
-    scrollToSlide(0);
-  }, [isLoading, items.length, initialPostId, scrollToSlide]);
-
-  useEffect(() => {
-    if (isLoading) return;
-
-    const el = loadMoreRef.current;
-    if (!el) return;
-
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry?.isIntersecting) return;
-        if (!hasNextPage || isFetchingNextPage) return;
-        void fetchNextPage();
-      },
-      { root: containerRef.current, rootMargin: '400px' },
-    );
-
-    io.observe(el);
-    return () => io.disconnect();
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage, isLoading]);
 
   if (isNotFound) notFound();
 
@@ -144,29 +139,34 @@ export function ReelsFeed({ initialPostId }: Props) {
   return (
     <ReelsAudioProvider>
       <div className="relative">
-        <div
-          ref={containerRef}
+        <Virtuoso
+          ref={virtuosoRef}
+          scrollerRef={(el) => {
+            scrollerRef.current = el as HTMLElement | null;
+          }}
           className={SCROLL_CONTAINER_BASE}
           style={{ height: slideHeight }}
-        >
-          {items.map((item, index) => (
+          data={items}
+          computeItemKey={(_, item) => item.id}
+          initialTopMostItemIndex={initialPostId ? 0 : undefined}
+          endReached={handleEndReached}
+          increaseViewportBy={{ top: 600, bottom: 800 }}
+          itemContent={(index, item) => (
             <ReelsSlide
-              key={item.id}
               item={item}
-              index={index}
               slideHeight={slideHeight}
-              onBecomeActive={handleBecomeActive}
+              isActive={index === activeIndex}
             />
-          ))}
-
-          <div ref={loadMoreRef} className="h-px shrink-0" />
-
-          {isFetchingNextPage && (
-            <div className="w-full shrink-0 snap-start" style={{ height: slideHeight }}>
-              <ReelsSkeleton />
-            </div>
           )}
-        </div>
+          components={{
+            Footer: () =>
+              isFetchingNextPage ? (
+                <div className="w-full shrink-0 snap-start" style={{ height: slideHeight }}>
+                  <ReelsSkeleton />
+                </div>
+              ) : null,
+          }}
+        />
 
         <ReelsNavControls
           onPrev={() => scrollToSlide(activeIndex - 1)}

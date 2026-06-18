@@ -132,8 +132,12 @@ export function SiteHeaderDesktop({
           className="relative min-h-10 min-w-0 max-w-xs flex-1"
           onSubmit={(e) => {
             e.preventDefault();
-            const value = new FormData(e.currentTarget).get('q')?.toString().trim() ?? '';
-            if (value.length >= 2) router.push(`/search?q=${encodeURIComponent(value)}`);
+            const form = e.currentTarget;
+            const value = new FormData(form).get('q')?.toString().trim() ?? '';
+            if (value.length >= 2) {
+              router.push(`/search?q=${encodeURIComponent(value)}`);
+              form.reset();
+            }
           }}
         >
           <label htmlFor="site-header-search-desktop" className="sr-only">
@@ -155,7 +159,7 @@ export function SiteHeaderDesktop({
       </div>
 
       {/* Giữa: Home / Reels / Friends */}
-      <nav aria-label="Trang chính" className="flex shrink-0 items-center justify-center gap-2">
+      <nav aria-label="Trang chính" className="flex shrink-0 items-center justify-center gap-4">
         <NavTab href="/" label="Trang chủ" isActive={pathname === '/'}>
           <Home className="h-6 w-6" strokeWidth={pathname === '/' ? 2.25 : 2} aria-hidden />
         </NavTab>

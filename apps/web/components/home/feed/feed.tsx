@@ -2,8 +2,9 @@
 
 import type { PostFeedItemDto } from '@costy/shared';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Socket } from 'socket.io-client';
+import { Virtuoso } from 'react-virtuoso';
 
 import { CreatePostModal } from '../compose/create-post-modal';
 import { CreatePostTrigger } from '../compose/create-post-trigger';
@@ -97,7 +98,6 @@ export function HomeFeed({ initialUser }: Props) {
   const posts = useMemo(() => flattenPostsFeedPages(data?.pages), [data?.pages]);
 
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => new Set());
-  const loadMoreRef = useRef<HTMLDivElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [autoOpenFilePicker, setAutoOpenFilePicker] = useState(false);
 
@@ -110,20 +110,10 @@ export function HomeFeed({ initialUser }: Props) {
     setDismissedIds((prev) => new Set(prev).add(postId));
   }, []);
 
-  useEffect(() => {
-    const el = loadMoreRef.current;
-    if (!el || !hasNextPage || isFetchingNextPage) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) void fetchNextPage();
-      },
-      { rootMargin: '200px' },
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+  /** Tải trang tiếp theo khi cuộn tới cuối danh sách Virtuoso. */
+  const handleEndReached = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   function openModal(openFilePicker = false) {
     setAutoOpenFilePicker(openFilePicker);
@@ -175,11 +165,47 @@ export function HomeFeed({ initialUser }: Props) {
       });
     }
 
+    function onCommentCountChanged(payload: { postId: string; delta: number; actorId: string }) {
+      if (me?.id && payload.actorId === me.id) return;
+      queryClient.setQueriesData<typeof data>({ queryKey: queryKeys.posts.feed }, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            data: page.data.map((p) =>
+              p.id === payload.postId
+                ? { ...p, replyCount: Math.max(0, p.replyCount + payload.delta) }
+                : p,
+            ),
+          })),
+        };
+      });
+    }
+
+    function onPostHidden(payload: { postId: string; parentId?: string | null }) {
+      if (payload.parentId) return;
+      queryClient.setQueriesData<typeof data>({ queryKey: queryKeys.posts.feed }, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            data: page.data.filter((p) => p.id !== payload.postId),
+          })),
+        };
+      });
+      dismissPost(payload.postId);
+      queryClient.invalidateQueries({ queryKey: ['posts', 'comments'] });
+    }
+
     void getAuthedSocket('/feed').then((socket) => {
       if (cancelled) return;
       activeSocket = socket;
       socket.on('post:created', onPostCreated);
       socket.on('post:reacted', onPostReacted);
+      socket.on('post:hidden', onPostHidden);
+      socket.on('comment:countChanged', onCommentCountChanged);
     });
 
     return () => {
@@ -187,9 +213,11 @@ export function HomeFeed({ initialUser }: Props) {
       if (activeSocket) {
         activeSocket.off('post:created', onPostCreated);
         activeSocket.off('post:reacted', onPostReacted);
+        activeSocket.off('post:hidden', onPostHidden);
+        activeSocket.off('comment:countChanged', onCommentCountChanged);
       }
     };
-  }, [queryClient]);
+  }, [queryClient, dismissPost, me?.id]);
 
   const errorMessage = isError ? error.message : null;
 
@@ -255,23 +283,29 @@ export function HomeFeed({ initialUser }: Props) {
                 : 'Chưa có bài đăng. Hãy chạy seed hoặc viết bài mới.'}
           </p>
         ) : (
-          <>
-            <ul className="flex flex-col">
-              {visiblePosts.map((post) => (
-                <PostCard key={post.id} post={post} onDismiss={dismissPost} />
-              ))}
-            </ul>
-
-            <div ref={loadMoreRef} className="flex min-h-11 items-center justify-center py-4">
-              {isFetchingNextPage ? (
-                <p className="text-muted-foreground text-sm" aria-live="polite">
-                  Đang tải thêm…
-                </p>
-              ) : (
-                <p className="text-muted-foreground text-xs">Đã hiển thị tất cả bài trong feed.</p>
-              )}
-            </div>
-          </>
+          <Virtuoso
+            useWindowScroll
+            data={visiblePosts}
+            computeItemKey={(_, post) => post.id}
+            endReached={handleEndReached}
+            overscan={600}
+            itemContent={(_, post) => <PostCard post={post} onDismiss={dismissPost} />}
+            components={{
+              Footer: () => (
+                <div className="flex min-h-11 items-center justify-center py-4">
+                  {isFetchingNextPage ? (
+                    <p className="text-muted-foreground text-sm" aria-live="polite">
+                      Đang tải thêm…
+                    </p>
+                  ) : (
+                    <p className="text-muted-foreground text-xs">
+                      Đã hiển thị tất cả bài trong feed.
+                    </p>
+                  )}
+                </div>
+              ),
+            }}
+          />
         )}
       </section>
     </div>

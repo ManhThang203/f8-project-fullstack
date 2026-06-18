@@ -3,7 +3,8 @@
 import type { PostFeedItemDto } from '@costy/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image, Sticker } from 'lucide-react';
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import type { Socket } from 'socket.io-client';
 import { toast } from 'sonner';
 
 import type { DraftMedia } from '../post-media/post-media-carousel';
@@ -16,9 +17,12 @@ import { Avatar } from '@/components/shared/avatar';
 import { IconButton } from '@/components/shared/icon-button';
 import { Modal } from '@/components/shared/modal';
 import { usePostComments } from '@/hooks/queries/use-post-comments';
+import { useCommentRealtime } from '@/hooks/use-comment-realtime';
 import { createPostWithMedia } from '@/lib/create-post';
+import { handleCommentEnterKey } from '@/lib/comment-input';
 import { isImageMime, isVideoMime, validateFiles } from '@/lib/media-validation';
 import { queryKeys } from '@/lib/query-keys';
+import { getAuthedSocket } from '@/lib/socket';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -41,6 +45,7 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
+  const [replyCount, setReplyCount] = useState(post.replyCount);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const { data, fetchNextPage, hasNextPage, isLoading } = usePostComments(post.id);
@@ -48,6 +53,12 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
 
   const imageCount = drafts.filter((d) => isImageMime(d.file.type)).length;
   const videoCount = drafts.filter((d) => isVideoMime(d.file.type)).length;
+
+  useEffect(() => {
+    if (open) {
+      setReplyCount(post.replyCount);
+    }
+  }, [open, post.id, post.replyCount]);
 
   useEffect(() => {
     if (!open) {
@@ -60,6 +71,54 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
       setReplyingToCommentId(null);
     }
   }, [open]);
+
+  const handleCountDelta = useCallback((delta: number) => {
+    setReplyCount((prev) => Math.max(0, prev + delta));
+  }, []);
+
+  useCommentRealtime({
+    postId: post.id,
+    meId: me?.id,
+    enabled: open,
+    onCountDelta: handleCountDelta,
+  });
+
+  useEffect(() => {
+    if (!open) return;
+
+    let cancelled = false;
+    let activeSocket: Socket | null = null;
+
+    function onPostHidden(payload: { postId: string; parentId?: string | null }) {
+      if (payload.postId === post.id) {
+        toast.error('Bài viết đã bị ẩn do vi phạm quy tắc cộng đồng.');
+        onClose();
+        return;
+      }
+      if (payload.parentId === post.id) {
+        setReplyCount((prev) => Math.max(0, prev - 1));
+      }
+      queryClient.invalidateQueries({ queryKey: ['posts', 'comments', post.id] });
+    }
+
+    void getAuthedSocket('/feed').then((socket) => {
+      if (cancelled) return;
+      activeSocket = socket;
+      socket.on('post:hidden', onPostHidden);
+    });
+
+    return () => {
+      cancelled = true;
+      activeSocket?.off('post:hidden', onPostHidden);
+    };
+  }, [open, post.id, onClose, queryClient]);
+
+  /** Giảm số bình luận hiển thị khi xóa comment cấp 1 của bài viết. */
+  function handleCommentDeleted(deletedComment: PostFeedItemDto) {
+    if (deletedComment.parentId === post.id) {
+      setReplyCount((prev) => Math.max(0, prev - 1));
+    }
+  }
 
   function handleFiles(files: FileList | null) {
     if (!files || busy) return;
@@ -132,6 +191,10 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
     setDrafts([]);
     toast.success('Đã gửi bình luận');
 
+    if (!replyingToCommentId) {
+      setReplyCount((prev) => prev + 1);
+    }
+
     // Invalidate root comments
     queryClient.invalidateQueries({ queryKey: ['posts', 'comments', post.id] });
 
@@ -175,6 +238,7 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
             onDismiss={() => {}}
             hideDismiss
             onCommentClick={() => textareaRef.current?.focus()}
+            replyCountOverride={replyCount}
           />
 
           <div className="border-border mt-2 border-t" />
@@ -191,7 +255,13 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
               </p>
             )}
             {comments.map((comment) => (
-              <CommentItem key={comment.id} comment={comment} onReply={handleReplyTo} />
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                onReply={handleReplyTo}
+                rootPostId={post.id}
+                onDeleted={handleCommentDeleted}
+              />
             ))}
             {hasNextPage && (
               <button
@@ -222,6 +292,7 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
                   setContent(e.target.value);
                   if (e.target.value.trim() === '') setReplyingToCommentId(null);
                 }}
+                onKeyDown={(e) => handleCommentEnterKey(e, () => void handleSubmit())}
                 placeholder="Viết bình luận..."
                 className="placeholder:text-muted-foreground w-full resize-none bg-transparent text-sm outline-none"
                 rows={drafts.length > 0 ? 2 : 1}

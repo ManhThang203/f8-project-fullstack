@@ -153,7 +153,9 @@ export function SiteHeaderCompact({
           className="bg-background/95 absolute inset-0 flex items-center gap-2 px-3"
           onSubmit={(e) => {
             e.preventDefault();
-            const value = new FormData(e.currentTarget).get('q')?.toString() ?? '';
+            const form = e.currentTarget;
+            const value = new FormData(form).get('q')?.toString() ?? '';
+            form.reset();
             submitSearch(value);
           }}
         >

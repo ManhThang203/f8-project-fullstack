@@ -18,11 +18,13 @@ import {
   EMPTY_ROOM_MESSAGES,
   useChatConversations,
   useRoomMessages,
-  useInvalidateChatConversations,
   useCreateChatRoomMutation,
 } from '@/hooks/queries/use-chat-queries';
+import { useTick } from '@/hooks/use-tick';
 import { authClient } from '@/lib/auth-client';
+import { patchConversationAfterMessage, patchMessageReaction, patchMessageUnsent } from '@/lib/chat-cache';
 import { getChatSocket } from '@/lib/chat-socket';
+import { formatActivityStatus } from '@/lib/format-relative-time';
 import { queryKeys } from '@/lib/query-keys';
 import { cn } from '@/lib/utils';
 import type { ChatMessageDto, ChatPeerDto } from '@/types/chat';
@@ -36,7 +38,6 @@ type SendInput = {
 export function MessagesView() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const invalidateConversations = useInvalidateChatConversations();
   const searchParams = useSearchParams();
   const roomId = searchParams.get('roomId');
 
@@ -69,6 +70,13 @@ export function MessagesView() {
     return activeConv.peers[0] ? peerLabel(activeConv.peers[0]) : 'Tin nhắn';
   }, [activeConv]);
 
+  useTick(60_000);
+
+  const activityStatus = useMemo(() => {
+    if (!activeConv || activeConv.isGroup) return null;
+    return formatActivityStatus(activeConv.peers[0]);
+  }, [activeConv]);
+
   // Cuộn xuống tin nhắn mới nhất sau khi gửi
   function scrollToBottom() {
     setTimeout(
@@ -97,7 +105,10 @@ export function MessagesView() {
               },
             );
             setReplyingTo(null);
-            invalidateConversations();
+            patchConversationAfterMessage(queryClient, roomId, ack.message, {
+              viewingRoom: true,
+              incrementUnread: false,
+            });
             scrollToBottom();
             resolve();
           } else {
@@ -229,6 +240,9 @@ export function MessagesView() {
         >
           <div className="border-border min-w-0 shrink-0 border-b px-4 py-3">
             <h2 className="text-foreground text-sm font-semibold">{title}</h2>
+            {activityStatus ? (
+              <p className="text-muted-foreground mt-0.5 text-xs">{activityStatus}</p>
+            ) : null}
             {!roomId ? (
               <p className="text-muted-foreground mt-1 text-xs">
                 Chọn một hội thoại hoặc tạo tin nhắn mới.
@@ -291,11 +305,10 @@ export function MessagesView() {
                           chatSocket?.emit(
                             'chat:react',
                             { messageId: m.id, emoji },
-                            (ack: { ok?: boolean }) => {
-                              if (ack?.ok)
-                                queryClient.invalidateQueries({
-                                  queryKey: queryKeys.chat.roomMessages(roomId),
-                                });
+                            (ack: { ok?: boolean; reaction?: { id: string; emoji: string; userId: string } }) => {
+                              if (ack?.ok && ack.reaction && roomId) {
+                                patchMessageReaction(queryClient, roomId, m.id, ack.reaction);
+                              }
                             },
                           );
                         }}
@@ -305,10 +318,9 @@ export function MessagesView() {
                             'chat:unsend',
                             { messageId: m.id },
                             (ack: { ok?: boolean }) => {
-                              if (ack?.ok)
-                                queryClient.invalidateQueries({
-                                  queryKey: queryKeys.chat.roomMessages(roomId),
-                                });
+                              if (ack?.ok && roomId) {
+                                patchMessageUnsent(queryClient, roomId, m.id);
+                              }
                             },
                           );
                         }}
@@ -318,10 +330,13 @@ export function MessagesView() {
                             'chat:delete',
                             { messageId: m.id },
                             (ack: { ok?: boolean }) => {
-                              if (ack?.ok)
-                                queryClient.invalidateQueries({
-                                  queryKey: queryKeys.chat.roomMessages(roomId),
-                                });
+                              if (ack?.ok && roomId) {
+                                queryClient.setQueryData<ChatMessageDto[]>(
+                                  queryKeys.chat.roomMessages(roomId),
+                                  (prev) =>
+                                    prev?.filter((msg) => msg.id !== m.id) ?? prev,
+                                );
+                              }
                             },
                           );
                         }}

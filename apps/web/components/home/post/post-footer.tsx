@@ -51,7 +51,7 @@ export function PostFooter({
   const hasReaction = !!currentReaction;
 
   let likeLabel = 'Thích';
-  let likeIcon = <ThumbsUp className="h-4 w-4" strokeWidth={1.75} />;
+  let likeIcon = <ThumbsUp className="h-5 w-5" strokeWidth={1.75} />;
   let likeColor = '';
 
   if (hasReaction) {
@@ -61,7 +61,7 @@ export function PostFooter({
     if (!isLiked) {
       likeIcon = <ReactionFace id={currentReaction} size="sm" />;
     } else {
-      likeIcon = <ThumbsUp className="h-4 w-4 fill-current" strokeWidth={1.75} />;
+      likeIcon = <ThumbsUp className="h-5 w-5 fill-current" strokeWidth={1.75} />;
     }
   }
 
@@ -96,14 +96,14 @@ export function PostFooter({
         </div>
 
         <ActionButton
-          icon={<MessageCircle className="h-4 w-4" strokeWidth={1.75} />}
+          icon={<MessageCircle className="h-5 w-5" strokeWidth={1.75} />}
           count={replyCount > 0 ? replyCount : undefined}
           label={replyCount > 0 ? `${replyCount} bình luận` : 'Bình luận'}
           onClick={onCommentClick}
         />
 
         <ActionButton
-          icon={<Share2 className="h-4 w-4" strokeWidth={1.75} />}
+          icon={<Share2 className="h-5 w-5" strokeWidth={1.75} />}
           count={shareCount > 0 ? shareCount : undefined}
           label="Chia sẻ"
           onClick={onShareClick}
@@ -111,7 +111,7 @@ export function PostFooter({
 
         <ActionButton
           icon={
-            <Bookmark className={cn('h-4 w-4', saved && 'fill-current')} strokeWidth={1.75} />
+            <Bookmark className={cn('h-5 w-5', saved && 'fill-current')} strokeWidth={1.75} />
           }
           label={saved ? 'Đã lưu' : 'Lưu'}
           onClick={onSaveClick}

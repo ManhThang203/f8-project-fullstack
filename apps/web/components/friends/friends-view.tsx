@@ -16,22 +16,6 @@ import {
 } from '@/hooks/queries/use-friend-mutation';
 import { cn } from '@/lib/utils';
 
-// #region agent log
-fetch('http://127.0.0.1:7600/ingest/7e460ad4-e57b-4c68-a427-7775819b3418', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '3d36f0' },
-  body: JSON.stringify({
-    sessionId: '3d36f0',
-    runId: 'initial',
-    hypothesisId: 'D',
-    location: 'apps/web/components/friends/friends-view.tsx:1',
-    message: 'friends-view module resolved',
-    data: { module: 'friends-view' },
-    timestamp: Date.now(),
-  }),
-}).catch(() => {});
-// #endregion
-
 type FriendTab = 'friends' | 'incoming' | 'outgoing';
 
 const TABS: { id: FriendTab; label: string }[] = [

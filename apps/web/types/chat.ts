@@ -35,6 +35,8 @@ export type ChatPeerDto = {
   image: string | null;
   lastReadAt?: string | null;
   lastDeliveredAt?: string | null;
+  isOnline?: boolean;
+  lastSeenAt?: string | null;
 };
 
 export type Conversation = {

@@ -23,15 +23,23 @@ type Props = {
   disableCommentClick?: boolean;
   onCommentClick?: () => void;
   hideDismiss?: boolean;
+  replyCountOverride?: number;
 };
 
-export function PostCard({ post, onDismiss, disableCommentClick, onCommentClick, hideDismiss }: Props) {
+export function PostCard({
+  post,
+  onDismiss,
+  disableCommentClick,
+  onCommentClick,
+  hideDismiss,
+  replyCountOverride,
+}: Props) {
   const [isReplyOpen, setIsReplyOpen] = useState(false);
   const { data: session } = authClient.useSession();
   const me = session?.user;
 
   return (
-    <li className="border-border border-b px-1 py-4 first:pt-0 last:border-b-0">
+    <div className="border-border border-b px-1 py-4 first:pt-0 last:border-b-0">
       <article className="flex gap-3">
         <Link
           href={`/${encodeURIComponent(post.author.username)}`}
@@ -49,29 +57,28 @@ export function PostCard({ post, onDismiss, disableCommentClick, onCommentClick,
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <div className="flex min-w-0 flex-col gap-0.5">
               <Link
                 href={`/${encodeURIComponent(post.author.username)}`}
                 className="text-foreground text-sm font-semibold hover:underline"
               >
                 {post.author.name ?? post.author.username}
               </Link>
-              <Link
-                href={`/${encodeURIComponent(post.author.username)}`}
-                className="text-muted-foreground text-sm hover:underline"
-              >
-                @{post.author.username}
-              </Link>
-              <time
-                className="text-muted-foreground text-xs"
-                dateTime={post.createdAt}
-                title={post.createdAt}
-              >
-                {new Date(post.createdAt).toLocaleString('vi-VN', {
-                  dateStyle: 'short',
-                  timeStyle: 'short',
-                })}
-              </time>
+              <div className="text-muted-foreground flex min-w-0 flex-wrap items-center gap-x-1 text-xs">
+                <Link
+                  href={`/${encodeURIComponent(post.author.username)}`}
+                  className="hover:underline"
+                >
+                  @{post.author.username}
+                </Link>
+                <span aria-hidden>·</span>
+                <time dateTime={post.createdAt} title={post.createdAt}>
+                  {new Date(post.createdAt).toLocaleString('vi-VN', {
+                    dateStyle: 'short',
+                    timeStyle: 'short',
+                  })}
+                </time>
+              </div>
             </div>
 
             <div className="flex shrink-0 items-center">
@@ -114,9 +121,10 @@ export function PostCard({ post, onDismiss, disableCommentClick, onCommentClick,
             postId={post.id}
             authorUsername={post.author.username}
             hasVideo={post.media.some((m) => m.type === 'video')}
-            replyCount={post.replyCount}
+            replyCount={replyCountOverride ?? post.replyCount}
             initialLikeCount={post.likeCount}
             initialReaction={post.myReaction as PostReactionId | null}
+            topReactions={post.topReactions}
             initialShareCount={post.shareCount}
             initialSavedByMe={post.savedByMe}
             onCommentClick={
@@ -134,6 +142,6 @@ export function PostCard({ post, onDismiss, disableCommentClick, onCommentClick,
           me={me}
         />
       )}
-    </li>
+    </div>
   );
 }

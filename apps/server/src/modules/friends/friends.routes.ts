@@ -7,7 +7,7 @@ import {
   type FriendRequestsQuery,
 } from '@costy/shared';
 import { Router } from 'express';
-import { z } from 'zod';
+import type { z } from 'zod';
 
 import { requireAuth } from '../../middleware/auth.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';

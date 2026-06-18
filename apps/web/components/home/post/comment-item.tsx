@@ -12,10 +12,14 @@ import { ReactionFace, REACTION_COLORS, REACTION_LABELS } from './reaction-face'
 
 import { Avatar } from '@/components/shared/avatar';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
-import { useDeletePost } from '@/hooks/queries/use-delete-post';
+import { useDeletePost, buildDeleteCommentInput } from '@/hooks/queries/use-delete-post';
 import { usePostComments } from '@/hooks/queries/use-post-comments';
 import { useReactPost } from '@/hooks/use-react-post';
 import { authClient } from '@/lib/auth-client';
+import {
+  displayTopReactions,
+  patchTopReactionsOptimistic,
+} from '@/lib/reaction-utils';
 import { cn } from '@/lib/utils';
 
 const COMMENT_REACTIONS: PostReactionId[] = [
@@ -34,9 +38,17 @@ type Props = {
   comment: PostFeedItemDto;
   onReply: (username: string, commentId: string) => void;
   isReply?: boolean;
+  rootPostId?: string;
+  onDeleted?: (comment: PostFeedItemDto) => void;
 };
 
-export function CommentItem({ comment, onReply, isReply = false }: Props) {
+export function CommentItem({
+  comment,
+  onReply,
+  isReply = false,
+  rootPostId,
+  onDeleted,
+}: Props) {
   const { data: session } = authClient.useSession();
   const me = session?.user;
   const isOwner = me?.id === comment.author.id;
@@ -59,6 +71,7 @@ export function CommentItem({ comment, onReply, isReply = false }: Props) {
 
   const [localReaction, setLocalReaction] = useState(comment.myReaction);
   const [localLikeCount, setLocalLikeCount] = useState(comment.likeCount);
+  const [localTopReactions, setLocalTopReactions] = useState(comment.topReactions ?? []);
 
   const clearHideTimer = useCallback(() => {
     if (hideTimerRef.current) {
@@ -80,7 +93,8 @@ export function CommentItem({ comment, onReply, isReply = false }: Props) {
   useEffect(() => {
     setLocalReaction(comment.myReaction);
     setLocalLikeCount(comment.likeCount);
-  }, [comment.myReaction, comment.likeCount]);
+    setLocalTopReactions(comment.topReactions ?? []);
+  }, [comment.myReaction, comment.likeCount, comment.topReactions]);
 
   useEffect(() => () => clearHideTimer(), [clearHideTimer]);
 
@@ -101,6 +115,7 @@ export function CommentItem({ comment, onReply, isReply = false }: Props) {
 
     setLocalLikeCount((prev) => (isLiked ? Math.max(0, prev - 1) : prev + 1));
     setLocalReaction(newReaction);
+    setLocalTopReactions((prev) => patchTopReactionsOptimistic(prev, newReaction));
 
     reactMutation.mutate({
       postId: comment.id,
@@ -122,6 +137,7 @@ export function CommentItem({ comment, onReply, isReply = false }: Props) {
 
     setLocalLikeCount(newCount);
     setLocalReaction(newReaction);
+    setLocalTopReactions((prev) => patchTopReactionsOptimistic(prev, newReaction));
 
     reactMutation.mutate({
       postId: comment.id,
@@ -135,9 +151,14 @@ export function CommentItem({ comment, onReply, isReply = false }: Props) {
   }
 
   function confirmDelete() {
-    deleteMutation.mutate(comment.id, {
+    const input = rootPostId
+      ? buildDeleteCommentInput(comment, rootPostId)
+      : { postId: comment.id };
+
+    deleteMutation.mutate(input, {
       onSuccess: () => {
         setDeleteConfirmOpen(false);
+        onDeleted?.(comment);
         toast.success('Đã xóa bình luận');
       },
       onError: (err) => {
@@ -147,6 +168,11 @@ export function CommentItem({ comment, onReply, isReply = false }: Props) {
   }
 
   const reactionId = (localReaction as PostReactionId | null) ?? null;
+  const reactionStack = displayTopReactions(
+    localTopReactions,
+    localLikeCount,
+    reactionId,
+  );
   const likeLabel =
     reactionId && reactionId !== 'like'
       ? REACTION_LABELS[reactionId]
@@ -169,7 +195,7 @@ export function CommentItem({ comment, onReply, isReply = false }: Props) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="relative inline-block max-w-full">
+        <div className="relative inline-block max-w-full pb-3 pr-2">
           <div className="bg-muted/50 inline-block rounded-2xl px-3 py-2">
             <div className="mb-0.5 flex items-center gap-2">
               <span className="cursor-pointer text-sm font-semibold hover:underline">
@@ -179,17 +205,23 @@ export function CommentItem({ comment, onReply, isReply = false }: Props) {
             <p className="whitespace-pre-wrap break-words text-sm">{comment.content}</p>
           </div>
 
-          {localLikeCount > 0 && (
+          {localLikeCount > 0 && reactionStack.length > 0 && (
             <div
-              className="bg-card border-border absolute -bottom-1.5 right-2 flex items-center gap-0.5 rounded-full border px-1 py-0.5 shadow-sm"
-              aria-label={`${localLikeCount} lượt thích`}
+              className="bg-card border-border absolute bottom-0 right-1 flex translate-y-1/2 items-center gap-0.5 rounded-full border px-1.5 py-0.5 shadow-sm"
+              aria-label={`${localLikeCount} lượt cảm xúc`}
             >
-              <ReactionFace
-                id={reactionId ?? 'like'}
-                size="sm"
-                className="h-4 w-4 min-h-4 min-w-4"
-              />
-              <span className="text-foreground pr-0.5 text-[11px] font-semibold leading-none">
+              <span className="flex items-center" aria-hidden>
+                {reactionStack.map((id, index) => (
+                  <span
+                    key={`${id}-${index}`}
+                    className={cn('relative', index > 0 && '-ml-1.5')}
+                    style={{ zIndex: reactionStack.length - index }}
+                  >
+                    <ReactionFace id={id} size="sm" className="h-4 w-4 min-h-4 min-w-4" />
+                  </span>
+                ))}
+              </span>
+              <span className="text-foreground pl-0.5 text-[11px] font-semibold leading-none tabular-nums">
                 {localLikeCount}
               </span>
             </div>
@@ -291,7 +323,7 @@ export function CommentItem({ comment, onReply, isReply = false }: Props) {
         {!isReply && replies.length > 0 && (
           <div className="mt-1 flex flex-col gap-1">
             {replies.map((reply) => (
-              <CommentItem key={reply.id} comment={reply} onReply={onReply} isReply={true} />
+              <CommentItem key={reply.id} comment={reply} onReply={onReply} isReply={true} rootPostId={rootPostId} onDeleted={onDeleted} />
             ))}
             {hasMoreReplies && (
               <button

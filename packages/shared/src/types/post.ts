@@ -34,6 +34,8 @@ export interface PostFeedItemDto {
   shareCount: number;
   myReaction: string | null;
   savedByMe: boolean;
+  /** Loại cảm xúc nhiều nhất (tối đa 3), sort theo số lượng giảm dần. */
+  topReactions: string[];
   media: PostMediaDto[];
 }
 
@@ -52,6 +54,8 @@ export interface ReelsFeedItemDto {
   shareCount: number;
   myReaction: string | null;
   savedByMe: boolean;
+  /** Loại cảm xúc nhiều nhất (tối đa 3), sort theo số lượng giảm dần. */
+  topReactions: string[];
   isFollowing: boolean;
   video: PostMediaDto;
 }

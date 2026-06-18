@@ -266,6 +266,11 @@ model User {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
+  /// Lần cuối user offline (persist khi disconnect socket chat).
+  lastSeenAt         DateTime?
+  /// Cho phép người khác thấy trạng thái online / last seen trong chat 1-1.
+  showActivityStatus Boolean   @default(true)
+
   posts         Post[]         @relation("PostAuthor")
   likes         PostLike[]
   postSaves     PostSave[]

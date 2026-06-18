@@ -48,3 +48,54 @@ export async function emitPostCreated(
     logger.warn({ err, authorId, postId: dto.id }, 'emitPostCreated failed');
   }
 }
+
+/** Push sự kiện post:hidden tới người đang xem feed (ẩn bài/comment sau kiểm duyệt). */
+export async function emitPostHidden(
+  authorId: string,
+  postId: string,
+  visibility: PostVisibility,
+  parentId: string | null,
+): Promise<void> {
+  const io = getRealtimeIo();
+  if (!io) return;
+
+  try {
+    const rooms = await resolvePostCreatedRooms(authorId, visibility);
+    io.of('/feed').to(rooms).emit('post:hidden', { postId, parentId });
+  } catch (err) {
+    logger.warn({ err, authorId, postId }, 'emitPostHidden failed');
+  }
+}
+
+/** Bắn comment mới tới room của bài viết cha (người đang mở chi tiết bài). */
+export function emitCommentCreated(
+  parentId: string,
+  comment: PostFeedItemDto,
+  actorId: string,
+): void {
+  const io = getRealtimeIo();
+  if (!io) return;
+  io.of('/feed').to(`post:${parentId}`).emit('comment:created', { comment, actorId });
+}
+
+/** Bắn comment bị xóa tới room của bài viết cha. */
+export function emitCommentDeleted(
+  parentId: string,
+  commentId: string,
+  actorId: string,
+): void {
+  const io = getRealtimeIo();
+  if (!io) return;
+  io.of('/feed').to(`post:${parentId}`).emit('comment:deleted', { commentId, parentId, actorId });
+}
+
+/** Bắn thay đổi số comment của một bài (toàn namespace /feed, payload nhẹ). */
+export function emitCommentCountChanged(
+  postId: string,
+  delta: number,
+  actorId: string,
+): void {
+  const io = getRealtimeIo();
+  if (!io) return;
+  io.of('/feed').emit('comment:countChanged', { postId, delta, actorId });
+}
