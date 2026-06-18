@@ -90,6 +90,15 @@ Single multi-stage Docker image bundles `web`, `server`, and workers:
 pnpm docker:build
 ```
 
+## 👥 Team & Roles
+
+Vai trò được tổng hợp từ lịch sử commit và có thể tinh chỉnh theo thời gian.
+
+| Thành viên | Vai trò chính |
+|---|---|
+| **Thắng** (`ManhThang203`) | Full-stack / lead — frontend web (`apps/web`), admin dashboard (`apps/admin`), và phần lớn backend (posts, admin/moderation, chat, search, media, socket realtime, auth, mail, notifications) |
+| **Khánh** (`midnight`) | Backend & hạ tầng — server modules (posts, chat, users), `packages`, cấu hình `config/env`, BullMQ queues, Docker, tài liệu |
+
 ## 🏗 Architecture Notes
 
 - **API surface**: FE calls `/api/v1/*` on Next.js, which proxies to Express via a catch-all route handler (BFF pattern). BetterAuth handler lives in Next route handlers.
@@ -97,4 +106,4 @@ pnpm docker:build
 - **Module pattern (frontend)**: every feature owns `components/`, `hooks/`, `queries/`, `stores/`, `schemas/`.
 - **Error envelope** (uniform): `{ success: true, data, meta }` or `{ success: false, error: { code, message } }`.
 
-See module-level READMEs (added in later phases) for deeper detail.
+Chi tiết kiến trúc, sơ đồ ERD, luồng BFF và danh sách API endpoints: [`docs/architecture.md`](docs/architecture.md).
