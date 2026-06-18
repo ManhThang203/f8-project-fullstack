@@ -17,6 +17,7 @@ const fakePostNoMedia: PostFeedItemDto = {
   shareCount: 0,
   myReaction: null,
   savedByMe: false,
+  topReactions: [],
   media: [],
   parentId: null,
 };

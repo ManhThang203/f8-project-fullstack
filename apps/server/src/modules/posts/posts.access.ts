@@ -55,3 +55,34 @@ export async function getViewerSavedSet(
   });
   return new Set(saves.map((s) => s.postId));
 }
+
+const TOP_REACTIONS_LIMIT = 3;
+
+/** Lấy top loại cảm xúc (tối đa 3) theo số lượng cho từng postId. */
+export async function getTopReactionsMap(postIds: string[]): Promise<Map<string, string[]>> {
+  if (postIds.length === 0) return new Map();
+
+  const groups = await prisma.postLike.groupBy({
+    by: ['postId', 'type'],
+    where: { postId: { in: postIds } },
+    _count: { type: true },
+  });
+
+  const byPost = new Map<string, { type: string; count: number }[]>();
+  for (const row of groups) {
+    const list = byPost.get(row.postId) ?? [];
+    list.push({ type: row.type, count: row._count.type });
+    byPost.set(row.postId, list);
+  }
+
+  const result = new Map<string, string[]>();
+  for (const postId of postIds) {
+    const sorted = (byPost.get(postId) ?? [])
+      .sort((a, b) => b.count - a.count)
+      .slice(0, TOP_REACTIONS_LIMIT)
+      .map((entry) => entry.type);
+    result.set(postId, sorted);
+  }
+
+  return result;
+}

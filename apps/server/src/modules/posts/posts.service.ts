@@ -1,13 +1,7 @@
-import { MediaKind, MediaStatus, Prisma, prisma } from '@costy/db';
-import type {
-  CreatePostBody,
-  CursorPageQuery,
-  FeedQuery,
-  PostFeedItemDto,
-  ReelsFeedItemDto,
-  ReelsFeedQuery,
-} from '@costy/shared';
+import { MediaKind, MediaStatus, prisma } from '@costy/db';
+import type { CreatePostBody, CursorPageQuery, PostFeedItemDto } from '@costy/shared';
 
+import { MODERATION_CONFIG } from '../../config/moderation.config.js';
 import {
   destroyMany,
   getCloudinaryCloudName,
@@ -16,536 +10,29 @@ import {
   type CloudinaryUploadResult,
 } from '../../lib/cloudinary.js';
 import { AppError } from '../../lib/errors.js';
-import { logger } from '../../lib/logger.js';
-import { embeddingQueue } from '../../queues/index.js';
-
-import { MODERATION_CONFIG } from '../../config/moderation.config.js';
 import { syncPostHashtags } from '../../lib/hashtag/hashtag.service.js';
-import { contentModerationQueue } from '../../queues/index.js';
+import { logger } from '../../lib/logger.js';
+import { contentModerationQueue, embeddingQueue } from '../../queues/index.js';
 import { createNotification } from '../notifications/notifications.service.js';
+
+import { canViewPost, getTopReactionsMap } from './posts.access.js';
+import { mapPostToFeedItemDto, postFeedInclude } from './posts.mapper.js';
 import {
-  buildVisibilityCondition,
-  canViewPost,
-  getViewerFriendIds,
-  getViewerSavedSet,
-} from './posts.access.js';
+  emitCommentCountChanged,
+  emitCommentCreated,
+  emitCommentDeleted,
+  emitPostCreated,
+} from './posts.realtime.js';
 import {
-  mapPostToFeedItemDto,
-  mapPostToReelsFeedItemDto,
-  postFeedInclude,
-  postReelInclude,
-} from './posts.mapper.js';
-import { emitPostCreated } from './posts.realtime.js';
-
-const IMAGE_MAX_BYTES = 10 * 1024 * 1024; // 10MB
-const VIDEO_MAX_BYTES = 500 * 1024 * 1024; // 500MB
-const MAX_IMAGES = 10; // 10 ảnh
-const MAX_VIDEOS = 1; // 1 video
-
-// MIME types cho ảnh
-const IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
-// MIME types cho video
-const VIDEO_MIMES = new Set(['video/mp4', 'video/quicktime']);
-
-// Mã base64url → một chuỗi an toàn đưa lên URL/query (?cursor=...).
-function encodeCursor(createdAt: Date, id: string): string {
-  return Buffer.from(JSON.stringify({ t: createdAt.toISOString(), id }), 'utf8').toString(
-    'base64url',
-  );
-}
-
-// base64url → { createdAt: Date, id: string }
-function decodeCursor(cursor: string): { createdAt: Date; id: string } {
-  try {
-    const raw = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as {
-      t?: string;
-      id?: string;
-    };
-    if (!raw.t || !raw.id) throw new Error('invalid cursor shape');
-    return { createdAt: new Date(raw.t), id: raw.id };
-  } catch {
-    throw AppError.badRequest('Invalid cursor');
-  }
-}
-
-// Kiểm tra xem MIME type có phải là ảnh không
-function isImageMime(mime: string): boolean {
-  return IMAGE_MIMES.has(mime);
-}
-
-// Kiểm tra xem MIME type có phải là video không
-function isVideoMime(mime: string): boolean {
-  return VIDEO_MIMES.has(mime);
-}
-
-// Kiểm tra xem file có hợp lệ không
-function validatePostFiles(files: Express.Multer.File[], content: string): void {
-  const text = content.trim();
-  if (!text && files.length === 0) {
-    throw AppError.badRequest('Bài viết trống');
-  }
-
-  let imageCount = 0;
-  let videoCount = 0;
-
-  for (const file of files) {
-    const isImage = isImageMime(file.mimetype);
-    const isVideo = isVideoMime(file.mimetype);
-
-    if (!isImage && !isVideo) {
-      throw AppError.badRequest('Chỉ hỗ trợ JPG, PNG, WebP, GIF, MP4, MOV');
-    }
-
-    if (isImage) {
-      if (file.size > IMAGE_MAX_BYTES) {
-        throw AppError.badRequest('Ảnh tối đa 10MB, video tối đa 500MB');
-      }
-      if (imageCount >= MAX_IMAGES) {
-        throw AppError.badRequest(`Tối đa ${MAX_IMAGES} ảnh mỗi bài`);
-      }
-      if (videoCount > 0) {
-        throw AppError.badRequest('Không thể đính kèm ảnh khi đã có video');
-      }
-      imageCount += 1;
-      continue;
-    }
-
-    if (file.size > VIDEO_MAX_BYTES) {
-      throw AppError.badRequest('Ảnh tối đa 10MB, video tối đa 500MB');
-    }
-    if (videoCount >= MAX_VIDEOS) {
-      throw AppError.badRequest('Chỉ được đính kèm tối đa 1 video');
-    }
-    if (imageCount > 0) {
-      throw AppError.badRequest('Không thể đính kèm video khi đã có ảnh');
-    }
-    videoCount += 1;
-  }
-}
-
-/** Điều kiện giới hạn feed về bài của bạn bè / người đang follow / chính mình (scope=following). */
-async function buildScopeCondition(
-  viewerId: string,
-  friendIds: string[],
-): Promise<Prisma.PostWhereInput> {
-  const follows = await prisma.follow.findMany({
-    where: { followerId: viewerId },
-    select: { followingId: true },
-  });
-  const authorIds = [...new Set([viewerId, ...friendIds, ...follows.map((f) => f.followingId)])];
-  return { authorId: { in: authorIds } };
-}
-
-// Lấy danh sách bài viết + phân trang khi cuộn xuống
-export async function listFeed(
-  query: FeedQuery,
-  viewerId?: string | null,
-): Promise<{
-  items: PostFeedItemDto[];
-  nextCursor: string | null;
-}> {
-  const friendIds = await getViewerFriendIds(viewerId ?? null);
-
-  const conditions: Prisma.PostWhereInput[] = [
-    { deletedAt: null, hiddenAt: null, parentId: null },
-    buildVisibilityCondition(viewerId ?? null, friendIds),
-  ];
-  if (query.scope === 'following' && viewerId) {
-    conditions.push(await buildScopeCondition(viewerId, friendIds));
-  }
-
-  const page = await fetchFeedPage(query, { AND: conditions });
-  const { rows, nextCursor } = page;
-
-  let viewerReactionMap = new Map<string, string>();
-  if (viewerId && rows.length > 0) {
-    const likes = await prisma.postLike.findMany({
-      where: { userId: viewerId, postId: { in: rows.map((p) => p.id) } },
-      select: { postId: true, type: true },
-    });
-    viewerReactionMap = new Map(likes.map((l) => [l.postId, l.type]));
-  }
-
-  const savedSet = await getViewerSavedSet(
-    viewerId ?? null,
-    rows.map((p) => p.id),
-  );
-
-  const items = rows.map((p) =>
-    mapPostToFeedItemDto(p, viewerReactionMap.get(p.id) ?? null, savedSet.has(p.id)),
-  );
-
-  return { items, nextCursor };
-}
-
-/** Danh sách bài viết của một tác giả, lọc visibility, phân trang cursor. */
-export async function listAuthorFeed(
-  authorId: string,
-  allowedVisibilities: Array<'PUBLIC' | 'FRIENDS' | 'PRIVATE'>,
-  query: CursorPageQuery,
-  viewerId: string | null,
-): Promise<{ items: PostFeedItemDto[]; nextCursor: string | null }> {
-  const baseWhere: Prisma.PostWhereInput = {
-    authorId,
-    deletedAt: null,
-    hiddenAt: null,
-    parentId: null,
-    visibility: { in: allowedVisibilities },
-  };
-
-  const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
-  const cursorCondition: Prisma.PostWhereInput | null = cursorData
-    ? {
-        OR: [
-          { createdAt: { lt: cursorData.createdAt } },
-          { AND: [{ createdAt: { equals: cursorData.createdAt } }, { id: { lt: cursorData.id } }] },
-        ],
-      }
-    : null;
-
-  const take = query.limit + 1;
-  const rows = await fetchFeedRows({
-    where: cursorCondition ? { AND: [baseWhere, cursorCondition] } : baseWhere,
-    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-    take,
-  });
-
-  const hasMore = rows.length > query.limit;
-  const page = hasMore ? rows.slice(0, query.limit) : rows;
-  const tail = page[page.length - 1];
-  const nextCursor = hasMore && tail ? encodeCursor(tail.createdAt, tail.id) : null;
-
-  let viewerReactionMap = new Map<string, string>();
-  if (viewerId && page.length > 0) {
-    const likes = await prisma.postLike.findMany({
-      where: { userId: viewerId, postId: { in: page.map((p) => p.id) } },
-      select: { postId: true, type: true },
-    });
-    viewerReactionMap = new Map(likes.map((l) => [l.postId, l.type]));
-  }
-
-  const savedSet = await getViewerSavedSet(
-    viewerId ?? null,
-    page.map((p) => p.id),
-  );
-
-  const items = page.map((p) =>
-    mapPostToFeedItemDto(p, viewerReactionMap.get(p.id) ?? null, savedSet.has(p.id)),
-  );
-
-  return { items, nextCursor };
-}
-
-type FeedRow = Awaited<ReturnType<typeof fetchFeedRows>>[number];
-
-function fetchFeedRows(args: Prisma.PostFindManyArgs) {
-  return prisma.post.findMany({ ...args, include: postFeedInclude });
-}
-
-/**
- * Lấy 1 trang feed theo sort:
- * - recent: cursor (createdAt + id), mới nhất trước.
- * - top: sắp theo tương tác (like + comment), phân trang bằng offset trong cursor.
- */
-async function fetchFeedPage(
-  query: FeedQuery,
-  where: Prisma.PostWhereInput,
-): Promise<{ rows: FeedRow[]; nextCursor: string | null }> {
-  const take = query.limit + 1;
-
-  if (query.sort === 'top') {
-    const offset = query.cursor ? Math.max(0, parseInt(query.cursor, 10) || 0) : 0;
-    const rows = await fetchFeedRows({
-      where,
-      orderBy: [
-        { likes: { _count: 'desc' } },
-        { replies: { _count: 'desc' } },
-        { createdAt: 'desc' },
-      ],
-      skip: offset,
-      take,
-    });
-    const hasMore = rows.length > query.limit;
-    const page = hasMore ? rows.slice(0, query.limit) : rows;
-    return { rows: page, nextCursor: hasMore ? String(offset + query.limit) : null };
-  }
-
-  const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
-  const cursorCondition: Prisma.PostWhereInput | null = cursorData
-    ? {
-        OR: [
-          { createdAt: { lt: cursorData.createdAt } },
-          { AND: [{ createdAt: { equals: cursorData.createdAt } }, { id: { lt: cursorData.id } }] },
-        ],
-      }
-    : null;
-  const rows = await fetchFeedRows({
-    where: cursorCondition ? { AND: [where, cursorCondition] } : where,
-    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-    take,
-  });
-  const hasMore = rows.length > query.limit;
-  const page = hasMore ? rows.slice(0, query.limit) : rows;
-  const tail = page[page.length - 1];
-  const nextCursor = hasMore && tail ? encodeCursor(tail.createdAt, tail.id) : null;
-  return { rows: page, nextCursor };
-}
-
-/** Fisher-Yates shuffle (in-place). */
-function shuffle<T>(arr: T[]): T[] {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j]!, arr[i]!];
-  }
-  return arr;
-}
-
-// Lấy feed reels ngẫu nhiên
-export async function listReelsFeed(
-  query: ReelsFeedQuery,
-  viewerId: string | null,
-): Promise<{ items: ReelsFeedItemDto[]; nextCursor: string | null }> {
-  const limit = query.limit;
-  // Fetch a larger pool to shuffle from; use offset cursor to page through pool
-  const POOL = Math.min(limit * 5, 100);
-
-  const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
-  const startPostId = !cursorData ? query.startPostId : undefined;
-
-  const where = cursorData
-    ? {
-        deletedAt: null,
-        hiddenAt: null,
-        parentId: null,
-        media: { some: { kind: MediaKind.VIDEO, status: MediaStatus.READY } },
-        OR: [
-          { createdAt: { lt: cursorData.createdAt } },
-          { AND: [{ createdAt: { equals: cursorData.createdAt } }, { id: { lt: cursorData.id } }] },
-        ],
-      }
-    : {
-        deletedAt: null,
-        hiddenAt: null,
-        parentId: null,
-        media: { some: { kind: MediaKind.VIDEO, status: MediaStatus.READY } },
-      };
-
-  const rows = await prisma.post.findMany({
-    where,
-    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-    take: POOL,
-    include: postReelInclude,
-  });
-
-  const hasMore = rows.length === POOL;
-  const pool = hasMore ? rows.slice(0, POOL) : rows;
-
-  shuffle(pool);
-  let page = pool.slice(0, limit);
-
-  let pinnedRow: (typeof rows)[number] | null = null;
-  if (startPostId) {
-    pinnedRow = await prisma.post.findFirst({
-      where: {
-        id: startPostId,
-        deletedAt: null,
-        hiddenAt: null,
-        parentId: null,
-        media: { some: { kind: MediaKind.VIDEO, status: MediaStatus.READY } },
-      },
-      include: postReelInclude,
-    });
-
-    if (!pinnedRow || !mapPostToReelsFeedItemDto(pinnedRow, false)) {
-      throw AppError.notFound('Reel not found');
-    }
-
-    page = page.filter((p) => p.id !== startPostId);
-    page = [pinnedRow, ...page].slice(0, limit);
-  }
-
-  // Batch-check isFollowing for all unique authors
-  const authorIds = [...new Set(page.map((p) => p.author.id))];
-  let followingSet = new Set<string>();
-  let reactionMap = new Map<string, string>();
-  let savedSet = new Set<string>();
-  if (viewerId && page.length > 0) {
-    const postIds = page.map((p) => p.id);
-    const [follows, likes, saves] = await Promise.all([
-      authorIds.length > 0
-        ? prisma.follow.findMany({
-            where: { followerId: viewerId, followingId: { in: authorIds } },
-            select: { followingId: true },
-          })
-        : Promise.resolve([]),
-      prisma.postLike.findMany({
-        where: { userId: viewerId, postId: { in: postIds } },
-        select: { postId: true, type: true },
-      }),
-      prisma.postSave.findMany({
-        where: { userId: viewerId, postId: { in: postIds } },
-        select: { postId: true },
-      }),
-    ]);
-    followingSet = new Set(follows.map((f) => f.followingId));
-    reactionMap = new Map(likes.map((l) => [l.postId, l.type]));
-    savedSet = new Set(saves.map((s) => s.postId));
-  }
-
-  const items: ReelsFeedItemDto[] = [];
-  for (const p of page) {
-    const dto = mapPostToReelsFeedItemDto(
-      p,
-      followingSet.has(p.author.id),
-      reactionMap.get(p.id) ?? null,
-      savedSet.has(p.id),
-    );
-    if (dto) items.push(dto);
-  }
-
-  // Cursor points to the last item in the deterministic order (before shuffle)
-  // so next page fetches older posts
-  const tail = page[page.length - 1];
-  const nextCursor = hasMore && tail ? encodeCursor(tail.createdAt, tail.id) : null;
-
-  return { items, nextCursor };
-}
-
-export async function getPostById(
-  postId: string,
-  viewerId?: string | null,
-): Promise<PostFeedItemDto> {
-  const row = await prisma.post.findUnique({
-    where: { id: postId, deletedAt: null },
-    include: postFeedInclude,
-  });
-
-  if (!row) {
-    throw AppError.notFound('Bài viết không tồn tại hoặc đã bị xóa');
-  }
-
-  const allowed = await canViewPost(viewerId ?? null, row);
-  if (!allowed) {
-    throw AppError.notFound('Bài viết không tồn tại hoặc đã bị xóa');
-  }
-
-  let myReaction: string | null = null;
-  let savedByMe = false;
-  if (viewerId) {
-    const [like, save] = await Promise.all([
-      prisma.postLike.findUnique({
-        where: { userId_postId: { userId: viewerId, postId } },
-        select: { type: true },
-      }),
-      prisma.postSave.findUnique({
-        where: { userId_postId: { userId: viewerId, postId } },
-        select: { postId: true },
-      }),
-    ]);
-    if (like) myReaction = like.type;
-    savedByMe = Boolean(save);
-  }
-
-  return mapPostToFeedItemDto(row, myReaction, savedByMe);
-}
-
-export async function getRootPostId(postId: string): Promise<string> {
-  let currentId = postId;
-  let limit = 10;
-
-  while (limit > 0) {
-    const post = await prisma.post.findUnique({
-      where: { id: currentId },
-      select: { parentId: true },
-    });
-
-    if (!post) throw AppError.notFound('Bài viết không tồn tại');
-
-    if (!post.parentId) {
-      return currentId;
-    }
-    currentId = post.parentId;
-    limit--;
-  }
-
-  return currentId;
-}
-
-// Lấy danh sách bình luận của 1 bài viết
-export async function listComments(
-  postId: string,
-  query: CursorPageQuery & { order?: 'asc' | 'desc' },
-  viewerId?: string | null,
-): Promise<{
-  items: PostFeedItemDto[];
-  nextCursor: string | null;
-}> {
-  const parent = await prisma.post.findUnique({
-    where: { id: postId },
-    select: { authorId: true, visibility: true, deletedAt: true },
-  });
-  if (!parent || parent.deletedAt) {
-    throw AppError.notFound('Bài viết không tồn tại hoặc đã bị xóa');
-  }
-  const allowed = await canViewPost(viewerId ?? null, parent);
-  if (!allowed) {
-    throw AppError.notFound('Bài viết không tồn tại hoặc đã bị xóa');
-  }
-
-  const take = query.limit + 1;
-  const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
-  const isDesc = query.order !== 'asc'; // default desc
-  const op = isDesc ? 'lt' : 'gt';
-
-  const where = cursorData
-    ? {
-        deletedAt: null,
-        parentId: postId,
-        OR: [
-          { createdAt: { [op]: cursorData.createdAt } },
-          {
-            AND: [{ createdAt: { equals: cursorData.createdAt } }, { id: { [op]: cursorData.id } }],
-          },
-        ],
-      }
-    : {
-        deletedAt: null,
-        parentId: postId,
-      };
-
-  const rows = await prisma.post.findMany({
-    where,
-    orderBy: [{ createdAt: isDesc ? 'desc' : 'asc' }, { id: isDesc ? 'desc' : 'asc' }],
-    take,
-    include: postFeedInclude,
-  });
-
-  const hasMore = rows.length > query.limit;
-  const page = hasMore ? rows.slice(0, query.limit) : rows;
-
-  let viewerReactionMap = new Map<string, string>();
-  if (viewerId && page.length > 0) {
-    const likes = await prisma.postLike.findMany({
-      where: { userId: viewerId, postId: { in: page.map((p) => p.id) } },
-      select: { postId: true, type: true },
-    });
-    viewerReactionMap = new Map(likes.map((l) => [l.postId, l.type]));
-  }
-
-  const savedSet = await getViewerSavedSet(
-    viewerId ?? null,
-    page.map((p) => p.id),
-  );
-
-  const items = page.map((p) =>
-    mapPostToFeedItemDto(p, viewerReactionMap.get(p.id) ?? null, savedSet.has(p.id)),
-  );
-
-  const tail = page[page.length - 1];
-  const nextCursor = hasMore && tail ? encodeCursor(tail.createdAt, tail.id) : null;
-
-  return { items, nextCursor };
-}
+  decodeCursor,
+  encodeCursor,
+  isVideoMime,
+  parseMentions,
+  resolveRootPostId,
+  validatePostFiles,
+} from './posts.utils.js';
+
+export * from './posts.feed.service.js';
 
 /** Đẩy job AI moderation vào BullMQ (không chặn response). */
 async function enqueueModerationJob(postId: string, content: string): Promise<void> {
@@ -644,13 +131,15 @@ export async function createPost(opts: {
 
     void enqueueModerationJob(postId, content);
 
+    let commentRootPostId: string | null = null;
     if (opts.body.parentId) {
       const parentPost = await prisma.post.findUnique({
         where: { id: opts.body.parentId },
-        select: { id: true, authorId: true },
+        select: { id: true, authorId: true, parentId: true },
       });
 
       if (parentPost) {
+        commentRootPostId = resolveRootPostId(parentPost);
         if (parentPost.authorId !== opts.authorId) {
           await createNotification({
             recipientId: parentPost.authorId,
@@ -700,6 +189,10 @@ export async function createPost(opts: {
     const dto = mapPostToFeedItemDto(row);
     if (!opts.body.parentId) {
       void emitPostCreated(opts.authorId, dto, row.visibility);
+    } else {
+      const rootPostId = commentRootPostId ?? opts.body.parentId!;
+      emitCommentCreated(rootPostId, dto, opts.authorId);
+      emitCommentCountChanged(rootPostId, 1, opts.authorId);
     }
 
     return dto;
@@ -790,14 +283,13 @@ export async function editPost(
   });
   if (like) myReaction = like.type;
 
-  return mapPostToFeedItemDto(row, myReaction);
-}
-
-/** Trích các @username từ nội dung (tối đa 10) để tạo notification mention. */
-function parseMentions(content: string): string[] {
-  const matches = content.match(/@([a-zA-Z0-9_.]+)/g) ?? [];
-  const usernames = matches.map((m) => m.slice(1).toLowerCase());
-  return [...new Set(usernames)].slice(0, 10);
+  const topReactionsMap = await getTopReactionsMap([postId]);
+  return mapPostToFeedItemDto(
+    row,
+    myReaction,
+    false,
+    topReactionsMap.get(postId) ?? [],
+  );
 }
 
 /** Tạo notification MENTION cho những user được nhắc trong bài (bỏ qua chính tác giả). */
@@ -908,8 +400,15 @@ export async function listSavedPosts(
     reactionMap = new Map(likes.map((l) => [l.postId, l.type]));
   }
 
+  const topReactionsMap = await getTopReactionsMap(page.map((r) => r.postId));
+
   const items = page.map((r) =>
-    mapPostToFeedItemDto(r.post, reactionMap.get(r.postId) ?? null, true),
+    mapPostToFeedItemDto(
+      r.post,
+      reactionMap.get(r.postId) ?? null,
+      true,
+      topReactionsMap.get(r.postId) ?? [],
+    ),
   );
 
   const tail = page[page.length - 1];
@@ -922,7 +421,7 @@ export async function listSavedPosts(
 export async function deletePost(postId: string, userId: string) {
   const post = await prisma.post.findUnique({
     where: { id: postId, deletedAt: null },
-    include: { parent: { select: { authorId: true } } },
+    include: { parent: { select: { authorId: true, id: true, parentId: true } } },
   });
 
   if (!post) {
@@ -940,6 +439,12 @@ export async function deletePost(postId: string, userId: string) {
     where: { id: postId },
     data: { deletedAt: new Date() },
   });
+
+  if (post.parentId) {
+    const rootPostId = post.parent ? resolveRootPostId(post.parent) : post.parentId;
+    emitCommentDeleted(rootPostId, postId, userId);
+    emitCommentCountChanged(rootPostId, -1, userId);
+  }
 
   return { success: true, postId };
 }

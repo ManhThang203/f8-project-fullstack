@@ -3,6 +3,8 @@
 import { Loader2, Plus, Users } from 'lucide-react';
 
 import { Avatar } from '@/components/shared/avatar';
+import { useTick } from '@/hooks/use-tick';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import { cn } from '@/lib/utils';
 import type { ChatMessageDto, ChatPeerDto, Conversation } from '@/types/chat';
 
@@ -31,6 +33,8 @@ export function ConversationList({
   onSelect: (roomId: string) => void;
   onNewChat: () => void;
 }) {
+  useTick(60_000);
+
   return (
     <aside
       className={cn(
@@ -75,23 +79,55 @@ export function ConversationList({
                         <Users className="h-5 w-5" aria-hidden />
                       </div>
                     ) : (
-                      <Avatar
-                        as="span"
-                        size="md"
-                        src={c.peers[0]?.image}
-                        name={c.peers[0]?.name}
-                        username={c.peers[0]?.username}
-                      />
+                      <div className="relative shrink-0">
+                        <Avatar
+                          as="span"
+                          size="md"
+                          src={c.peers[0]?.image}
+                          name={c.peers[0]?.name}
+                          username={c.peers[0]?.username}
+                        />
+                        {c.peers[0]?.isOnline ? (
+                          <span
+                            className="ring-background absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2"
+                            aria-hidden
+                          />
+                        ) : null}
+                      </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="text-foreground truncate font-medium">
-                        {c.isGroup
-                          ? c.name || 'Nhóm'
-                          : c.peers[0]
-                            ? peerLabel(c.peers[0] as ChatPeerDto)
-                            : 'Unknown'}
-                      </p>
-                      <p className="text-muted-foreground truncate text-xs">
+                      <div className="flex items-center justify-between gap-1">
+                        <p
+                          className={cn(
+                            'text-foreground truncate',
+                            c.unreadCount > 0 ? 'font-semibold' : 'font-medium',
+                          )}
+                        >
+                          {c.isGroup
+                            ? c.name || 'Nhóm'
+                            : c.peers[0]
+                              ? peerLabel(c.peers[0] as ChatPeerDto)
+                              : 'Unknown'}
+                        </p>
+                        {c.lastMessage ? (
+                          <span
+                            className={cn(
+                              'shrink-0 text-xs',
+                              c.unreadCount > 0
+                                ? 'text-foreground font-semibold'
+                                : 'text-muted-foreground',
+                            )}
+                          >
+                            {formatRelativeTime(c.lastMessage.createdAt)}
+                          </span>
+                        ) : null}
+                      </div>
+                      <p
+                        className={cn(
+                          'truncate text-xs',
+                          c.unreadCount > 0 ? 'text-foreground font-medium' : 'text-muted-foreground',
+                        )}
+                      >
                         {c.lastMessage ? lastMessagePreview(c.lastMessage) : 'Chưa có tin nhắn'}
                       </p>
                     </div>

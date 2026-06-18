@@ -15,6 +15,7 @@ import { writeAuditLog } from '../../lib/admin/audit.service.js';
 import { classifyContent } from '../../lib/ai/moderation-ai.service.js';
 import { AppError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
+import { emitPostHidden } from '../posts/posts.realtime.js';
 import { createNotification } from '../notifications/notifications.service.js';
 
 const authorSelect = {
@@ -113,6 +114,7 @@ export async function runModerationJob(postId: string): Promise<void> {
       content: true,
       authorId: true,
       parentId: true,
+      visibility: true,
       deletedAt: true,
       hiddenAt: true,
     },
@@ -134,8 +136,9 @@ export async function runModerationJob(postId: string): Promise<void> {
   const { confidence, label, reason } = classification;
   if (confidence < MODERATION_CONFIG.reviewThreshold) return;
 
-  const autoHide = confidence >= MODERATION_CONFIG.autoHideThreshold;
-  const status = autoHide ? 'AUTO_HIDDEN' : 'PENDING';
+  // Mọi nội dung bị AI gắn cờ và vượt ngưỡng review đều tự ẩn ngay
+  const autoHide = true;
+  const status = 'AUTO_HIDDEN';
   const targetType = resolveTargetType(post.parentId);
 
   const moderationCase = await prisma.$transaction(async (tx) => {
@@ -162,6 +165,11 @@ export async function runModerationJob(postId: string): Promise<void> {
   });
 
   await notifyAuthor(moderationCase.id, post.authorId);
+
+  if (autoHide) {
+    await emitPostHidden(post.authorId, postId, post.visibility, post.parentId);
+  }
+
   logger.info(
     { caseId: moderationCase.id, postId, label, confidence, autoHide },
     'AI moderation case created',

@@ -2,6 +2,8 @@ import { prisma } from '@costy/db';
 
 import { AppError } from '../../lib/errors.js';
 
+import { getPresence } from './presence.service.js';
+
 type ListMsgOpts = { limit?: number; beforeId?: string };
 
 const userSelect = {
@@ -207,6 +209,35 @@ export async function listConversationsForUser(userId: string) {
       };
     }),
   );
+
+  const directPeerIds = items
+    .filter((item) => !item.isGroup)
+    .flatMap((item) => item.peers.map((p) => p.id));
+  const uniquePeerIds = [...new Set(directPeerIds)];
+
+  const presenceMap =
+    uniquePeerIds.length > 0 ? await getPresence(uniquePeerIds) : new Map<string, { isOnline: boolean; lastSeenAt: string | null }>();
+
+  const privacySettings =
+    uniquePeerIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: uniquePeerIds } },
+          select: { id: true, showActivityStatus: true },
+        })
+      : [];
+  const privacyMap = new Map(privacySettings.map((u) => [u.id, u.showActivityStatus]));
+
+  for (const item of items) {
+    for (const peer of item.peers) {
+      if (!item.isGroup && privacyMap.get(peer.id) !== false) {
+        const p = presenceMap.get(peer.id);
+        Object.assign(peer, {
+          isOnline: p?.isOnline ?? false,
+          lastSeenAt: p?.lastSeenAt ?? null,
+        });
+      }
+    }
+  }
 
   return items.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
 }

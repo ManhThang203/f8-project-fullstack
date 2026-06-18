@@ -2,6 +2,7 @@ import type { PostFeedItemDto } from '@costy/shared';
 import { useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 
 import { apiFetch } from '@/lib/api-client';
+import { patchTopReactionsOptimistic } from '@/lib/reaction-utils';
 
 type FeedPage = { data: PostFeedItemDto[] };
 type FeedCache = InfiniteData<FeedPage>;
@@ -34,7 +35,12 @@ function patchPostReaction(
   if (!wasLiked && isLikedNow) newLikeCount++;
   if (wasLiked && !isLikedNow) newLikeCount = Math.max(0, newLikeCount - 1);
 
-  return { ...post, myReaction: type, likeCount: newLikeCount };
+  return {
+    ...post,
+    myReaction: type,
+    likeCount: newLikeCount,
+    topReactions: patchTopReactionsOptimistic(post.topReactions ?? [], type),
+  };
 }
 
 function patchInfiniteFeedCache(

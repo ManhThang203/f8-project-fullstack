@@ -10,6 +10,7 @@ import { prisma } from '@costy/db';
 import type { Namespace, Socket } from 'socket.io';
 
 import { logger } from '../lib/logger.js';
+import { setOnline, setOffline, refreshHeartbeat } from '../modules/chat/presence.service.js';
 import { createNotification } from '../modules/notifications/notifications.service.js';
 
 import { authenticateSocket } from './socket-auth.js';
@@ -53,6 +54,10 @@ export function registerChatNamespace(chatNs: Namespace) {
     const userId = socket.data.userId as string;
 
     socket.join(`user:${userId}`); // Phòng riêng của user (để nhận notification hoặc force refresh)
+    void setOnline(userId).catch((err: unknown) => {
+      logger.warn({ err, userId }, 'presence: failed to set online');
+    });
+
     void joinChatRooms(socket, userId).catch((err: unknown) => {
       logger.warn({ err, userId }, 'chat socket: failed to join rooms');
     });
@@ -248,7 +253,19 @@ export function registerChatNamespace(chatNs: Namespace) {
       }
     });
 
+    socket.on('presence:heartbeat', () => {
+      void refreshHeartbeat(userId).catch((err: unknown) => {
+        logger.warn({ err, userId }, 'presence: heartbeat refresh failed');
+      });
+    });
+
     socket.on('disconnect', (reason) => {
+      const userRoom = chatNs.adapter.rooms.get(`user:${userId}`);
+      if (!userRoom || userRoom.size === 0) {
+        void setOffline(userId).catch((err: unknown) => {
+          logger.warn({ err, userId }, 'presence: failed to set offline');
+        });
+      }
       logger.debug({ userId, reason }, 'chat socket disconnect');
     });
   });

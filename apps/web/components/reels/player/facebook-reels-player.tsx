@@ -189,6 +189,7 @@ export function FacebookReelsPlayer({ item, isActive }: ReelsPlayerProps) {
       shareCount,
       myReaction: isLiked ? 'like' : null,
       savedByMe: saved,
+      topReactions: item.topReactions ?? [],
       media: [item.video],
     }),
     [item, likeCount, shareCount, isLiked, saved],

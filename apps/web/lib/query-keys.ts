@@ -24,4 +24,12 @@ export const queryKeys = {
     list: (q: string) => ['friends', 'list', q] as const,
     requests: (type: 'incoming' | 'outgoing') => ['friends', 'requests', type] as const,
   },
+  search: {
+    posts: (q: string) => ['search', 'posts', q] as const,
+    users: (q: string) => ['search', 'users', q] as const,
+    hashtags: (q: string) => ['search', 'hashtags', q] as const,
+  },
+  me: {
+    saved: ['me', 'saved'] as const,
+  },
 } as const;

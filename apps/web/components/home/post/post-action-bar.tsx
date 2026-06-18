@@ -8,6 +8,7 @@ import { ReactionFace, type PostReactionId } from './reaction-face';
 
 import { useSharePost, useToggleSavePost } from '@/hooks/queries/use-save-post';
 import { useReactPost } from '@/hooks/use-react-post';
+import { displayTopReactions } from '@/lib/reaction-utils';
 import { cn } from '@/lib/utils';
 
 export type { PostReactionId };
@@ -32,20 +33,11 @@ type Props = {
   replyCount: number;
   initialLikeCount: number;
   initialReaction: PostReactionId | null;
+  topReactions?: string[];
   initialShareCount?: number;
   initialSavedByMe?: boolean;
   onCommentClick?: () => void;
 };
-
-function reactionSummaryStack(
-  reaction: PostReactionId | null | undefined,
-  likeCount: number,
-): PostReactionId[] {
-  if (likeCount <= 0) return [];
-  const primary = reaction || 'like';
-  const secondary = primary === 'like' ? 'haha' : 'like';
-  return [primary, secondary];
-}
 
 export function PostActionBar({
   postId,
@@ -54,6 +46,7 @@ export function PostActionBar({
   replyCount,
   initialLikeCount,
   initialReaction,
+  topReactions = [],
   initialShareCount = 0,
   initialSavedByMe = false,
   onCommentClick,
@@ -174,8 +167,8 @@ export function PostActionBar({
   }
 
   const summaryReactions = useMemo(
-    () => reactionSummaryStack(initialReaction, initialLikeCount),
-    [initialReaction, initialLikeCount],
+    () => displayTopReactions(topReactions, initialLikeCount, initialReaction),
+    [topReactions, initialLikeCount, initialReaction],
   );
 
   return (

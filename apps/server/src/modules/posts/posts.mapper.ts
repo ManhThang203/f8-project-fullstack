@@ -34,6 +34,7 @@ export function mapPostToFeedItemDto(
   post: PostWithAuthorAndMedia,
   myReaction: string | null = null,
   savedByMe = false,
+  topReactions: string[] = [],
 ): PostFeedItemDto {
   const sortedMedia = [...post.media]
     .filter((m) => Boolean(m.publicUrl?.trim()))
@@ -56,6 +57,7 @@ export function mapPostToFeedItemDto(
     shareCount: post._count.shares ?? 0,
     myReaction,
     savedByMe,
+    topReactions,
     media: sortedMedia.map((m, index) => mapMediaRow(m, index)),
   };
 }
@@ -72,6 +74,7 @@ export function mapPostToReelsFeedItemDto(
   isFollowing: boolean,
   myReaction: string | null = null,
   savedByMe = false,
+  topReactions: string[] = [],
 ): ReelsFeedItemDto | null {
   const videoMedia = post.media
     .filter((m) => m.kind === MediaKind.VIDEO)
@@ -96,6 +99,7 @@ export function mapPostToReelsFeedItemDto(
     shareCount: post._count.shares ?? 0,
     myReaction,
     savedByMe,
+    topReactions,
     isFollowing,
     video: mapMediaRow(videoMedia, 0),
   };
@@ -109,7 +113,13 @@ export const postReelInclude = {
     where: { kind: MediaKind.VIDEO, status: MediaStatus.READY },
     orderBy: { createdAt: 'asc' as const },
   },
-  _count: { select: { replies: true, likes: true, shares: true } },
+  _count: {
+    select: {
+      replies: { where: { deletedAt: null, hiddenAt: null } },
+      likes: true,
+      shares: true,
+    },
+  },
 } as const;
 
 export const postFeedInclude = {
@@ -120,5 +130,11 @@ export const postFeedInclude = {
     where: { status: { not: MediaStatus.FAILED } },
     orderBy: { createdAt: 'asc' as const },
   },
-  _count: { select: { replies: true, likes: true, shares: true } },
+  _count: {
+    select: {
+      replies: { where: { deletedAt: null, hiddenAt: null } },
+      likes: true,
+      shares: true,
+    },
+  },
 } as const;

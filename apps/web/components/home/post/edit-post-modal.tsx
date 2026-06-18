@@ -11,22 +11,6 @@ import { Modal } from '@/components/shared/modal';
 import { useUpdatePost } from '@/hooks/queries/use-update-post';
 import { cn } from '@/lib/utils';
 
-// #region agent log
-fetch('http://127.0.0.1:7600/ingest/7e460ad4-e57b-4c68-a427-7775819b3418', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '3d36f0' },
-  body: JSON.stringify({
-    sessionId: '3d36f0',
-    runId: 'initial',
-    hypothesisId: 'B',
-    location: 'apps/web/components/home/post/edit-post-modal.tsx:1',
-    message: 'edit-post-modal module resolved',
-    data: { module: 'edit-post-modal' },
-    timestamp: Date.now(),
-  }),
-}).catch(() => {});
-// #endregion
-
 type Props = {
   open: boolean;
   onClose: () => void;

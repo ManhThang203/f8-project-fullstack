@@ -4,22 +4,6 @@ import Link from 'next/link';
 
 import { cn } from '@/lib/utils';
 
-// #region agent log
-fetch('http://127.0.0.1:7600/ingest/7e460ad4-e57b-4c68-a427-7775819b3418', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '3d36f0' },
-  body: JSON.stringify({
-    sessionId: '3d36f0',
-    runId: 'initial',
-    hypothesisId: 'D',
-    location: 'apps/web/components/shared/rich-text.tsx:1',
-    message: 'rich-text module resolved',
-    data: { module: 'rich-text' },
-    timestamp: Date.now(),
-  }),
-}).catch(() => {});
-// #endregion
-
 type Props = {
   text: string;
   className?: string;
