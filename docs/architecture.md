@@ -11,15 +11,16 @@ Costy là ứng dụng mạng xã hội full-stack, tổ chức theo monorepo Tu
 | Lớp | Công nghệ |
 |---|---|
 | Monorepo | Turborepo + pnpm workspaces |
-| Frontend | Next.js (App Router), Tailwind, shadcn/ui, Zustand, TanStack Query |
-| Admin | Next.js (`apps/admin`) — BFF riêng cho panel quản trị |
-| Backend | Express.js (Node 22), Prisma, Pino, Zod |
+| Frontend (web) | Next.js 16 (App Router), React 19, Tailwind, Radix UI, `@costy/ui`, TanStack Query, Zustand, react-hook-form/Zod, i18next, socket.io-client |
+| Admin | Next.js 16 (`apps/admin`, port 3001), Recharts, Radix UI — BFF riêng cho panel quản trị |
+| Backend | Express 4 (Node 22), Prisma, Pino, Zod, BullMQ, Socket.io, Helmet, Multer |
 | Database | PostgreSQL 16 + pgvector |
-| Cache / Queue | Redis + BullMQ |
-| Auth | BetterAuth (Gmail OAuth, Phone/OTP, đăng nhập identifier) |
+| Cache / Queue | Redis (ioredis) + BullMQ |
+| Auth | BetterAuth (Google OAuth + email/username + password) |
 | Realtime | Socket.io (namespaces `/chat`, `/feed`, `/notifications`) |
-| Media | MinIO (temp) → BullMQ + FFmpeg → Cloudflare R2; Cloudinary (avatar/cover); upload local VPS (chat) |
-| Notifications | Novu + Nodemailer |
+| Media | Cloudinary (ảnh/video bài viết, avatar, cover) + upload local đĩa VPS cho chat |
+| AI | Vercel AI Gateway + OpenAI (embedding hybrid search, gpt-4o-mini content moderation) |
+| Mail | Nodemailer |
 | i18n | i18next (vi mặc định, en fallback) |
 
 ### Cấu trúc thư mục
@@ -33,6 +34,7 @@ Costy là ứng dụng mạng xã hội full-stack, tổ chức theo monorepo Tu
 ├── packages/
 │   ├── shared/     Shared TS types, Zod schemas, API envelope
 │   ├── db/         Prisma schema, client, migrations
+│   ├── ui/         Shared UI utilities (cn, tokens)
 │   ├── eslint-config/
 │   └── typescript-config/
 └── docker/
@@ -80,8 +82,8 @@ flowchart TB
     subgraph infra [Infrastructure]
         Postgres[(PostgreSQL + pgvector)]
         Redis[(Redis)]
-        MinIO[(MinIO)]
-        R2[(Cloudflare R2)]
+        Cloudinary[(Cloudinary)]
+        LocalDisk[(Local disk VPS)]
     end
 
     Browser --> WebPages
@@ -99,11 +101,12 @@ flowchart TB
 
     ExpressAPI --> Postgres
     ExpressAPI --> Redis
-    ExpressAPI --> MinIO
+    ExpressAPI --> Cloudinary
+    ExpressAPI --> LocalDisk
     SocketIO --> Redis
     workers --> Postgres
     workers --> Redis
-    MediaWorker --> R2
+    workers --> Cloudinary
 ```
 
 ## Luồng BFF
@@ -442,13 +445,13 @@ Nguồn: [`apps/server/src/socket/socket.ts`](../apps/server/src/socket/socket.t
 
 | Queue | Mục đích |
 |---|---|
-| `Media` | Xử lý media (FFmpeg, upload R2) — skeleton |
-| `Email` | Gửi email qua Nodemailer — skeleton |
-| `Notification` | Push qua Novu — skeleton |
-| `MediaCleanup` | Dọn file chat hết hạn trên VPS |
+| `Media` | Skeleton (noop) — dự phòng xử lý media nền |
+| `Email` | Skeleton (noop) — dự phòng gửi email qua Nodemailer |
+| `Notification` | Skeleton (noop) — dự phòng thông báo nền |
+| `MediaCleanup` | Dọn file chat hết hạn trên đĩa VPS |
 | `TrendingHashtags` | Tính hashtag trending |
-| `ContentModeration` | AI kiểm duyệt nội dung bài viết |
-| `Embedding` | Sinh vector embedding cho semantic search |
+| `ContentModeration` | AI kiểm duyệt nội dung bài viết (Vercel AI Gateway + gpt-4o-mini) |
+| `Embedding` | Sinh vector embedding cho hybrid search (OpenAI text-embedding-3-small) |
 
 Nguồn: [`apps/server/src/workers/index.ts`](../apps/server/src/workers/index.ts)
 

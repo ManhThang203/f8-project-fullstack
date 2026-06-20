@@ -5,26 +5,30 @@ A production-ready, full-stack Costy-like social media app built with a module-b
 ## 🛠 Tech Stack
 
 - **Monorepo**: Turborepo + pnpm workspaces
-- **Frontend**: Next.js (App Router) + Tailwind + shadcn/ui + Zustand + TanStack Query
-- **Backend**: Express.js (Node 22) + Prisma + Pino + Zod
+- **Frontend (web)**: Next.js 16 (App Router) + React 19 + Tailwind + Radix UI + `@costy/ui` + TanStack Query + Zustand + react-hook-form/Zod + i18next + socket.io-client
+- **Admin**: Next.js 16 (port 3001) + Recharts + Radix UI
+- **Backend**: Express 4 (Node 22) + Prisma + Pino + Zod + BullMQ + Socket.io + Helmet + Multer
 - **Database**: PostgreSQL 16 + pgvector
-- **Cache/Queue**: Redis + BullMQ
-- **Auth**: BetterAuth (Gmail OAuth + Phone/OTP)
+- **Cache/Queue**: Redis (ioredis) + BullMQ
+- **Auth**: BetterAuth (Google OAuth + email/username + password)
 - **Realtime**: Socket.io
-- **Media**: MinIO (temp) → BullMQ + FFmpeg → Cloudflare R2 (permanent)
-- **Notifications**: Novu + Nodemailer
-- **i18n**: i18next (vi default, en fallback)
+- **Media**: Cloudinary (ảnh/video bài viết, avatar, cover) + upload local đĩa VPS cho chat
+- **AI**: Vercel AI Gateway + OpenAI (embedding cho hybrid search, gpt-4o-mini cho content moderation)
+- **Mail**: Nodemailer
+- **i18n**: i18next (vi mặc định, en fallback)
 
 ## 📁 Layout
 
 ```
 .
 ├── apps/
-│   ├── web/        Next.js frontend (BFF for the Express API)
+│   ├── web/        Next.js frontend (BFF cho Express API)
+│   ├── admin/      Next.js admin dashboard (BFF riêng, port 3001)
 │   └── server/     Express API + Socket.io + BullMQ workers
 ├── packages/
 │   ├── shared/     Shared TS types + Zod schemas + API envelope
 │   ├── db/         Prisma schema, client singleton, migrations
+│   ├── ui/         Shared UI utilities (cn, tokens)
 │   ├── eslint-config/
 │   └── typescript-config/
 └── docker/
@@ -48,7 +52,7 @@ cp .env.example .env          # for local `pnpm dev` outside Docker (optional if
 cp docker/.env.docker.example docker/.env.docker   # Docker stack: edit secrets in docker/.env.docker
 ```
 
-### Run infrastructure (Postgres + Redis + MinIO)
+### Run infrastructure (Postgres + Redis)
 
 The Compose stack reads **`docker/.env.docker`**. Root **`pnpm docker:*`** scripts already pass `--env-file docker/.env.docker`, so you do **not** need a repo-root `.env` for Docker. See [`docker/README.md`](docker/README.md).
 
@@ -70,9 +74,9 @@ pnpm dev
 ```
 
 - Web: <http://localhost:3000>
+- Admin: <http://localhost:3001>
 - API: <http://localhost:4000>
 - API Docs (Swagger): <http://localhost:4000/docs>
-- MinIO Console: <http://localhost:9001>
 
 ## 🧪 Tests, Lint, Type-check
 
