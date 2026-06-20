@@ -19,8 +19,10 @@ services:
     restart: unless-stopped
     env_file:
       - .env.docker
+    # Chỉ bind localhost — không expose Postgres ra Internet trên VPS.
+    # API trong stack vẫn kết nối qua hostname `postgres` (Docker network nội bộ).
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -35,8 +37,9 @@ services:
     container_name: costy-redis
     restart: unless-stopped
     command: ['redis-server', '--appendonly', 'yes']
+    # Chỉ bind localhost — không expose Redis ra Internet trên VPS.
     ports:
-      - '6379:6379'
+      - '127.0.0.1:6379:6379'
     volumes:
       - redis-data:/data
     healthcheck:
@@ -56,6 +59,7 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
         NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL:-http://localhost:4000}
         NEXT_PUBLIC_DEMO_USER_ID: ${NEXT_PUBLIC_DEMO_USER_ID:-seed_demo_user_001}
+        NEXT_PUBLIC_ADMIN_API_URL: ${NEXT_PUBLIC_ADMIN_API_URL:-/api}
     image: costy:local
     container_name: costy-api
     restart: unless-stopped
@@ -64,6 +68,9 @@ services:
       - '4000:4000'
     env_file:
       - .env.docker
+    # File chat upload lưu local đĩa (apps/server/uploads); volume giữ qua rebuild/recreate.
+    volumes:
+      - costy-uploads:/app/apps/server/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -80,6 +87,7 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
         NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL:-http://localhost:4000}
         NEXT_PUBLIC_DEMO_USER_ID: ${NEXT_PUBLIC_DEMO_USER_ID:-seed_demo_user_001}
+        NEXT_PUBLIC_ADMIN_API_URL: ${NEXT_PUBLIC_ADMIN_API_URL:-/api}
     image: costy:local
     container_name: costy-web
     restart: unless-stopped
@@ -92,6 +100,30 @@ services:
       api:
         condition: service_started
 
+  # ─── Admin — Next.js dashboard quản trị (cùng image, port 3001) ────────────
+  admin:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
+        NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL:-http://localhost:4000}
+        NEXT_PUBLIC_DEMO_USER_ID: ${NEXT_PUBLIC_DEMO_USER_ID:-seed_demo_user_001}
+        NEXT_PUBLIC_ADMIN_API_URL: ${NEXT_PUBLIC_ADMIN_API_URL:-/api}
+    image: costy:local
+    container_name: costy-admin
+    restart: unless-stopped
+    command: ['pnpm', '--filter', '@costy/admin', 'start']
+    ports:
+      - '3001:3001'
+    env_file:
+      - .env.docker
+    depends_on:
+      api:
+        condition: service_started
+
 volumes:
   postgres-data:
   redis-data:
+  costy-uploads:

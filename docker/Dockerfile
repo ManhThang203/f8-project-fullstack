@@ -18,6 +18,7 @@ WORKDIR /app
 FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/web/package.json apps/web/package.json
+COPY apps/admin/package.json apps/admin/package.json
 COPY apps/server/package.json apps/server/package.json
 COPY packages/db/package.json packages/db/package.json
 COPY packages/shared/package.json packages/shared/package.json
@@ -40,13 +41,16 @@ ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
 ARG NEXT_PUBLIC_API_URL=/api
 ARG NEXT_PUBLIC_SOCKET_URL=http://localhost:4000
 ARG NEXT_PUBLIC_DEMO_USER_ID=seed_demo_user_001
+# Admin gọi BFF cùng origin; mặc định `/api` (tương đối) hoạt động trên mọi domain.
+ARG NEXT_PUBLIC_ADMIN_API_URL=/api
 ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_SOCKET_URL=$NEXT_PUBLIC_SOCKET_URL
 ENV NEXT_PUBLIC_DEMO_USER_ID=$NEXT_PUBLIC_DEMO_USER_ID
+ENV NEXT_PUBLIC_ADMIN_API_URL=$NEXT_PUBLIC_ADMIN_API_URL
 
-# Chỉ build web + server; admin không nằm trong image production.
-RUN pnpm turbo run build --filter=@costy/web --filter=@costy/server
+# Build web + server + admin (cả ba app production).
+RUN pnpm turbo run build --filter=@costy/web --filter=@costy/server --filter=@costy/admin
 
 # ─── runner stage: minimal runtime image ────────────────────────────────────
 FROM node:22-alpine AS runner
@@ -69,14 +73,20 @@ COPY --from=builder /app/apps/web/.next apps/web/.next
 COPY --from=builder /app/apps/web/public apps/web/public
 COPY --from=builder /app/apps/web/package.json apps/web/package.json
 COPY --from=builder /app/apps/web/next.config.ts apps/web/next.config.ts
+# Admin: build output Next + static assets.
+COPY --from=builder /app/apps/admin/.next apps/admin/.next
+COPY --from=builder /app/apps/admin/public apps/admin/public
+COPY --from=builder /app/apps/admin/package.json apps/admin/package.json
+COPY --from=builder /app/apps/admin/next.config.ts apps/admin/next.config.ts
 COPY --from=builder /app/packages packages
 COPY --from=builder /app/node_modules node_modules
 # pnpm workspace: each app resolves deps via its own node_modules symlinks into .pnpm (root alone is not enough).
 COPY --from=builder /app/apps/server/node_modules apps/server/node_modules
 COPY --from=builder /app/apps/web/node_modules apps/web/node_modules
+COPY --from=builder /app/apps/admin/node_modules apps/admin/node_modules
 
-# 3000 = Next (service web), 4000 = Express + Socket.io (service api).
-EXPOSE 3000 4000
+# 3000 = web (Next), 3001 = admin (Next), 4000 = Express + Socket.io (service api).
+EXPOSE 3000 3001 4000
 
 COPY docker/api-entrypoint.sh /usr/local/bin/api-entrypoint.sh
 # Windows checkout có thể để CRLF → shebang hỏng trong Linux.
