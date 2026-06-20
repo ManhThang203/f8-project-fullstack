@@ -82,9 +82,11 @@ export function buildApp(): Express {
   app.use(cookieParser()); // `req.cookies` cho middleware ngoài Better Auth.
   app.use(pinoHttp({ logger })); // Log có cấu trúc (request id, latency…).
 
-  // ─── API docs (chỉ bật ở dev/staging tuỳ env) ──────────────────────────
-  app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-  app.get('/openapi.json', (_req, res) => res.json(swaggerSpec));
+  // ─── API docs (chỉ bật ở dev/staging — ẩn trên production) ───────────────
+  if (env.NODE_ENV !== 'production') {
+    app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+    app.get('/openapi.json', (_req, res) => res.json(swaggerSpec));
+  }
 
   // ─── API v1 ─────────────────────────────────────────────────────────────
   // Admin routes use `authAdmin` cookies; all other v1 routes use `authWeb`.
