@@ -104,5 +104,21 @@ if (!parsed.success) {
   process.exit(1);
 }
 
+/** Chặn boot production nếu BETTER_AUTH_SECRET rỗng, mặc định hoặc quá ngắn. */
+function assertProductionAuthSecret(data: z.infer<typeof envSchema>): void {
+  if (data.NODE_ENV !== 'production') return;
+
+  const secret = data.BETTER_AUTH_SECRET.trim();
+  if (!secret || secret === 'change_me_in_production' || secret.length < 32) {
+    // eslint-disable-next-line no-console
+    console.error(
+      'BETTER_AUTH_SECRET không hợp lệ cho production: cần chuỗi ngẫu nhiên >= 32 ký tự, không dùng giá trị mặc định.',
+    );
+    process.exit(1);
+  }
+}
+
+assertProductionAuthSecret(parsed.data);
+
 export const env = parsed.data;
 export type Env = z.infer<typeof envSchema>;
