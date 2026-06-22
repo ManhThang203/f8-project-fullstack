@@ -1,7 +1,7 @@
 'use client';
 
 import type { PostFeedItemDto, PostVisibilityDto } from '@costy/shared';
-import { Image, MapPin, MoreHorizontal, Smile, Sticker, UserPlus } from 'lucide-react';
+import { Image } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -10,9 +10,10 @@ import { PostMediaCarousel } from '../post-media/post-media-carousel';
 import { VisibilitySelect } from './visibility-select';
 
 import { Avatar } from '@/components/shared/avatar';
-import { IconButton } from '@/components/shared/icon-button';
+import { ComposeEmojiPicker } from '@/components/shared/compose-emoji-picker';
 import { Modal } from '@/components/shared/modal';
 import { createPostWithMedia } from '@/lib/create-post';
+import { applyEmojiInsert } from '@/lib/insert-text-at-cursor';
 import { ACCEPT_MEDIA, isImageMime, isVideoMime, validateFiles } from '@/lib/media-validation';
 import { cn } from '@/lib/utils';
 
@@ -115,6 +116,10 @@ export function CreatePostModal({
       if (target?.url.startsWith('blob:')) URL.revokeObjectURL(target.url);
       return prev.filter((d) => d.tempId !== tempId);
     });
+  }
+
+  function handleEmojiSelect(emoji: string) {
+    applyEmojiInsert(textareaRef.current, content, emoji, setContent);
   }
 
   async function handleSubmit() {
@@ -260,46 +265,35 @@ export function CreatePostModal({
             </span>
             <span className="text-muted-foreground text-sm sm:hidden">Thêm</span>
             <div className="-mr-1 flex shrink-0 items-center gap-0.5 overflow-x-auto sm:gap-1">
-              <label
-                htmlFor="modal-file-input"
-                aria-label="Thêm ảnh hoặc video"
-                className={cn(
-                  'flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full',
-                  'text-muted-foreground hover:bg-muted transition-colors',
-                  busy && 'pointer-events-none opacity-40',
-                )}
-              >
-                <Image className="h-5 w-5 text-[hsl(145,60%,50%)]" aria-hidden />
-              </label>
-              <input
-                ref={fileInputRef}
-                id="modal-file-input"
-                type="file"
-                accept={ACCEPT_MEDIA}
-                multiple={videoCount === 0}
-                className="sr-only"
-                disabled={busy}
-                onChange={(e) => handleFiles(e.target.files)}
-                onClick={(e) => {
-                  (e.currentTarget as HTMLInputElement).value = '';
-                }}
-              />
-              <IconButton shape="circle" disabled={busy} aria-label="Tag người khác">
-                <UserPlus className="h-5 w-5" aria-hidden />
-              </IconButton>
-              <IconButton shape="circle" disabled={busy} aria-label="Cảm xúc">
-                <Smile className="h-5 w-5 text-[hsl(40,90%,60%)]" aria-hidden />
-              </IconButton>
-              <IconButton shape="circle" disabled={busy} aria-label="Vị trí">
-                <MapPin className="h-5 w-5" aria-hidden />
-              </IconButton>
-              <IconButton shape="circle" disabled={busy} aria-label="GIF">
-                <Sticker className="h-5 w-5" aria-hidden />
-              </IconButton>
-              <IconButton shape="circle" disabled={busy} aria-label="Thêm">
-                <MoreHorizontal className="h-5 w-5" aria-hidden />
-              </IconButton>
-            </div>
+                <label
+                  htmlFor="modal-file-input"
+                  aria-label="Thêm ảnh hoặc video"
+                  className={cn(
+                    'flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full',
+                    'text-muted-foreground hover:bg-muted transition-colors',
+                    busy && 'pointer-events-none opacity-40',
+                  )}
+                >
+                  <Image className="h-5 w-5 text-[hsl(145,60%,50%)]" aria-hidden />
+                </label>
+                <input
+                  ref={fileInputRef}
+                  id="modal-file-input"
+                  type="file"
+                  accept={ACCEPT_MEDIA}
+                  multiple={videoCount === 0}
+                  className="sr-only"
+                  disabled={busy}
+                  onChange={(e) => handleFiles(e.target.files)}
+                  onClick={(e) => {
+                    (e.currentTarget as HTMLInputElement).value = '';
+                  }}
+                />
+                <ComposeEmojiPicker
+                  onSelect={handleEmojiSelect}
+                  disabled={busy}
+                />
+              </div>
           </div>
 
           <button

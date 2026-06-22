@@ -1,17 +1,8 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { useState, useRef, useEffect } from 'react';
 
-// Lazy load emoji-picker to avoid SSR issues and reduce initial bundle size
-const EmojiPickerReact = dynamic(() => import('emoji-picker-react').then((mod) => mod.default), {
-  ssr: false,
-  loading: () => (
-    <div className="text-muted-foreground flex h-[350px] items-center justify-center text-sm">
-      Đang tải...
-    </div>
-  ),
-});
+import { EmojiPickerPanel } from '@/components/shared/emoji-picker-panel';
 
 export const MOCK_STICKERS = [
   { id: 'st_joy', url: 'https://fonts.gstatic.com/s/e/notoemoji/latest/1f602/512.webp' },
@@ -73,12 +64,14 @@ export function EmojiStickerPicker({
         <div className="border-border bg-card animate-in fade-in slide-in-from-bottom-2 absolute bottom-[calc(100%+10px)] left-0 z-50 w-[350px] overflow-hidden rounded-xl border shadow-lg duration-200">
           <div className="border-border flex w-full border-b">
             <button
+              type="button"
               className={`flex-1 py-3 text-sm font-medium transition-colors ${tab === 'emoji' ? 'border-primary text-foreground border-b-2' : 'text-muted-foreground hover:bg-muted/50'}`}
               onClick={() => setTab('emoji')}
             >
               Emoji
             </button>
             <button
+              type="button"
               className={`flex-1 py-3 text-sm font-medium transition-colors ${tab === 'sticker' ? 'border-primary text-foreground border-b-2' : 'text-muted-foreground hover:bg-muted/50'}`}
               onClick={() => setTab('sticker')}
             >
@@ -87,15 +80,7 @@ export function EmojiStickerPicker({
           </div>
 
           <div className="w-full">
-            {tab === 'emoji' && (
-              <EmojiPickerReact
-                onEmojiClick={(emojiData) => onEmojiSelect(emojiData.emoji)}
-                width="100%"
-                height={350}
-                searchDisabled={false}
-                skinTonesDisabled={true}
-              />
-            )}
+            {tab === 'emoji' && <EmojiPickerPanel onSelect={onEmojiSelect} height={350} />}
 
             {tab === 'sticker' && (
               <div className="bg-card h-[350px] overflow-y-auto p-4">
@@ -103,6 +88,7 @@ export function EmojiStickerPicker({
                   {MOCK_STICKERS.map((sticker) => (
                     <button
                       key={sticker.id}
+                      type="button"
                       className="hover:bg-muted focus-visible:ring-primary flex aspect-square items-center justify-center rounded-xl p-2 transition-colors focus-visible:outline-none focus-visible:ring-2"
                       onClick={() => {
                         onStickerSelect(sticker.id);

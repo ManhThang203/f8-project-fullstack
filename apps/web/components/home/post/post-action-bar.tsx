@@ -112,11 +112,7 @@ export function PostActionBar({
   }
 
   function handleComment() {
-    if (onCommentClick) {
-      onCommentClick();
-    } else {
-      toast.message('Bình luận — tính năng sắp có');
-    }
+    onCommentClick?.();
   }
 
   /** Toggle lưu bài với optimistic update, revert khi lỗi. */

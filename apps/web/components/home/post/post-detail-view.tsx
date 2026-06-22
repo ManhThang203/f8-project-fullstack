@@ -2,7 +2,7 @@
 
 import type { PostFeedItemDto } from '@costy/shared';
 import { useQueryClient } from '@tanstack/react-query';
-import { Image, Sticker } from 'lucide-react';
+import { Image } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import type { Socket } from 'socket.io-client';
 import { toast } from 'sonner';
@@ -14,12 +14,13 @@ import { CommentItem } from './comment-item';
 import { PostCard } from './post-card';
 
 import { Avatar } from '@/components/shared/avatar';
-import { IconButton } from '@/components/shared/icon-button';
+import { ComposeEmojiPicker } from '@/components/shared/compose-emoji-picker';
 import { usePost } from '@/hooks/queries/use-post';
 import { usePostComments } from '@/hooks/queries/use-post-comments';
 import { useCommentRealtime } from '@/hooks/use-comment-realtime';
 import { authClient } from '@/lib/auth-client';
 import { createPostWithMedia } from '@/lib/create-post';
+import { applyEmojiInsert } from '@/lib/insert-text-at-cursor';
 import { isImageMime, isVideoMime, validateFiles } from '@/lib/media-validation';
 import { queryKeys } from '@/lib/query-keys';
 import { getAuthedSocket } from '@/lib/socket';
@@ -147,6 +148,10 @@ export function PostDetailView({ post, highlightCommentId }: Props) {
       if (target?.url.startsWith('blob:')) URL.revokeObjectURL(target.url);
       return prev.filter((d) => d.tempId !== tempId);
     });
+  }
+
+  function handleEmojiSelect(emoji: string) {
+    applyEmojiInsert(textareaRef.current, content, emoji, setContent);
   }
 
   async function handleSubmit() {
@@ -286,6 +291,7 @@ export function PostDetailView({ post, highlightCommentId }: Props) {
               }}
               onKeyDown={(e) => handleCommentEnterKey(e, () => void handleSubmit())}
               placeholder="Viết bình luận..."
+              maxLength={2000}
               className="placeholder:text-muted-foreground w-full resize-none bg-transparent text-sm outline-none"
               rows={drafts.length > 0 ? 2 : 1}
               disabled={busy}
@@ -325,9 +331,11 @@ export function PostDetailView({ post, highlightCommentId }: Props) {
                     disabled={busy || drafts.length >= 1}
                   />
                 </label>
-                <IconButton shape="circle" size="sm" disabled={busy}>
-                  <Sticker className="text-muted-foreground h-4 w-4" />
-                </IconButton>
+                <ComposeEmojiPicker
+                  onSelect={handleEmojiSelect}
+                  size="sm"
+                  disabled={busy}
+                />
               </div>
               <button
                 onClick={handleSubmit}
