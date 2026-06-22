@@ -1,14 +1,16 @@
 'use client';
 
 import type { PostFeedItemDto, PostVisibilityDto } from '@costy/shared';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { VisibilitySelect } from '../compose/visibility-select';
 
 import { Button } from '@/components/shared/button';
+import { ComposeEmojiPicker } from '@/components/shared/compose-emoji-picker';
 import { Modal } from '@/components/shared/modal';
 import { useUpdatePost } from '@/hooks/queries/use-update-post';
+import { applyEmojiInsert } from '@/lib/insert-text-at-cursor';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -21,6 +23,7 @@ type Props = {
 export function EditPostModal({ open, onClose, post }: Props) {
   const [content, setContent] = useState(post.content);
   const [visibility, setVisibility] = useState<PostVisibilityDto>(post.visibility);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const updatePost = useUpdatePost();
 
   useEffect(() => {
@@ -36,6 +39,10 @@ export function EditPostModal({ open, onClose, post }: Props) {
   );
   const saving = updatePost.isPending;
   const canSubmit = changed && trimmedContent.length > 0 && !saving;
+
+  function handleEmojiSelect(emoji: string) {
+    applyEmojiInsert(textareaRef.current, content, emoji, setContent);
+  }
 
   /** Lưu thay đổi bài viết và đóng modal khi backend trả về thành công. */
   function handleSubmit() {
@@ -74,6 +81,7 @@ export function EditPostModal({ open, onClose, post }: Props) {
             Nội dung
           </label>
           <textarea
+            ref={textareaRef}
             id="edit-post-text"
             value={content}
             onChange={(event) => setContent(event.target.value)}
@@ -100,6 +108,7 @@ export function EditPostModal({ open, onClose, post }: Props) {
         </div>
 
         <div className="border-border shrink-0 border-t px-4 py-3">
+          <ComposeEmojiPicker onSelect={handleEmojiSelect} disabled={saving} className="mb-3" />
           <Button className="w-full" loading={saving} disabled={!canSubmit} onClick={handleSubmit}>
             Lưu thay đổi
           </Button>

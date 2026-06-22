@@ -1,6 +1,6 @@
 'use client';
 
-import { Bookmark, MessageCircle, MoreHorizontal, Share2, ThumbsUp } from 'lucide-react';
+import { Bookmark, MessageCircle, Share2, ThumbsUp } from 'lucide-react';
 import { useReducedMotion } from 'motion/react';
 import { useState } from 'react';
 
@@ -16,7 +16,6 @@ type Props = {
   onComment: (e: React.MouseEvent) => void;
   onShare: (e: React.MouseEvent) => void;
   onSave: (e: React.MouseEvent) => void;
-  onMore: (e: React.MouseEvent) => void;
   className?: string;
 };
 
@@ -43,7 +42,6 @@ export function ReelsActionRail({
   onComment,
   onShare,
   onSave,
-  onMore,
   className,
 }: Props) {
   const [likeAnimating, setLikeAnimating] = useState(false);
@@ -120,20 +118,6 @@ export function ReelsActionRail({
       >
         <span className={iconWrap}>
           <Bookmark className={cn('h-7 w-7 stroke-[1.5]', saved && 'fill-white')} aria-hidden />
-        </span>
-      </button>
-
-      <button
-        type="button"
-        aria-label="Thêm tuỳ chọn"
-        className={btnBase}
-        onClick={(e) => {
-          e.stopPropagation();
-          onMore(e);
-        }}
-      >
-        <span className={iconWrap}>
-          <MoreHorizontal className="h-7 w-7 stroke-[1.5]" aria-hidden />
         </span>
       </button>
     </div>

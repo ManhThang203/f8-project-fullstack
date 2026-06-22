@@ -252,11 +252,6 @@ export function FacebookReelsPlayer({ item, isActive }: ReelsPlayerProps) {
     setVolume(nextVolume);
   }
 
-  function handleSearch(e: React.MouseEvent) {
-    e.stopPropagation();
-    toast.message('Tìm kiếm — tính năng sắp có');
-  }
-
   function handleSeek(timeMs: number) {
     const v = videoRef.current;
     if (!v) return;
@@ -329,11 +324,6 @@ export function FacebookReelsPlayer({ item, isActive }: ReelsPlayerProps) {
     );
   }
 
-  function handleMore(e: React.MouseEvent) {
-    e.stopPropagation();
-    toast.message('Thêm tuỳ chọn — tính năng sắp có');
-  }
-
   function handleAvatarClick(e: React.MouseEvent) {
     e.stopPropagation();
     router.push(`/${item.author.username}`);
@@ -372,7 +362,6 @@ export function FacebookReelsPlayer({ item, isActive }: ReelsPlayerProps) {
     onComment: handleComment,
     onShare: (e: React.MouseEvent) => void handleShare(e),
     onSave: handleSave,
-    onMore: handleMore,
   };
 
   return (
@@ -417,7 +406,6 @@ export function FacebookReelsPlayer({ item, isActive }: ReelsPlayerProps) {
             onVolumeChange={handleVolumeChange}
             onToggleMute={handleToggleMute}
             onVolumeIconTap={handleVolumeIconTap}
-            onSearch={handleSearch}
           />
 
           <ReelsBottomMeta

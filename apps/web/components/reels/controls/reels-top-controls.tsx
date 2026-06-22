@@ -1,6 +1,6 @@
 'use client';
 
-import { Pause, Play, Search } from 'lucide-react';
+import { Pause, Play } from 'lucide-react';
 
 import {
   ReelsVolumeControl,
@@ -21,7 +21,6 @@ type Props = {
   onVolumeChange: (volume: number) => void;
   onToggleMute: (e: React.MouseEvent) => void;
   onVolumeIconTap?: (e: React.MouseEvent) => void;
-  onSearch: (e: React.MouseEvent) => void;
   className?: string;
 };
 
@@ -44,7 +43,6 @@ export function ReelsTopControls({
   onVolumeChange,
   onToggleMute,
   onVolumeIconTap,
-  onSearch,
   className,
 }: Props) {
   const hidden = !visible;
@@ -85,21 +83,6 @@ export function ReelsTopControls({
           onVolumeIconTap={onVolumeIconTap}
         />
       </div>
-
-      <button
-        type="button"
-        aria-label="Tìm kiếm"
-        className={cn(
-          glassBtn,
-          'absolute right-3 top-3 z-20',
-          visibilityClass,
-          hidden && 'pointer-events-none invisible opacity-0',
-          className,
-        )}
-        onClick={onSearch}
-      >
-        <Search className="h-5 w-5" aria-hidden />
-      </button>
     </>
   );
 }

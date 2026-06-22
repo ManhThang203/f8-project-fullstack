@@ -251,3 +251,89 @@ html.reels-scroll-lock body {
   background: rgb(255 255 255);
   box-shadow: 0 0 0 1px rgb(0 0 0 / 0.15);
 }
+
+/* Emoji picker — Threads-style dark surface, 6-col grid, pill search */
+.EmojiPickerThreads .epr-main,
+.EmojiPickerThreads aside.EmojiPickerReact {
+  --epr-bg-color: hsl(var(--card));
+  --epr-text-color: hsl(var(--muted-foreground));
+  --epr-picker-border-color: transparent;
+  --epr-search-input-bg-color: hsl(var(--muted));
+  --epr-search-input-bg-color-active: hsl(var(--muted));
+  --epr-search-border-color: transparent;
+  --epr-search-border-color-active: transparent;
+  --epr-search-input-text-color: hsl(var(--foreground));
+  --epr-search-input-placeholder-color: hsl(var(--muted-foreground));
+  --epr-category-label-bg-color: hsl(var(--card));
+  --epr-category-label-text-color: hsl(var(--muted-foreground));
+  --epr-hover-bg-color: hsl(var(--muted));
+  --epr-focus-bg-color: hsl(var(--accent));
+  --epr-highlight-color: hsl(var(--foreground));
+  --epr-category-icon-active-color: hsl(var(--foreground));
+  --epr-horizontal-padding: 8px;
+  --epr-header-padding: 12px 12px 4px;
+  --epr-search-input-border-radius: 9999px;
+  --epr-search-input-height: 36px;
+  --epr-search-input-padding: 0 36px;
+  --epr-search-bar-inner-padding: 0;
+  --epr-category-navigation-button-size: 36px;
+  --epr-emoji-size: 32px;
+  --epr-emoji-padding: 12px;
+  --epr-picker-border-radius: 0;
+  --epr-category-label-height: 28px;
+  border: none;
+  box-shadow: none;
+}
+
+.EmojiPickerThreads .epr-emoji-category-label {
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.EmojiPickerThreads .epr-category-nav {
+  border-top: 1px solid hsl(var(--border));
+  padding: 8px 4px 4px;
+  gap: 2px;
+}
+
+.EmojiPickerThreads .epr-cat-btn.epr-active {
+  background-color: hsl(var(--muted));
+  border-radius: 10px;
+}
+
+.EmojiPickerThreads .epr-emoji:hover,
+.EmojiPickerThreads .epr-emoji:focus-visible {
+  border-radius: 10px;
+}
+
+.EmojiPickerThreads .epr-search-container .epr-icn-search {
+  opacity: 0.55;
+}
+
+.EmojiPickerCosty .epr-main {
+  --epr-bg-color: hsl(var(--card));
+  --epr-text-color: hsl(var(--muted-foreground));
+  --epr-picker-border-color: hsl(var(--border));
+  --epr-search-input-bg-color: hsl(var(--muted));
+  --epr-category-label-bg-color: hsl(var(--card));
+  --epr-hover-bg-color: hsl(var(--muted));
+  --epr-focus-bg-color: hsl(var(--accent));
+  --epr-highlight-color: hsl(var(--foreground));
+  --epr-category-icon-active-color: hsl(var(--foreground));
+  --epr-emoji-size: 28px;
+  --epr-emoji-padding: 8px;
+  --epr-picker-border-radius: 0;
+  border: none;
+}
+
+.EmojiPickerCosty .epr-dark-theme,
+.dark .EmojiPickerCosty .epr-main {
+  --epr-bg-color: hsl(var(--card));
+  --epr-text-color: hsl(var(--muted-foreground));
+  --epr-picker-border-color: hsl(var(--border));
+  --epr-search-input-bg-color: hsl(var(--muted));
+  --epr-category-label-bg-color: hsl(var(--card));
+  --epr-hover-bg-color: hsl(var(--muted));
+  --epr-focus-bg-color: hsl(var(--accent));
+}

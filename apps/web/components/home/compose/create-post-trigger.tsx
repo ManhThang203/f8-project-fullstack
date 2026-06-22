@@ -1,6 +1,6 @@
 'use client';
 
-import { Image, Smile, Video } from 'lucide-react';
+import { Image, Smile } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
@@ -38,18 +38,6 @@ export function CreatePostTrigger({ username, avatarUrl, onOpen }: Props) {
 
       {/* Quick action icons */}
       <div className="flex items-center gap-1">
-        <button
-          type="button"
-          onClick={() => onOpen(false)}
-          aria-label="Video trực tiếp"
-          className={cn(
-            'hover:bg-muted flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors',
-            'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
-          )}
-        >
-          <Video className="h-5 w-5 text-[hsl(0,80%,60%)]" aria-hidden />
-        </button>
-
         <button
           type="button"
           onClick={() => onOpen(true)}
