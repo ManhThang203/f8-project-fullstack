@@ -55,13 +55,14 @@ export async function emitPostHidden(
   postId: string,
   visibility: PostVisibility,
   parentId: string | null,
+  rootPostId: string | null,
 ): Promise<void> {
   const io = getRealtimeIo();
   if (!io) return;
 
   try {
     const rooms = await resolvePostCreatedRooms(authorId, visibility);
-    io.of('/feed').to(rooms).emit('post:hidden', { postId, parentId });
+    io.of('/feed').to(rooms).emit('post:hidden', { postId, parentId, rootPostId });
   } catch (err) {
     logger.warn({ err, authorId, postId }, 'emitPostHidden failed');
   }

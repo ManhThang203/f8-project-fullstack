@@ -76,11 +76,18 @@ export async function createPost(opts: {
       const message = result.reason instanceof Error ? result.reason.message : 'Upload thất bại';
       logger.error({ err: result.reason }, 'Cloudinary upload failed during createPost');
       const isAuthError = message.includes('Invalid cloud_name') || message.includes('(HTTP 401)');
-      throw AppError.badRequest(
-        isAuthError
-          ? `Cấu hình Cloudinary không hợp lệ. Cloud name "${getCloudinaryCloudName()}" bị Cloudinary từ chối (401). Lấy đúng Cloud name, API Key, API Secret từ Dashboard → Product environment credentials.`
-          : `Không tải được media: ${message}`,
-      );
+      const isPermissionError = message.includes('(HTTP 403)');
+      if (isAuthError) {
+        throw AppError.badRequest(
+          `Cấu hình Cloudinary không hợp lệ. Cloud name "${getCloudinaryCloudName()}" bị Cloudinary từ chối (401). Lấy đúng Cloud name, API Key, API Secret từ Dashboard → Product environment credentials.`,
+        );
+      }
+      if (isPermissionError) {
+        throw AppError.badRequest(
+          `API Key Cloudinary không có quyền upload (Cloudinary trả 403 "missing permissions: create"). Dùng API Key + API Secret mặc định (full access) trong Dashboard → Settings → API Keys, thay vì access key giới hạn quyền.`,
+        );
+      }
+      throw AppError.badRequest(`Không tải được media: ${message}`);
     }
   }
 
