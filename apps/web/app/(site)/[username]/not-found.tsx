@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function ProfileNotFound() {
   return (
-    <main className="bg-background min-h-screen">
+    <main className="bg-background min-h-dvh">
       <div className="mx-auto max-w-[600px] space-y-4 px-4 py-16 text-center">
         <p className="text-foreground text-lg font-semibold">Không tìm thấy người dùng này</p>
         <Link

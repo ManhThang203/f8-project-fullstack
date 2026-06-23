@@ -6,6 +6,7 @@ type ReelsAudioContextValue = {
   volume: number;
   muted: boolean;
   setVolume: (volume: number) => void;
+  setMuted: (muted: boolean) => void;
   toggleMute: () => void;
 };
 
@@ -37,7 +38,7 @@ export function ReelsAudioProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ volume, muted, setVolume, toggleMute }),
+    () => ({ volume, muted, setVolume, setMuted, toggleMute }),
     [volume, muted, setVolume, toggleMute],
   );
 

@@ -13,6 +13,7 @@ import { ConversationList, peerLabel } from './conversation-list';
 import { NewChatModal } from './new-chat-modal';
 import { useChatRoomSocket } from './use-chat-room-socket';
 
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import {
   EMPTY_CONVERSATIONS,
   EMPTY_ROOM_MESSAGES,
@@ -35,6 +36,11 @@ type SendInput = {
   mediaId?: string;
 };
 
+type PendingMessageAction = {
+  type: 'unsend' | 'delete';
+  messageId: string;
+};
+
 export function MessagesView() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -54,6 +60,7 @@ export function MessagesView() {
   const [sending, setSending] = useState(false);
   const [newChatOpen, setNewChatOpen] = useState(false);
   const [pulsingId, setPulsingId] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingMessageAction | null>(null);
 
   const chatSocket = useChatRoomSocket(meId, roomId);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
@@ -169,6 +176,48 @@ export function MessagesView() {
     } finally {
       setSending(false);
     }
+  }
+
+  /** Thu hồi tin nhắn đã gửi qua socket và cập nhật cache. */
+  function runUnsend(messageId: string) {
+    if (!roomId) return;
+    chatSocket?.emit(
+      'chat:unsend',
+      { messageId },
+      (ack: { ok?: boolean }) => {
+        if (ack?.ok) {
+          patchMessageUnsent(queryClient, roomId, messageId);
+        }
+      },
+    );
+  }
+
+  /** Xoá tin nhắn chỉ phía mình qua socket và loại khỏi cache. */
+  function runDelete(messageId: string) {
+    if (!roomId) return;
+    chatSocket?.emit(
+      'chat:delete',
+      { messageId },
+      (ack: { ok?: boolean }) => {
+        if (ack?.ok) {
+          queryClient.setQueryData<ChatMessageDto[]>(
+            queryKeys.chat.roomMessages(roomId),
+            (prev) => prev?.filter((msg) => msg.id !== messageId) ?? prev,
+          );
+        }
+      },
+    );
+  }
+
+  /** Xác nhận hành động thu hồi/xoá tin nhắn từ modal. */
+  function confirmPendingAction() {
+    if (!pendingAction) return;
+    if (pendingAction.type === 'unsend') {
+      runUnsend(pendingAction.messageId);
+    } else {
+      runDelete(pendingAction.messageId);
+    }
+    setPendingAction(null);
   }
 
   /** Tạo chat 1-1 hoặc nhóm từ modal; chat 1-1 đã có thì mở lại phòng cũ. */
@@ -312,34 +361,12 @@ export function MessagesView() {
                             },
                           );
                         }}
-                        onUnsend={() => {
-                          if (!confirm('Bạn có chắc muốn thu hồi tin nhắn này?')) return;
-                          chatSocket?.emit(
-                            'chat:unsend',
-                            { messageId: m.id },
-                            (ack: { ok?: boolean }) => {
-                              if (ack?.ok && roomId) {
-                                patchMessageUnsent(queryClient, roomId, m.id);
-                              }
-                            },
-                          );
-                        }}
-                        onDelete={() => {
-                          if (!confirm('Bạn có chắc muốn xoá tin nhắn này (chỉ phía bạn)?')) return;
-                          chatSocket?.emit(
-                            'chat:delete',
-                            { messageId: m.id },
-                            (ack: { ok?: boolean }) => {
-                              if (ack?.ok && roomId) {
-                                queryClient.setQueryData<ChatMessageDto[]>(
-                                  queryKeys.chat.roomMessages(roomId),
-                                  (prev) =>
-                                    prev?.filter((msg) => msg.id !== m.id) ?? prev,
-                                );
-                              }
-                            },
-                          );
-                        }}
+                        onUnsend={() =>
+                          setPendingAction({ type: 'unsend', messageId: m.id })
+                        }
+                        onDelete={() =>
+                          setPendingAction({ type: 'delete', messageId: m.id })
+                        }
                       />
                     );
                   }}
@@ -368,6 +395,21 @@ export function MessagesView() {
         open={newChatOpen}
         onClose={() => setNewChatOpen(false)}
         onCreate={(params) => void handleCreateChat(params)}
+      />
+
+      <ConfirmDialog
+        open={pendingAction !== null}
+        onClose={() => setPendingAction(null)}
+        onConfirm={confirmPendingAction}
+        title={pendingAction?.type === 'unsend' ? 'Thu hồi tin nhắn' : 'Xoá tin nhắn'}
+        description={
+          pendingAction?.type === 'unsend'
+            ? 'Bạn có chắc muốn thu hồi tin nhắn này? Tin nhắn sẽ bị thu hồi với mọi người.'
+            : 'Bạn có chắc muốn xoá tin nhắn này? Tin nhắn chỉ bị xoá ở phía bạn.'
+        }
+        confirmLabel={pendingAction?.type === 'unsend' ? 'Thu hồi' : 'Xoá'}
+        cancelLabel="Huỷ"
+        destructive
       />
     </>
   );

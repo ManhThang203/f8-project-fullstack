@@ -19,7 +19,7 @@ export default async function FollowersPage({ params }: Props) {
   const { username } = await params;
 
   return (
-    <main className="bg-background min-h-screen px-4 py-6">
+    <main className="bg-background min-h-dvh px-4 py-6">
       <ClientOnly
         fallback={
           <div className="text-muted-foreground mx-auto max-w-[600px] py-12 text-center text-sm">

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function FriendsPage() {
   return (
-    <main className="bg-background min-h-screen py-4">
+    <main className="bg-background min-h-dvh py-4">
       <ClientOnly
         fallback={
           <div className="text-muted-foreground mx-auto max-w-[600px] py-12 text-center text-sm">

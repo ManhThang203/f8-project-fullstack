@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 function MessagesFallback() {
   return (
-    <main className="bg-background min-h-screen">
+    <main className="bg-background min-h-dvh">
       <div className="text-muted-foreground flex min-h-[50dvh] items-center justify-center text-sm">
         Đang tải…
       </div>

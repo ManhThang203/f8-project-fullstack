@@ -72,7 +72,7 @@ export function EditPostModal({ open, onClose, post }: Props) {
       <Modal.Panel
         from="bottom"
         size="md"
-        className="flex max-h-screen w-full flex-col rounded-t-2xl sm:rounded-2xl"
+        className="flex max-h-[100dvh] w-full flex-col rounded-t-2xl sm:rounded-2xl"
       >
         <Modal.Header title="Chỉnh sửa bài viết" closeDisabled={saving} />
 
@@ -108,7 +108,9 @@ export function EditPostModal({ open, onClose, post }: Props) {
         </div>
 
         <div className="border-border shrink-0 border-t px-4 py-3">
-          <ComposeEmojiPicker onSelect={handleEmojiSelect} disabled={saving} className="mb-3" />
+          <div className="border-border mb-3 flex items-center justify-end rounded-xl border px-3 py-2.5">
+            <ComposeEmojiPicker onSelect={handleEmojiSelect} disabled={saving} />
+          </div>
           <Button className="w-full" loading={saving} disabled={!canSubmit} onClick={handleSubmit}>
             Lưu thay đổi
           </Button>

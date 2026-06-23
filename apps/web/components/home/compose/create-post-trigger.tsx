@@ -11,7 +11,7 @@ type Props = {
 };
 
 export function CreatePostTrigger({ username, avatarUrl, onOpen }: Props) {
-  const placeholder = username ? `${username} ơi, bạn đang nghĩ gì thế?` : 'Bạn đang nghĩ gì thế?';
+  const placeholder = 'Có gì mới?';
 
   return (
     <div className="border-border bg-card flex items-center gap-3 rounded-2xl border px-4 py-3">

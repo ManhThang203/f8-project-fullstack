@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 
 import { FeedSkeletonList } from '@/components/home/feed/feed-skeleton-list';
 import { PostCard } from '@/components/home/post/post-card';
@@ -15,7 +16,6 @@ type Props = {
 };
 
 export function ProfileFeed({ username, isOwner, isDeleted, onCreatePost }: Props) {
-  const loadMoreRef = useRef<HTMLDivElement>(null);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => new Set());
 
   const {
@@ -39,19 +39,9 @@ export function ProfileFeed({ username, isOwner, isDeleted, onCreatePost }: Prop
     setDismissedIds((prev) => new Set(prev).add(postId));
   }, []);
 
-  useEffect(() => {
-    const el = loadMoreRef.current;
-    if (!el || !hasNextPage || isFetchingNextPage) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) void fetchNextPage();
-      },
-      { rootMargin: '200px' },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+  const handleEndReached = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   if (isDeleted) {
     return (
@@ -96,22 +86,30 @@ export function ProfileFeed({ username, isOwner, isDeleted, onCreatePost }: Prop
   }
 
   return (
-    <>
-      <ul className="border-border flex flex-col border-t px-4">
-        {visiblePosts.map((post) => (
-          <PostCard key={post.id} post={post} onDismiss={dismissPost} hideDismiss />
-        ))}
-      </ul>
-
-      <div ref={loadMoreRef} className="flex min-h-11 items-center justify-center py-4">
-        {isFetchingNextPage ? (
-          <p className="text-muted-foreground text-sm" aria-live="polite">
-            Đang tải thêm…
-          </p>
-        ) : hasNextPage ? null : (
-          <p className="text-muted-foreground text-xs">Đã hiển thị tất cả bài viết.</p>
+    <div className="border-border border-t px-4">
+      <Virtuoso
+        useWindowScroll
+        data={visiblePosts}
+        computeItemKey={(_, post) => post.id}
+        endReached={handleEndReached}
+        overscan={600}
+        itemContent={(_, post) => (
+          <PostCard post={post} onDismiss={dismissPost} hideDismiss />
         )}
-      </div>
-    </>
+        components={{
+          Footer: () => (
+            <div className="flex min-h-11 items-center justify-center py-4">
+              {isFetchingNextPage ? (
+                <p className="text-muted-foreground text-sm" aria-live="polite">
+                  Đang tải thêm…
+                </p>
+              ) : hasNextPage ? null : (
+                <p className="text-muted-foreground text-xs">Đã hiển thị tất cả bài viết.</p>
+              )}
+            </div>
+          ),
+        }}
+      />
+    </div>
   );
 }

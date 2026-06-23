@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 import { SiteHeaderCompact } from './site-header-compact';
 import { SiteHeaderDesktop } from './site-header-desktop';
@@ -33,7 +34,6 @@ export function SiteHeader({ initialUser }: Props) {
   const pathname = usePathname();
   const { data: session, refetch } = authClient.useSession();
   const [loggingOut, setLoggingOut] = useState(false);
-  const [logoutError, setLogoutError] = useState<string | null>(null);
   const [avatarOverride, setAvatarOverride] = useState<string | null>(null);
   /** Ngay sau signOut: hiện nav khách, không chờ RSC / nano store bắt kịp. */
   const [forceGuestNav, setForceGuestNav] = useState(false);
@@ -70,7 +70,6 @@ export function SiteHeader({ initialUser }: Props) {
   }, [me, avatarOverride]);
 
   async function onLogout() {
-    setLogoutError(null);
     setLoggingOut(true);
     setForceGuestNav(true);
     try {
@@ -80,10 +79,10 @@ export function SiteHeader({ initialUser }: Props) {
       const err = result && typeof result === 'object' && 'error' in result ? result.error : null;
       if (err) {
         setForceGuestNav(false);
-        setLogoutError(
+        toast.error(
           typeof err === 'object' && err !== null && typeof err.message === 'string'
             ? err.message
-            : 'Đăng xuất thất bại. Thử lại.',
+            : 'Đăng xuất thất bại, vui lòng thử lại.',
         );
         return;
       }
@@ -92,7 +91,7 @@ export function SiteHeader({ initialUser }: Props) {
       router.refresh();
     } catch {
       setForceGuestNav(false);
-      setLogoutError('Đăng xuất thất bại. Thử lại.');
+      toast.error('Đăng xuất thất bại, vui lòng thử lại.');
     } finally {
       setLoggingOut(false);
     }
@@ -114,14 +113,6 @@ export function SiteHeader({ initialUser }: Props) {
         {...sharedProps}
       />
       <SiteHeaderCompact className="w-full lg:hidden" pathname={pathname} {...sharedProps} />
-      {logoutError ? (
-        <p
-          className="border-border bg-background border-t px-4 py-2 text-sm text-red-600 dark:text-red-400"
-          role="alert"
-        >
-          {logoutError}
-        </p>
-      ) : null}
     </header>
   );
 }

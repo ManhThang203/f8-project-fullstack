@@ -15,6 +15,8 @@ import { cn } from '@/lib/utils';
 type Props = {
   likeCount: number;
   replyCount: number;
+  /** Tổng bình luận mọi cấp; fallback về replyCount nếu chưa có. */
+  commentCount?: number;
   shareCount: number;
   summaryReactions: PostReactionId[];
   onLikeClick?: () => void;
@@ -33,6 +35,7 @@ type Props = {
 export function PostFooter({
   likeCount,
   replyCount,
+  commentCount,
   shareCount,
   summaryReactions,
   onLikeClick,
@@ -69,6 +72,8 @@ export function PostFooter({
     likeLabel = `${likeCount} ${likeLabel.toLowerCase()}`;
   }
 
+  const effectiveCount = commentCount ?? replyCount;
+
   return (
     <footer
       className={cn(
@@ -97,8 +102,8 @@ export function PostFooter({
 
         <ActionButton
           icon={<MessageCircle className="h-5 w-5" strokeWidth={1.75} />}
-          count={replyCount > 0 ? replyCount : undefined}
-          label={replyCount > 0 ? `${replyCount} bình luận` : 'Bình luận'}
+          count={effectiveCount > 0 ? effectiveCount : undefined}
+          label={effectiveCount > 0 ? `${effectiveCount} bình luận` : 'Bình luận'}
           onClick={onCommentClick}
         />
 

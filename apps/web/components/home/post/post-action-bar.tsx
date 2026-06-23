@@ -31,6 +31,8 @@ type Props = {
   authorUsername: string;
   hasVideo?: boolean;
   replyCount: number;
+  /** Tổng mọi cấp cho nhãn bình luận */
+  commentCount?: number;
   initialLikeCount: number;
   initialReaction: PostReactionId | null;
   topReactions?: string[];
@@ -44,6 +46,7 @@ export function PostActionBar({
   authorUsername,
   hasVideo = false,
   replyCount,
+  commentCount,
   initialLikeCount,
   initialReaction,
   topReactions = [],
@@ -204,6 +207,7 @@ export function PostActionBar({
       <PostFooter
         likeCount={initialLikeCount}
         replyCount={replyCount}
+        commentCount={commentCount}
         shareCount={shareCount}
         summaryReactions={summaryReactions}
         onLikeClick={toggleLike}

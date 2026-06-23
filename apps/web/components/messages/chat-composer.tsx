@@ -62,7 +62,7 @@ export function ChatComposer({
 
   return (
     <form
-      className="border-border relative flex min-w-0 flex-col gap-0 border-t"
+      className="border-border relative flex min-w-0 flex-col gap-0 border-t pb-[env(safe-area-inset-bottom)]"
       onSubmit={(e) => {
         e.preventDefault();
         void handleSubmit();
@@ -88,7 +88,7 @@ export function ChatComposer({
           </button>
         </div>
       )}
-      <div className="flex items-center gap-2 p-3">
+      <div className="flex min-w-0 w-full items-center gap-1 px-2 py-2 sm:gap-2 sm:p-3">
         <input
           type="file"
           accept="image/*,video/*"
@@ -145,7 +145,7 @@ export function ChatComposer({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Nhập tin nhắn…"
-          className="border-border bg-muted/50 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring min-h-11 flex-1 rounded-full border px-4 text-sm focus-visible:outline-none focus-visible:ring-2"
+          className="border-border bg-muted/50 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring min-h-11 min-w-0 flex-1 rounded-full border px-4 text-sm focus-visible:outline-none focus-visible:ring-2"
           maxLength={8000}
           disabled={sending}
         />

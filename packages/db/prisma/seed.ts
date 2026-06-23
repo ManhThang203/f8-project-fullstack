@@ -3,6 +3,8 @@ import { fileURLToPath } from 'node:url';
 
 import dotenv from 'dotenv';
 
+import { seedSavedPostsForUser } from './seed-saved-posts.js';
+
 const prismaDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(prismaDir, '../../..');
 dotenv.config({ path: path.join(repoRoot, '.env') });
@@ -16,6 +18,21 @@ const ADMIN_USER_ID = 'seed_admin_user_001';
 
 /** Số bài gốc (parentId = null) để test cuộn feed + cursor pagination (limit mặc định 20 → ~5 trang). */
 const SEED_ROOT_POST_COUNT = 100;
+
+/** Số bình luận seed cho mỗi bài gốc (test cuộn danh sách comment). */
+const SEED_COMMENTS_PER_POST = 100;
+
+/** Prefix nội dung comment seed — dùng để xóa/idempotent khi chạy lại seed. */
+const SEED_COMMENT_PREFIX = 'Bình luận seed';
+
+/** Số bản ghi mỗi tab Bạn bè / Lời mời đến / Đã gửi. */
+const SEED_FRIENDSHIPS_PER_TAB = 100;
+
+/** Username nhận seed bạn bè / bài đã lưu (user dev chính). */
+const SEED_FRIEND_TARGET_USERNAME = process.env.SEED_FRIEND_TARGET_USERNAME ?? 'dongthang848';
+
+/** Tổng user seed riêng cho friendships (100 × 3 tab). */
+const SEED_FRIEND_USER_COUNT = SEED_FRIENDSHIPS_PER_TAB * 3;
 
 /** Số user giả để test trang Users trên admin. */
 const SEED_BULK_USER_COUNT = 50;
@@ -207,6 +224,146 @@ async function seedBulkUsers() {
   };
 }
 
+/** Xóa comment seed cũ và tạo ~100 bình luận cho mỗi bài gốc. */
+async function seedPostComments(
+  rootPosts: { id: string }[],
+  authorIds: string[],
+): Promise<{ removed: number; created: number }> {
+  if (rootPosts.length === 0 || authorIds.length === 0) {
+    return { removed: 0, created: 0 };
+  }
+
+  const removed = await prisma.post.deleteMany({
+    where: { content: { startsWith: SEED_COMMENT_PREFIX } },
+  });
+
+  const commentNow = Date.now();
+  const comments = rootPosts.flatMap((post, postIndex) =>
+    Array.from({ length: SEED_COMMENTS_PER_POST }, (_, commentIndex) => ({
+      authorId: authorIds[(postIndex + commentIndex) % authorIds.length]!,
+      parentId: post.id,
+      content: `${SEED_COMMENT_PREFIX} ${commentIndex + 1}/${SEED_COMMENTS_PER_POST} — bài #${postIndex + 1}`,
+      createdAt: new Date(
+        commentNow - (postIndex * SEED_COMMENTS_PER_POST + commentIndex) * 1_000,
+      ),
+    })),
+  );
+
+  const batchSize = 1_000;
+  let created = 0;
+  for (let offset = 0; offset < comments.length; offset += batchSize) {
+    const batch = comments.slice(offset, offset + batchSize);
+    const result = await prisma.post.createMany({ data: batch });
+    created += result.count;
+  }
+
+  return { removed: removed.count, created };
+}
+
+type FriendUserSeed = {
+  id: string;
+  username: string;
+  email: string;
+  name: string;
+};
+
+/** Tạo 300 user seed riêng cho tab Bạn bè (100 bạn + 100 incoming + 100 outgoing). */
+function buildFriendUserSeeds(): FriendUserSeed[] {
+  return Array.from({ length: SEED_FRIEND_USER_COUNT }, (_, index) => {
+    const n = index + 1;
+    const padded = String(n).padStart(3, '0');
+
+    return {
+      id: `seed_friend_user_${padded}`,
+      username: `seedfriend${padded}`,
+      email: `seedfriend${padded}@costy.local`,
+      name: `Bạn bè seed ${n}`,
+    };
+  });
+}
+
+/** Seed 100 bạn bè, 100 lời mời đến và 100 lời mời đã gửi cho một user. */
+async function seedFriendshipsForUser(targetUserId: string): Promise<{
+  users: number;
+  removed: number;
+  created: number;
+  accepted: number;
+  incoming: number;
+  outgoing: number;
+}> {
+  const users = buildFriendUserSeeds();
+
+  for (const user of users) {
+    await prisma.user.upsert({
+      where: { username: user.username },
+      create: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        name: user.name,
+        role: 'USER',
+      },
+      update: {
+        name: user.name,
+        email: user.email,
+      },
+    });
+  }
+
+  const friendUserIds = users.map((user) => user.id);
+  const removed = await prisma.friendship.deleteMany({
+    where: {
+      OR: [
+        { requesterId: targetUserId, addresseeId: { in: friendUserIds } },
+        { addresseeId: targetUserId, requesterId: { in: friendUserIds } },
+      ],
+    },
+  });
+
+  const now = Date.now();
+  const minuteMs = 60_000;
+
+  const acceptedFriends = users
+    .slice(0, SEED_FRIENDSHIPS_PER_TAB)
+    .map((user, index) => ({
+      requesterId: targetUserId,
+      addresseeId: user.id,
+      status: 'ACCEPTED' as const,
+      createdAt: new Date(now - index * minuteMs),
+    }));
+
+  const incomingRequests = users
+    .slice(SEED_FRIENDSHIPS_PER_TAB, SEED_FRIENDSHIPS_PER_TAB * 2)
+    .map((user, index) => ({
+      requesterId: user.id,
+      addresseeId: targetUserId,
+      status: 'PENDING' as const,
+      createdAt: new Date(now - index * minuteMs),
+    }));
+
+  const outgoingRequests = users
+    .slice(SEED_FRIENDSHIPS_PER_TAB * 2, SEED_FRIEND_USER_COUNT)
+    .map((user, index) => ({
+      requesterId: targetUserId,
+      addresseeId: user.id,
+      status: 'PENDING' as const,
+      createdAt: new Date(now - index * minuteMs),
+    }));
+
+  const created = await prisma.friendship.createMany({
+    data: [...acceptedFriends, ...incomingRequests, ...outgoingRequests],
+  });
+
+  return {
+    users: users.length,
+    removed: removed.count,
+    created: created.count,
+    accepted: acceptedFriends.length,
+    incoming: incomingRequests.length,
+    outgoing: outgoingRequests.length,
+  };
+}
+
 async function main() {
   await seedPermissions();
 
@@ -271,9 +428,48 @@ async function main() {
     }
   }
 
+  const rootPostsForComments = await prisma.post.findMany({
+    where: {
+      parentId: null,
+      OR: [
+        { content: { startsWith: 'Bài seed ' } },
+        { content: { startsWith: 'Bài seed bulk' } },
+      ],
+    },
+    select: { id: true },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const commentAuthorIds = [
+    DEMO_USER_ID,
+    ADMIN_USER_ID,
+    ...buildBulkUserSeeds()
+      .slice(0, 20)
+      .map((user) => user.id),
+  ];
+
+  const commentResult = await seedPostComments(rootPostsForComments, commentAuthorIds);
+
+  const friendTarget = await prisma.user.findUnique({
+    where: { username: SEED_FRIEND_TARGET_USERNAME },
+    select: { id: true, username: true },
+  });
+
+  let friendLog = `friends skipped (@${SEED_FRIEND_TARGET_USERNAME} not found)`;
+  let savedLog = `saved skipped (@${SEED_FRIEND_TARGET_USERNAME} not found)`;
+  if (friendTarget) {
+    const friendResult = await seedFriendshipsForUser(friendTarget.id);
+    const savedResult = await seedSavedPostsForUser(prisma, friendTarget.id);
+    friendLog = `friends @${friendTarget.username} users ${friendResult.users} removed ${friendResult.removed} created ${friendResult.created} (accepted ${friendResult.accepted}, incoming ${friendResult.incoming}, outgoing ${friendResult.outgoing})`;
+    savedLog = `saved @${friendTarget.username} removed ${savedResult.removed} created ${savedResult.created}`;
+  } else {
+    // eslint-disable-next-line no-console
+    console.warn(`[seed] skip friends/saved: user @${SEED_FRIEND_TARGET_USERNAME} not found`);
+  }
+
   // eslint-disable-next-line no-console
   console.log(
-    `[seed] permissions ok | users demo+admin+bulk(${bulkResult.userCount}) | bulk posts removed ${bulkResult.removedPosts} created ${bulkResult.createdPosts} | demo posts removed ${deleted.count} created ${created.count}`,
+    `[seed] permissions ok | users demo+admin+bulk(${bulkResult.userCount}) | bulk posts removed ${bulkResult.removedPosts} created ${bulkResult.createdPosts} | demo posts removed ${deleted.count} created ${created.count} | comments removed ${commentResult.removed} created ${commentResult.created} (${SEED_COMMENTS_PER_POST}/post × ${rootPostsForComments.length} posts) | ${friendLog} | ${savedLog}`,
   );
 }
 

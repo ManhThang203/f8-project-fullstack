@@ -44,7 +44,18 @@ export function ProfileActions({ profile, onFollowChange }: Props) {
     const prev = friendStatus;
     setFriendStatus(optimistic);
     friendMutation.mutate(
-      { userId: profile.id, action },
+      {
+        userId: profile.id,
+        action,
+        user: {
+          id: profile.id,
+          username: profile.username,
+          name: profile.name,
+          image: profile.image,
+          createdAt: profile.createdAt,
+          friendStatus: optimistic,
+        },
+      },
       {
         onSuccess: (data) => setFriendStatus(data.status),
         onError: () => setFriendStatus(prev),
@@ -90,7 +101,6 @@ export function ProfileActions({ profile, onFollowChange }: Props) {
     followMutation.mutate(
       { userId: profile.id, follow: next },
       {
-        onSuccess: (data) => onFollowChange(data.isFollowing),
         onError: () => onFollowChange(prev),
       },
     );

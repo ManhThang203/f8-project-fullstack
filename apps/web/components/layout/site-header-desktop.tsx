@@ -11,6 +11,7 @@ import { NotificationDropdown } from './notification-dropdown';
 
 import { iconButtonClass } from '@/components/shared/icon-button';
 import { NotificationBadge } from '@/components/shared/notification-badge';
+import { handleHomeNavClick } from '@/lib/home-feed-refresh';
 import { cn } from '@/lib/utils';
 
 type AccountUser = {
@@ -34,16 +35,19 @@ function NavTab({
   href,
   label,
   isActive,
+  onClick,
   children,
 }: {
   href: string;
   label: string;
   isActive: boolean;
+  onClick?: (e: React.MouseEvent) => void;
   children: ReactNode;
 }) {
   return (
     <Link
       href={href}
+      onClick={onClick}
       aria-label={label}
       aria-current={isActive ? 'page' : undefined}
       title={label}
@@ -121,6 +125,7 @@ export function SiteHeaderDesktop({
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <Link
           href="/"
+          onClick={(e) => handleHomeNavClick(pathname, e)}
           aria-label="Cotsy — Trang chủ"
           className="text-foreground hover:text-foreground/90 focus-visible:ring-ring focus-visible:ring-offset-background flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-1 text-base font-semibold tracking-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
         >
@@ -160,7 +165,12 @@ export function SiteHeaderDesktop({
 
       {/* Giữa: Home / Reels / Friends */}
       <nav aria-label="Trang chính" className="flex shrink-0 items-center justify-center gap-4">
-        <NavTab href="/" label="Trang chủ" isActive={pathname === '/'}>
+        <NavTab
+          href="/"
+          label="Trang chủ"
+          isActive={pathname === '/'}
+          onClick={(e) => handleHomeNavClick(pathname, e)}
+        >
           <Home className="h-6 w-6" strokeWidth={pathname === '/' ? 2.25 : 2} aria-hidden />
         </NavTab>
         <NavTab href="/reels" label="Reels" isActive={pathname.startsWith('/reel')}>

@@ -13,7 +13,7 @@ export default async function HomePage() {
   const serverSession = await getServerSession();
 
   return (
-    <main className="bg-background min-h-screen">
+    <main className="bg-background min-h-dvh">
       <ClientOnly fallback={<HomeFeedSsrFallback />}>
         <HomeFeed initialUser={serverSession?.user ?? null} />
       </ClientOnly>

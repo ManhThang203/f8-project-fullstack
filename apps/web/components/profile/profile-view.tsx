@@ -76,6 +76,7 @@ function ProfileViewInner({ username, initialUser }: Props) {
         queryKeys.users.profile(username),
         (old: { data: ProfileDto } | undefined) => {
           if (!old?.data) return old;
+          if (old.data.isFollowing === isFollowing) return old;
           return {
             ...old,
             data: {

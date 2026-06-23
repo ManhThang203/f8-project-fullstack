@@ -8,6 +8,7 @@ import { useMemo, type ReactNode } from 'react';
 import { NotificationBadge } from '@/components/shared/notification-badge';
 import { authClient } from '@/lib/auth-client';
 import type { ServerAuthUser } from '@/lib/auth-user.types';
+import { handleHomeNavClick } from '@/lib/home-feed-refresh';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -18,16 +19,19 @@ function BottomNavItem({
   href,
   label,
   isActive,
+  onClick,
   children,
 }: {
   href: string;
   label: string;
   isActive: boolean;
+  onClick?: (e: React.MouseEvent) => void;
   children: ReactNode;
 }) {
   return (
     <Link
       href={href}
+      onClick={onClick}
       aria-label={label}
       aria-current={isActive ? 'page' : undefined}
       className={cn(
@@ -63,7 +67,12 @@ export function BottomNav({ initialUser }: Props) {
       className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/80 fixed inset-x-0 bottom-0 z-50 border-t backdrop-blur-sm lg:hidden"
     >
       <div className="mx-auto flex h-14 max-w-screen-2xl items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)]">
-        <BottomNavItem href="/" label="Trang chủ" isActive={pathname === '/'}>
+        <BottomNavItem
+          href="/"
+          label="Trang chủ"
+          isActive={pathname === '/'}
+          onClick={(e) => handleHomeNavClick(pathname, e)}
+        >
           <Home className="h-6 w-6" strokeWidth={pathname === '/' ? 2.25 : 2} aria-hidden />
         </BottomNavItem>
         <BottomNavItem href="/reels" label="Reels" isActive={pathname.startsWith('/reel')}>

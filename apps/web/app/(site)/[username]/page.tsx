@@ -22,7 +22,7 @@ export default async function ProfilePage({ params }: Props) {
   const serverSession = await getServerSession();
 
   return (
-    <main className="bg-background min-h-screen">
+    <main className="bg-background min-h-dvh">
       <ClientOnly fallback={<ProfileSkeleton />}>
         <ProfileView username={username} initialUser={serverSession?.user ?? null} />
       </ClientOnly>

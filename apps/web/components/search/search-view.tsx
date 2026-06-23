@@ -5,6 +5,7 @@ import { Hash, Search, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import { PostCard } from '@/components/home/post/post-card';
 import { Avatar } from '@/components/shared/avatar';
@@ -123,6 +124,11 @@ export function SearchView() {
     (tab === 'users' && usersQuery.isError) ||
     (tab === 'hashtags' && hashtagsQuery.isError);
 
+  useEffect(() => {
+    if (!isError) return;
+    toast.error('Không tải được kết quả. Thử lại sau.');
+  }, [isError]);
+
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-4">
       <form role="search" onSubmit={submitSearch} className="mb-4">
@@ -162,7 +168,7 @@ export function SearchView() {
           Đang tìm…
         </p>
       ) : isError ? (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        <p className="text-muted-foreground text-sm" role="alert">
           Không tải được kết quả. Thử lại sau.
         </p>
       ) : tab === 'posts' ? (

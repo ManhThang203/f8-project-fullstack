@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import type { z } from 'zod';
 
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
@@ -147,11 +148,11 @@ export function RegisterForm() {
       lower.includes('username') &&
       (lower.includes('taken') || lower.includes('exists') || lower.includes('already'))
     ) {
-      setError('username', { message: msg });
+      setError('username', { message: 'Tên đăng nhập đã được sử dụng' });
       document.getElementById('username')?.focus();
       return;
     }
-    setError('root', { message: msg });
+    toast.error('Đăng ký thất bại, vui lòng thử lại.');
   }
 
   const linkFocusClass =
@@ -202,12 +203,6 @@ export function RegisterForm() {
                   onSubmit={handleSubmit(onSubmit)}
                   noValidate
                 >
-              {errors.root ? (
-                <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-                  {errors.root.message}
-                </p>
-              ) : null}
-
               <div>
                 <label className="text-muted-foreground text-xs font-medium" htmlFor="username">
                   Tên đăng nhập
@@ -293,7 +288,7 @@ export function RegisterForm() {
                   callbackURL={afterAuthUrl}
                   label="Tiếp tục với Google"
                   className="border-border bg-card rounded-xl"
-                  onError={(msg) => setError('root', { message: msg })}
+                  onError={(msg) => toast.error(msg)}
                 />
               </>
             ) : null}

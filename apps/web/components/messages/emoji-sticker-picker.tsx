@@ -61,7 +61,7 @@ export function EmojiStickerPicker({
       <div onClick={() => onOpenChange(!open)}>{trigger}</div>
 
       {open && (
-        <div className="border-border bg-card animate-in fade-in slide-in-from-bottom-2 absolute bottom-[calc(100%+10px)] left-0 z-50 w-[350px] overflow-hidden rounded-xl border shadow-lg duration-200">
+        <div className="border-border bg-card animate-in fade-in slide-in-from-bottom-2 fixed inset-x-3 bottom-20 z-50 overflow-hidden rounded-xl border shadow-lg duration-200 sm:absolute sm:inset-x-auto sm:bottom-[calc(100%+10px)] sm:left-0 sm:w-[350px]">
           <div className="border-border flex w-full border-b">
             <button
               type="button"

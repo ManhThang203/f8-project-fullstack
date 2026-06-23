@@ -69,6 +69,7 @@ export function mapPostToGridItemDto(post: PostGridRow, isVideo: boolean): Profi
     mediaCount: post._count.media,
     likeCount: post._count.likes,
     replyCount: post._count.replies,
+    commentCount: post._count.replies, // grid chủ yếu hiển thị post gốc; có thể override bằng count root nếu cần
     createdAt: post.createdAt.toISOString(),
     isVideo,
   };

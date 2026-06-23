@@ -35,6 +35,7 @@ export function mapPostToFeedItemDto(
   myReaction: string | null = null,
   savedByMe = false,
   topReactions: string[] = [],
+  commentCount?: number,
 ): PostFeedItemDto {
   const sortedMedia = [...post.media]
     .filter((m) => Boolean(m.publicUrl?.trim()))
@@ -53,6 +54,7 @@ export function mapPostToFeedItemDto(
       image: post.author.image,
     },
     replyCount: post._count.replies,
+    commentCount: commentCount ?? post._count.replies,
     likeCount: post._count.likes ?? 0,
     shareCount: post._count.shares ?? 0,
     myReaction,
@@ -75,6 +77,7 @@ export function mapPostToReelsFeedItemDto(
   myReaction: string | null = null,
   savedByMe = false,
   topReactions: string[] = [],
+  commentCount?: number,
 ): ReelsFeedItemDto | null {
   const videoMedia = post.media
     .filter((m) => m.kind === MediaKind.VIDEO)
@@ -95,6 +98,7 @@ export function mapPostToReelsFeedItemDto(
     createdAt: post.createdAt.toISOString(),
     author,
     replyCount: post._count.replies,
+    commentCount: commentCount ?? post._count.replies,
     likeCount: post._count.likes,
     shareCount: post._count.shares ?? 0,
     myReaction,

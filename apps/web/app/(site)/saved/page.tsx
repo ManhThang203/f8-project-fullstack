@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function SavedPage() {
   return (
-    <main className="bg-background min-h-screen py-4">
+    <main className="bg-background min-h-dvh py-4">
       <div className="mx-auto w-full max-w-2xl px-4">
         <h1 className="mb-4 text-xl font-semibold">Đã lưu</h1>
         <ClientOnly

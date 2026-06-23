@@ -37,7 +37,7 @@ export default function ModerationDetailPage() {
 
   if (isLoading) {
     return (
-      <main className="bg-background mx-auto min-h-screen max-w-lg px-4 py-8">
+      <main className="bg-background mx-auto min-h-dvh max-w-lg px-4 py-8">
         <p className="text-muted-foreground text-sm">Đang tải...</p>
       </main>
     );
@@ -45,7 +45,7 @@ export default function ModerationDetailPage() {
 
   if (error || !caseData) {
     return (
-      <main className="bg-background mx-auto min-h-screen max-w-lg px-4 py-8">
+      <main className="bg-background mx-auto min-h-dvh max-w-lg px-4 py-8">
         <p className="text-muted-foreground text-sm">Không tìm thấy thông tin kiểm duyệt.</p>
         <Link
           href="/"
@@ -69,7 +69,7 @@ export default function ModerationDetailPage() {
   };
 
   return (
-    <main className="bg-background mx-auto min-h-screen max-w-lg px-4 py-8">
+    <main className="bg-background mx-auto min-h-dvh max-w-lg px-4 py-8">
       <div className="mb-6 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500/10">
           <ShieldAlert className="h-5 w-5 text-orange-600" />
