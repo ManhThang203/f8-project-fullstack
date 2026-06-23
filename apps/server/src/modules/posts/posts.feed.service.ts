@@ -9,6 +9,7 @@ import type {
 
 import { AppError } from '../../lib/errors.js';
 
+import { getCommentCountForRoot, getCommentCountMap } from './posts-count.js';
 import {
   buildVisibilityCondition,
   canViewPost,
@@ -73,6 +74,7 @@ export async function listFeed(
   );
 
   const topReactionsMap = await getTopReactionsMap(rows.map((p) => p.id));
+  const commentCountMap = await getCommentCountMap(rows.map((p) => p.id));
 
   const items = rows.map((p) =>
     mapPostToFeedItemDto(
@@ -80,6 +82,7 @@ export async function listFeed(
       viewerReactionMap.get(p.id) ?? null,
       savedSet.has(p.id),
       topReactionsMap.get(p.id) ?? [],
+      commentCountMap.get(p.id),
     ),
   );
 
@@ -138,6 +141,7 @@ export async function listAuthorFeed(
   );
 
   const topReactionsMap = await getTopReactionsMap(page.map((p) => p.id));
+  const commentCountMap = await getCommentCountMap(page.map((p) => p.id));
 
   const items = page.map((p) =>
     mapPostToFeedItemDto(
@@ -145,6 +149,7 @@ export async function listAuthorFeed(
       viewerReactionMap.get(p.id) ?? null,
       savedSet.has(p.id),
       topReactionsMap.get(p.id) ?? [],
+      commentCountMap.get(p.id),
     ),
   );
 
@@ -299,6 +304,7 @@ export async function listReelsFeed(
   }
 
   const topReactionsMap = await getTopReactionsMap(page.map((p) => p.id));
+  const commentCountMap = await getCommentCountMap(page.map((p) => p.id));
 
   const items: ReelsFeedItemDto[] = [];
   for (const p of page) {
@@ -308,6 +314,7 @@ export async function listReelsFeed(
       reactionMap.get(p.id) ?? null,
       savedSet.has(p.id),
       topReactionsMap.get(p.id) ?? [],
+      commentCountMap.get(p.id),
     );
     if (dto) items.push(dto);
   }
@@ -356,11 +363,17 @@ export async function getPostById(
   }
 
   const topReactionsMap = await getTopReactionsMap([postId]);
+  // Tính commentCount cho post đơn lẻ (chỉ có ý nghĩa nếu là root)
+  let singleCommentCount: number | undefined;
+  if (!row.parentId) {
+    singleCommentCount = await getCommentCountForRoot(postId);
+  }
   return mapPostToFeedItemDto(
     row,
     myReaction,
     savedByMe,
     topReactionsMap.get(postId) ?? [],
+    singleCommentCount,
   );
 }
 
@@ -455,6 +468,7 @@ export async function listComments(
   );
 
   const topReactionsMap = await getTopReactionsMap(page.map((p) => p.id));
+  const commentCountMap = await getCommentCountMap(page.map((p) => p.id));
 
   const items = page.map((p) =>
     mapPostToFeedItemDto(
@@ -462,6 +476,7 @@ export async function listComments(
       viewerReactionMap.get(p.id) ?? null,
       savedSet.has(p.id),
       topReactionsMap.get(p.id) ?? [],
+      commentCountMap.get(p.id),
     ),
   );
 

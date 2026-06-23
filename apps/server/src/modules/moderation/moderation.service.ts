@@ -15,8 +15,9 @@ import { writeAuditLog } from '../../lib/admin/audit.service.js';
 import { classifyContent } from '../../lib/ai/moderation-ai.service.js';
 import { AppError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
-import { emitPostHidden } from '../posts/posts.realtime.js';
 import { createNotification } from '../notifications/notifications.service.js';
+import { emitPostHidden } from '../posts/posts.realtime.js';
+import { resolveRootPostId } from '../posts/posts.utils.js';
 
 const authorSelect = {
   id: true,
@@ -114,9 +115,11 @@ export async function runModerationJob(postId: string): Promise<void> {
       content: true,
       authorId: true,
       parentId: true,
+      rootPostId: true,
       visibility: true,
       deletedAt: true,
       hiddenAt: true,
+      parent: { select: { id: true, parentId: true, rootPostId: true } },
     },
   });
 
@@ -167,7 +170,11 @@ export async function runModerationJob(postId: string): Promise<void> {
   await notifyAuthor(moderationCase.id, post.authorId);
 
   if (autoHide) {
-    await emitPostHidden(post.authorId, postId, post.visibility, post.parentId);
+    const rootPostId = post.parentId
+      ? (post.rootPostId ??
+        (post.parent ? (post.parent.rootPostId ?? resolveRootPostId(post.parent)) : post.parentId))
+      : null;
+    await emitPostHidden(post.authorId, postId, post.visibility, post.parentId, rootPostId);
   }
 
   logger.info(

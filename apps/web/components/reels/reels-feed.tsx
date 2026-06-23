@@ -136,10 +136,13 @@ export function ReelsFeed({ initialPostId }: Props) {
     );
   }
 
+  const virtuosoInitialIndexProps = initialPostId ? { initialTopMostItemIndex: 0 } : {};
+
   return (
     <ReelsAudioProvider>
       <div className="relative">
         <Virtuoso
+          {...virtuosoInitialIndexProps}
           ref={virtuosoRef}
           scrollerRef={(el) => {
             scrollerRef.current = el as HTMLElement | null;
@@ -148,7 +151,6 @@ export function ReelsFeed({ initialPostId }: Props) {
           style={{ height: slideHeight }}
           data={items}
           computeItemKey={(_, item) => item.id}
-          initialTopMostItemIndex={initialPostId ? 0 : undefined}
           endReached={handleEndReached}
           increaseViewportBy={{ top: 600, bottom: 800 }}
           itemContent={(index, item) => (

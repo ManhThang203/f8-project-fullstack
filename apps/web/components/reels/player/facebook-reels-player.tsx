@@ -29,6 +29,7 @@ import { useReelsControlsBehavior } from '@/hooks/use-reels-controls-behavior';
 import { useReelsVideoStage } from '@/hooks/use-reels-video-stage';
 import { authClient } from '@/lib/auth-client';
 import { feedVideoController } from '@/lib/feed-video-controller';
+import { consumeUnmuteOnEntry } from '@/lib/reels-entry-intent';
 import { cn } from '@/lib/utils';
 
 const TIMEUPDATE_THROTTLE_MS = 250;
@@ -50,14 +51,15 @@ export function FacebookReelsPlayer({ item, isActive }: ReelsPlayerProps) {
   const isImmersive = layoutMode === 'immersive';
   const isTablet = deviceProfile === 'tablet';
   const isMobile = deviceProfile === 'mobile';
+  const videoWidth = item.video.width;
+  const videoHeight = item.video.height;
 
   const placeholderVideoSize = useMemo(() => {
-    const { width, height } = item.video;
-    if (width && height && width > 0 && height > 0) {
-      return { width, height };
+    if (videoWidth && videoHeight && videoWidth > 0 && videoHeight > 0) {
+      return { width: videoWidth, height: videoHeight };
     }
     return { width: 9, height: 16 };
-  }, [item.video.width, item.video.height]);
+  }, [videoWidth, videoHeight]);
 
   const { containerRef, onVideoSizeChange, stageClassName, stageStyle } = useReelsVideoStage(
     item.video.url,
@@ -69,7 +71,7 @@ export function FacebookReelsPlayer({ item, isActive }: ReelsPlayerProps) {
   const mutedRef = useRef(false);
 
   const [isPlaying, setIsPlaying] = useState(false);
-  const { volume, muted, setVolume, toggleMute } = useReelsAudio();
+  const { volume, muted, setVolume, setMuted, toggleMute } = useReelsAudio();
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
   const [durationMs, setDurationMs] = useState(item.video.durationMs ?? 0);
   const [isLiked, setIsLiked] = useState(item.myReaction != null);
@@ -96,13 +98,17 @@ export function FacebookReelsPlayer({ item, isActive }: ReelsPlayerProps) {
   const play = useCallback(() => {
     const v = videoRef.current;
     if (!v) return;
-    applyReelsAudio(v, volume, muted);
-    v.play().catch(() => {
-      v.muted = true;
-      v.play().catch(() => {});
+    applyReelsAudio(v, volumeRef.current, mutedRef.current);
+    v.play().catch((err: unknown) => {
+      // Chỉ tắt tiếng khi trình duyệt chặn autoplay có tiếng; lỗi khác (AbortError) thì bỏ qua.
+      if (err instanceof DOMException && err.name === 'NotAllowedError') {
+        v.muted = true;
+        setMuted(true);
+        v.play().catch(() => {});
+      }
     });
     feedVideoController.setCurrent(v);
-  }, [volume, muted]);
+  }, [setMuted]);
 
   const pause = useCallback(() => {
     videoRef.current?.pause();
@@ -131,18 +137,23 @@ export function FacebookReelsPlayer({ item, isActive }: ReelsPlayerProps) {
   const controlsChromeVisible = !isTablet || controlsVisible;
   const volumeVariant = getVolumeVariant(deviceProfile);
 
+  // Vào Reels từ thao tác bấm video ở feed: ép bật tiếng cho phiên xem này.
+  useEffect(() => {
+    if (!isActive) return;
+
+    if (consumeUnmuteOnEntry()) {
+      setMuted(false);
+      setVolume(1);
+    }
+  }, [isActive, setMuted, setVolume]);
+
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
 
     if (isActive) {
       if (!userPausedRef.current) {
-        applyReelsAudio(v, volumeRef.current, mutedRef.current);
-        v.play().catch(() => {
-          v.muted = true;
-          v.play().catch(() => {});
-        });
-        feedVideoController.setCurrent(v);
+        play();
       }
     } else {
       v.pause();
@@ -151,7 +162,7 @@ export function FacebookReelsPlayer({ item, isActive }: ReelsPlayerProps) {
     return () => {
       feedVideoController.clear(v);
     };
-  }, [isActive]);
+  }, [isActive, play]);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -185,6 +196,7 @@ export function FacebookReelsPlayer({ item, isActive }: ReelsPlayerProps) {
       visibility: 'PUBLIC',
       author: item.author,
       replyCount: item.replyCount,
+      commentCount: item.commentCount ?? item.replyCount,
       likeCount,
       shareCount,
       myReaction: isLiked ? 'like' : null,
@@ -356,7 +368,7 @@ export function FacebookReelsPlayer({ item, isActive }: ReelsPlayerProps) {
     isLiked,
     saved,
     likeCount,
-    commentCount: item.replyCount,
+    commentCount: item.commentCount ?? item.replyCount,
     shareCount,
     onLike: handleLike,
     onComment: handleComment,
