@@ -174,8 +174,11 @@ export function ChatMessageItem({
         {!message.isUnsent && (
           <div
             className={cn(
-              'bg-background border-border text-foreground absolute top-0 z-20 flex items-center gap-1 rounded-lg border p-1 opacity-0 shadow-sm transition-opacity group-hover/bubble:opacity-100',
-              isMine ? 'right-full mr-2' : 'left-full ml-2',
+              'bg-background border-border text-foreground absolute z-20 flex items-center gap-1 rounded-lg border p-1 opacity-0 shadow-sm transition-opacity group-hover/bubble:opacity-100',
+              'bottom-full mb-1',
+              isMine ? 'right-0' : 'left-0',
+              'sm:bottom-auto sm:top-0 sm:mb-0',
+              isMine ? 'sm:right-full sm:mr-2' : 'sm:left-full sm:ml-2',
             )}
           >
             {onReact && (
@@ -186,7 +189,12 @@ export function ChatMessageItem({
                 >
                   <SmilePlus className="h-4 w-4" />
                 </button>
-                <div className="absolute bottom-full left-1/2 hidden -translate-x-1/2 pb-1 group-hover/emoji:block">
+                <div
+                  className={cn(
+                    'absolute bottom-full hidden pb-1 group-hover/emoji:block',
+                    isMine ? 'right-0' : 'left-0',
+                  )}
+                >
                   <div className="bg-background border-border flex gap-1 rounded-full border p-1 shadow-md">
                     {['👍', '❤️', '😂', '😮', '😢', '🙏'].map((emoji) => (
                       <button

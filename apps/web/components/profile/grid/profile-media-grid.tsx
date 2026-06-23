@@ -1,13 +1,13 @@
 'use client';
 
 import type { ProfileGridItemDto } from '@costy/shared';
-import { useEffect, useRef } from 'react';
+import { useCallback } from 'react';
+import { VirtuosoGrid } from 'react-virtuoso';
 
 import { ProfileMediaTile } from '@/components/profile/grid/profile-media-tile';
 import type { ProfileTab } from '@/components/profile/profile-utils';
 import { Button } from '@/components/shared/button';
 import { flattenProfileGridPages, useProfileGrid } from '@/hooks/queries/use-profile-grid';
-import { cn } from '@/lib/utils';
 
 type Props = {
   username: string;
@@ -32,8 +32,6 @@ export function ProfileMediaGrid({
   onTileClick,
   onCreatePost,
 }: Props) {
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-
   const {
     data,
     isLoading,
@@ -47,19 +45,9 @@ export function ProfileMediaGrid({
 
   const items = flattenProfileGridPages(data?.pages);
 
-  useEffect(() => {
-    const el = loadMoreRef.current;
-    if (!el || !hasNextPage || isFetchingNextPage) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) void fetchNextPage();
-      },
-      { rootMargin: '200px' },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+  const handleEndReached = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   if (isDeleted) {
     return (
@@ -104,26 +92,32 @@ export function ProfileMediaGrid({
   }
 
   return (
-    <>
-      <div className={cn('grid grid-cols-3 gap-px md:gap-1')}>
-        {items.map((item) => (
-          <ProfileMediaTile
-            key={item.postId}
-            item={item}
-            username={username}
-            onClick={() => onTileClick(item)}
-          />
-        ))}
-      </div>
-      {isFetchingNextPage ? (
-        <div className="flex justify-center py-6">
-          <span
-            className="border-muted-foreground h-6 w-6 animate-spin rounded-full border-2 border-t-transparent"
-            aria-label="Đang tải thêm"
-          />
-        </div>
-      ) : null}
-      <div ref={loadMoreRef} className="h-1" aria-hidden />
-    </>
+    <VirtuosoGrid
+      useWindowScroll
+      data={items}
+      computeItemKey={(_, item) => item.postId}
+      endReached={handleEndReached}
+      overscan={800}
+      listClassName="grid grid-cols-3 gap-px md:gap-1"
+      itemClassName="aspect-square"
+      itemContent={(_, item) => (
+        <ProfileMediaTile
+          item={item}
+          username={username}
+          onClick={() => onTileClick(item)}
+        />
+      )}
+      components={{
+        Footer: () =>
+          isFetchingNextPage ? (
+            <div className="col-span-3 flex justify-center py-6">
+              <span
+                className="border-muted-foreground h-6 w-6 animate-spin rounded-full border-2 border-t-transparent"
+                aria-label="Đang tải thêm"
+              />
+            </div>
+          ) : null,
+      }}
+    />
   );
 }

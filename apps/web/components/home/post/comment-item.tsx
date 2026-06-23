@@ -2,6 +2,7 @@
 
 import type { PostFeedItemDto } from '@costy/shared';
 import { MoreHorizontal } from 'lucide-react';
+import Link from 'next/link';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 
@@ -112,10 +113,14 @@ export function CommentItem({
   function handleLike() {
     const isLiked = localReaction !== null;
     const newReaction = isLiked ? null : 'like';
+    const prevReaction = localReaction;
+    const newCount = isLiked ? Math.max(0, localLikeCount - 1) : localLikeCount + 1;
 
-    setLocalLikeCount((prev) => (isLiked ? Math.max(0, prev - 1) : prev + 1));
+    setLocalLikeCount(newCount);
     setLocalReaction(newReaction);
-    setLocalTopReactions((prev) => patchTopReactionsOptimistic(prev, newReaction));
+    setLocalTopReactions((prev) =>
+      patchTopReactionsOptimistic(prev, newReaction, prevReaction, newCount),
+    );
 
     reactMutation.mutate({
       postId: comment.id,
@@ -137,7 +142,9 @@ export function CommentItem({
 
     setLocalLikeCount(newCount);
     setLocalReaction(newReaction);
-    setLocalTopReactions((prev) => patchTopReactionsOptimistic(prev, newReaction));
+    setLocalTopReactions((prev) =>
+      patchTopReactionsOptimistic(prev, newReaction, localReaction, newCount),
+    );
 
     reactMutation.mutate({
       postId: comment.id,
@@ -177,6 +184,9 @@ export function CommentItem({
     reactionId && reactionId !== 'like'
       ? REACTION_LABELS[reactionId]
       : 'Thích';
+  const hasReactions = localLikeCount > 0 && reactionStack.length > 0;
+  const profileHref = `/${encodeURIComponent(comment.author.username)}`;
+  const profileLabel = comment.author.name ?? comment.author.username;
 
   return (
     <div
@@ -186,28 +196,43 @@ export function CommentItem({
       )}
     >
       <div className="shrink-0 pt-1">
-        <Avatar
-          src={comment.author.image || null}
-          name={comment.author.name}
-          username={comment.author.username}
-          size={isReply ? 'xs' : 'sm'}
-        />
+        <Link
+          href={profileHref}
+          aria-label={`Xem trang cá nhân của ${profileLabel}`}
+          className="inline-flex rounded-full transition-opacity duration-150 hover:opacity-90 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2"
+        >
+          <Avatar
+            as="span"
+            src={comment.author.image || null}
+            name={comment.author.name}
+            username={comment.author.username}
+            size={isReply ? 'xs' : 'sm'}
+          />
+        </Link>
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="relative inline-block max-w-full pb-3 pr-2">
-          <div className="bg-muted/50 inline-block rounded-2xl px-3 py-2">
+        <div className="relative inline-block max-w-full">
+          <div
+            className={cn(
+              'bg-muted/50 inline-block rounded-2xl px-3 py-2',
+              hasReactions && 'pr-8',
+            )}
+          >
             <div className="mb-0.5 flex items-center gap-2">
-              <span className="cursor-pointer text-sm font-semibold hover:underline">
-                {comment.author.name ?? comment.author.username}
-              </span>
+              <Link
+                href={profileHref}
+                className="text-foreground text-sm font-semibold hover:underline focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2"
+              >
+                {profileLabel}
+              </Link>
             </div>
             <p className="whitespace-pre-wrap break-words text-sm">{comment.content}</p>
           </div>
 
-          {localLikeCount > 0 && reactionStack.length > 0 && (
+          {hasReactions && (
             <div
-              className="bg-card border-border absolute bottom-0 right-1 flex translate-y-1/2 items-center gap-0.5 rounded-full border px-1.5 py-0.5 shadow-sm"
+              className="bg-card border-border absolute bottom-0 right-2 z-10 flex translate-y-1/2 items-center gap-0.5 rounded-full border px-1.5 py-0.5 shadow-sm"
               aria-label={`${localLikeCount} lượt cảm xúc`}
             >
               <span className="flex items-center" aria-hidden>
@@ -234,7 +259,12 @@ export function CommentItem({
           </div>
         )}
 
-        <div className="relative mt-1 flex items-center gap-4 px-2">
+        <div
+          className={cn(
+            'relative flex items-center gap-4 px-2',
+            hasReactions ? 'mt-2' : 'mt-0.5',
+          )}
+        >
           <span className="text-muted-foreground text-xs">
             {new Date(comment.createdAt).toLocaleString('vi-VN', {
               dateStyle: 'short',

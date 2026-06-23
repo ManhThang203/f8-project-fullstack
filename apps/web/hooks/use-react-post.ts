@@ -39,7 +39,12 @@ function patchPostReaction(
     ...post,
     myReaction: type,
     likeCount: newLikeCount,
-    topReactions: patchTopReactionsOptimistic(post.topReactions ?? [], type),
+    topReactions: patchTopReactionsOptimistic(
+      post.topReactions ?? [],
+      type,
+      post.myReaction,
+      newLikeCount,
+    ),
   };
 }
 

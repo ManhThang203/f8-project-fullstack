@@ -18,7 +18,7 @@ function SearchFallback() {
 
 export default function SearchPage() {
   return (
-    <main className="bg-background min-h-screen">
+    <main className="bg-background min-h-dvh">
       <Suspense fallback={<SearchFallback />}>
         <SearchView />
       </Suspense>

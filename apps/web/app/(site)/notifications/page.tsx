@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function NotificationsPage() {
   return (
-    <main className="bg-background min-h-screen px-4 py-8">
+    <main className="bg-background min-h-dvh px-4 py-8">
       <h1 className="text-foreground text-lg font-semibold">Thông báo</h1>
       <p className="text-muted-foreground mt-2 text-sm">Trang đang được xây dựng.</p>
     </main>

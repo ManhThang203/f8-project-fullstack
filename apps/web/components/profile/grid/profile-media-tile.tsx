@@ -17,7 +17,8 @@ type Props = {
 export function ProfileMediaTile({ item, username, onClick }: Props) {
   const reduceMotion = useReducedMotion();
   const [previewFailed, setPreviewFailed] = useState(false);
-  const label = `Bài viết của @${username}, ${item.likeCount} lượt thích, ${item.replyCount} phản hồi`;
+  const cCount = item.commentCount ?? item.replyCount;
+  const label = `Bài viết của @${username}, ${item.likeCount} lượt thích, ${cCount} phản hồi`;
   const previewUrl =
     item.thumbnailUrl ||
     profileGridPreviewUrl(item.mediaUrl ?? '', item.isVideo);
@@ -83,7 +84,7 @@ export function ProfileMediaTile({ item, username, onClick }: Props) {
         </span>
         <span className="flex items-center gap-1">
           <MessageCircle className="h-4 w-4 fill-current" />
-          {item.replyCount}
+          {cCount}
         </span>
       </span>
     </button>

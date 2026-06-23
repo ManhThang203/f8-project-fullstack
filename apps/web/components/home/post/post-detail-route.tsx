@@ -54,7 +54,7 @@ export function PostDetailRoute({ username, postId, highlightCommentId }: Props)
   if (isComment) return <div className="flex justify-center p-8">Đang chuyển hướng...</div>;
 
   return (
-    <div className="bg-muted/20 flex min-h-[calc(100vh-64px)] justify-center">
+    <div className="bg-muted/20 flex min-h-[calc(100dvh-64px)] justify-center">
       <div className="bg-background border-border flex w-full max-w-[600px] flex-col border-x shadow-sm">
         <div className="bg-background/80 border-border sticky top-0 z-20 flex shrink-0 items-center border-b p-4 backdrop-blur-md">
           <h1 className="text-lg font-bold">
@@ -63,7 +63,7 @@ export function PostDetailRoute({ username, postId, highlightCommentId }: Props)
         </div>
         <div
           className="relative flex min-h-0 flex-1 flex-col"
-          style={{ minHeight: 'calc(100vh - 140px)' }}
+          style={{ minHeight: 'calc(100dvh - 140px)' }}
         >
           <PostDetailView post={post!} highlightCommentId={highlightCommentId} />
         </div>

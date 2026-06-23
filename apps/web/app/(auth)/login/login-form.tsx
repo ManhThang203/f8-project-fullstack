@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import type { z } from 'zod';
 
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
@@ -96,7 +97,6 @@ export function LoginForm() {
   const {
     register,
     handleSubmit,
-    setError,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginBodySchema),
@@ -136,14 +136,13 @@ export function LoginForm() {
         code === 'EMAIL_NOT_VERIFIED' ||
         /verif|xác thực/i.test(message);
       if (unverified) {
-        setError('root', {
-          message:
-            'Email chưa được xác thực. Chúng tôi đã gửi lại liên kết xác thực, vui lòng kiểm tra hộp thư (và thư mục spam).',
-        });
+        toast.error(
+          'Email chưa được xác thực. Chúng tôi đã gửi lại liên kết xác thực, vui lòng kiểm tra hộp thư (và thư mục spam).',
+        );
         return;
       }
 
-      setError('root', { message });
+      toast.error('Email hoặc mật khẩu không đúng');
       return;
     }
 
@@ -188,12 +187,6 @@ export function LoginForm() {
               onSubmit={handleSubmit(onSubmit)}
               noValidate
             >
-              {errors.root ? (
-                <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-                  {errors.root.message}
-                </p>
-              ) : null}
-
               <div>
                 <label className="text-muted-foreground text-xs font-medium" htmlFor="identifier">
                   Email hoặc tên đăng nhập
@@ -256,7 +249,7 @@ export function LoginForm() {
                   callbackURL={afterAuthUrl}
                   label="Tiếp tục với Google"
                   className="border-border bg-card rounded-xl"
-                  onError={(msg) => setError('root', { message: msg })}
+                  onError={(msg) => toast.error(msg)}
                 />
               </>
             ) : null}
@@ -268,14 +261,6 @@ export function LoginForm() {
                 className="text-foreground focus-visible:ring-ring focus-visible:ring-offset-card rounded-sm font-semibold transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
               >
                 Đăng ký
-              </Link>
-            </p>
-            <p className="mt-4 text-center sm:mt-6">
-              <Link
-                href="/"
-                className="text-muted-foreground focus-visible:ring-ring focus-visible:ring-offset-card inline-flex min-h-11 min-w-[44px] items-center justify-center rounded-sm text-sm transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-              >
-                ← Về trang chủ
               </Link>
             </p>
           </div>

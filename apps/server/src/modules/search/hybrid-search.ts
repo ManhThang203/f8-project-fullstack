@@ -3,6 +3,7 @@ import type { PostSearchResult, SearchMode } from '@costy/shared';
 
 import { getQueryEmbedding } from '../../lib/search/embed.js';
 import { getTopReactionsMap } from '../posts/posts.access.js';
+import { getCommentCountMap } from '../posts/posts-count.js';
 import { mapPostToFeedItemDto, postFeedInclude } from '../posts/posts.mapper.js';
 
 const RRF_K = 60;
@@ -28,12 +29,14 @@ async function loadSearchResults(ids: string[]): Promise<PostSearchResult[]> {
 
   const byId = new Map(rows.map((row) => [row.id, row]));
   const topReactionsMap = await getTopReactionsMap(ids);
+  const commentCountMap = await getCommentCountMap(ids);
+
   const results: PostSearchResult[] = [];
 
   for (const id of ids) {
     const row = byId.get(id);
     if (row) {
-      results.push(mapPostToFeedItemDto(row, null, false, topReactionsMap.get(id) ?? []));
+      results.push(mapPostToFeedItemDto(row, null, false, topReactionsMap.get(id) ?? [], commentCountMap.get(id)));
     }
   }
 

@@ -4,6 +4,7 @@ import type { FriendStateDto, FriendUserDto } from '@costy/shared';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { apiQuery, apiQueryData } from '@/lib/api-query';
+import { applyFriendMutationCacheUpdates } from '@/lib/friend-cache';
 import { queryKeys } from '@/lib/query-keys';
 
 export type FriendAction = 'request' | 'cancel' | 'accept' | 'reject' | 'unfriend';
@@ -11,6 +12,8 @@ export type FriendAction = 'request' | 'cancel' | 'accept' | 'reject' | 'unfrien
 type FriendVars = {
   userId: string;
   action: FriendAction;
+  /** Dữ liệu user để patch cache danh sách (tránh refetch infinite query). */
+  user?: FriendUserDto;
 };
 
 type FriendListMeta = {
@@ -25,7 +28,7 @@ const FRIEND_ACTION_REQUEST: Record<FriendAction, { method: 'POST' | 'DELETE'; s
   unfriend: { method: 'DELETE', suffix: '' },
 };
 
-/** Gọi API kết bạn/hủy/chấp nhận/từ chối và refresh profile + danh sách bạn bè. */
+/** Gọi API kết bạn/hủy/chấp nhận/từ chối và patch cache danh sách + profile. */
 export function useFriendMutation(options?: {
   onSuccess?: (data: FriendStateDto, variables: FriendVars) => void;
   onError?: (error: Error, variables: FriendVars) => void;
@@ -41,8 +44,7 @@ export function useFriendMutation(options?: {
       );
     },
     onSuccess: (data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: ['users'] });
-      void queryClient.invalidateQueries({ queryKey: ['friends'] });
+      applyFriendMutationCacheUpdates(queryClient, variables, data);
       options?.onSuccess?.(data, variables);
     },
     onError: (error, variables) => {
@@ -52,11 +54,12 @@ export function useFriendMutation(options?: {
 }
 
 /** Lấy danh sách bạn bè của viewer, có hỗ trợ tìm kiếm và phân trang cursor. */
-export function useFriendsList(q: string) {
+export function useFriendsList(q: string, options?: { enabled?: boolean }) {
   const search = q.trim();
 
   return useInfiniteQuery({
     queryKey: queryKeys.friends.list(search),
+    enabled: options?.enabled ?? true,
     queryFn: ({ pageParam }) => {
       const params = new URLSearchParams({ limit: '20' });
       if (search) params.set('q', search);
@@ -69,9 +72,10 @@ export function useFriendsList(q: string) {
 }
 
 /** Lấy danh sách lời mời kết bạn đến hoặc đã gửi. */
-export function useFriendRequests(type: 'incoming' | 'outgoing') {
+export function useFriendRequests(type: 'incoming' | 'outgoing', options?: { enabled?: boolean }) {
   return useInfiniteQuery({
     queryKey: queryKeys.friends.requests(type),
+    enabled: options?.enabled ?? true,
     queryFn: ({ pageParam }) => {
       const params = new URLSearchParams({ type, limit: '20' });
       if (pageParam) params.set('cursor', pageParam);

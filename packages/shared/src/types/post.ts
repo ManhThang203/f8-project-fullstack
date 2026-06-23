@@ -30,6 +30,8 @@ export interface PostFeedItemDto {
   visibility: PostVisibilityDto;
   author: PostAuthorDto;
   replyCount: number;
+  /** Tổng số bình luận mọi cấp (gốc + reply + reply-of-reply). */
+  commentCount: number;
   likeCount: number;
   shareCount: number;
   myReaction: string | null;
@@ -50,6 +52,8 @@ export interface ReelsFeedItemDto {
   createdAt: string;
   author: PostAuthorDto;
   replyCount: number;
+  /** Tổng số bình luận mọi cấp (gốc + reply + reply-of-reply). */
+  commentCount: number;
   likeCount: number;
   shareCount: number;
   myReaction: string | null;

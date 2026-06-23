@@ -3,8 +3,9 @@
 import type { PostFeedItemDto } from '@costy/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { Socket } from 'socket.io-client';
+import { toast } from 'sonner';
 import { Virtuoso } from 'react-virtuoso';
+import type { Socket } from 'socket.io-client';
 
 import { CreatePostModal } from '../compose/create-post-modal';
 import { CreatePostTrigger } from '../compose/create-post-trigger';
@@ -20,6 +21,7 @@ import {
 } from '@/hooks/queries/use-posts-feed';
 import { authClient } from '@/lib/auth-client';
 import type { ServerAuthUser } from '@/lib/auth-user.types';
+import { onHomeFeedRefresh } from '@/lib/home-feed-refresh';
 import { queryKeys } from '@/lib/query-keys';
 import { getAuthedSocket } from '@/lib/socket';
 import { cn } from '@/lib/utils';
@@ -115,14 +117,28 @@ export function HomeFeed({ initialUser }: Props) {
     if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  // Khi bấm Home/logo lúc đang ở trang chủ: cuộn lên đầu và tải lại feed mới.
+  useEffect(
+    () =>
+      onHomeFeedRefresh(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setDismissedIds(new Set());
+        void queryClient.resetQueries({ queryKey: queryKeys.posts.feed });
+      }),
+    [queryClient],
+  );
+
   function openModal(openFilePicker = false) {
     setAutoOpenFilePicker(openFilePicker);
     setModalOpen(true);
   }
 
+  // Đồng bộ bài vừa đăng vào cache feed, tránh trùng với sự kiện realtime cùng post.
   function handlePosted(post: PostFeedItemDto) {
     queryClient.setQueryData(feedKey, (old: typeof data) => {
       if (!old) return old;
+      const exists = old.pages.some((page) => page.data.some((p) => p.id === post.id));
+      if (exists) return old;
       return {
         ...old,
         pages: old.pages.map((page, i) =>
@@ -175,7 +191,11 @@ export function HomeFeed({ initialUser }: Props) {
             ...page,
             data: page.data.map((p) =>
               p.id === payload.postId
-                ? { ...p, replyCount: Math.max(0, p.replyCount + payload.delta) }
+                ? {
+                    ...p,
+                    replyCount: Math.max(0, p.replyCount + payload.delta),
+                    commentCount: Math.max(0, (p.commentCount ?? p.replyCount) + payload.delta),
+                  }
                 : p,
             ),
           })),
@@ -220,6 +240,11 @@ export function HomeFeed({ initialUser }: Props) {
   }, [queryClient, dismissPost, me?.id]);
 
   const errorMessage = isError ? error.message : null;
+
+  useEffect(() => {
+    if (!errorMessage) return;
+    toast.error(errorMessage);
+  }, [errorMessage]);
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col px-4 py-4">
@@ -266,7 +291,7 @@ export function HomeFeed({ initialUser }: Props) {
       ) : null}
 
       {errorMessage ? (
-        <p className="mb-4 text-sm text-red-600 dark:text-red-400" role="alert">
+        <p className="text-muted-foreground mb-4 text-sm" role="alert">
           {errorMessage}
         </p>
       ) : null}

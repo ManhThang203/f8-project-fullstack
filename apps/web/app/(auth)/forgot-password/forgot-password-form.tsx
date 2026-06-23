@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import type { z } from 'zod';
 
 import { authClient } from '@/lib/auth-client';
@@ -82,7 +83,6 @@ export function ForgotPasswordForm() {
   const {
     register,
     handleSubmit,
-    setError,
     formState: { errors, isSubmitting },
     reset: resetForm,
   } = useForm<FormValues>({
@@ -101,7 +101,7 @@ export function ForgotPasswordForm() {
     });
 
     if (res.error) {
-      setError('root', { message: res.error.message ?? 'Không gửi được email. Thử lại sau.' });
+      toast.error(res.error.message ?? 'Không gửi được email. Thử lại sau.');
       return;
     }
 
@@ -153,12 +153,6 @@ export function ForgotPasswordForm() {
                 onSubmit={handleSubmit(onSubmit)}
                 noValidate
               >
-                {errors.root ? (
-                  <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-                    {errors.root.message}
-                  </p>
-                ) : null}
-
                 <div>
                   <label
                     className="text-muted-foreground text-xs font-medium"

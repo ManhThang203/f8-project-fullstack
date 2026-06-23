@@ -337,3 +337,12 @@ html.reels-scroll-lock body {
   --epr-hover-bg-color: hsl(var(--muted));
   --epr-focus-bg-color: hsl(var(--accent));
 }
+
+/* Mobile: ép input >= 16px để iOS Safari không auto-zoom khi focus */
+@media (max-width: 640px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}

@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import type { z } from 'zod';
 
 import { PasswordInput } from '@/components/auth/password-input';
@@ -29,7 +30,6 @@ export function ResetPasswordForm() {
   const {
     register,
     handleSubmit,
-    setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(resetPasswordFormSchema),
@@ -37,7 +37,7 @@ export function ResetPasswordForm() {
 
   async function onSubmit(data: FormValues) {
     if (!token) {
-      setError('root', { message: 'Không có mã xác thực. Hãy dùng liên kết trong email.' });
+      toast.error('Không có mã xác thực. Hãy dùng liên kết trong email.');
       return;
     }
 
@@ -47,7 +47,7 @@ export function ResetPasswordForm() {
     });
 
     if (res.error) {
-      setError('root', { message: res.error.message ?? 'Đặt lại mật khẩu thất bại' });
+      toast.error(res.error.message ?? 'Đặt lại mật khẩu thất bại');
       return;
     }
 
@@ -58,7 +58,7 @@ export function ResetPasswordForm() {
 
   if (tokenInvalid) {
     return (
-      <main className="bg-background min-h-screen px-4 py-12">
+      <main className="bg-background min-h-dvh px-4 py-12">
         <div className="border-border bg-card mx-auto w-full max-w-md rounded-[var(--radius)] border p-6 shadow-sm">
           <h1 className="text-xl font-semibold tracking-tight">Liên kết không hợp lệ</h1>
           <p className="text-muted-foreground mt-2 text-sm" role="alert">
@@ -84,7 +84,7 @@ export function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <main className="bg-background min-h-screen px-4 py-12">
+      <main className="bg-background min-h-dvh px-4 py-12">
         <div className="border-border bg-card mx-auto w-full max-w-md rounded-[var(--radius)] border p-6 shadow-sm">
           <h1 className="text-xl font-semibold tracking-tight">Đặt lại mật khẩu</h1>
           <p className="text-muted-foreground mt-2 text-sm" role="alert">
@@ -104,7 +104,7 @@ export function ResetPasswordForm() {
   }
 
   return (
-    <main className="bg-background min-h-screen px-4 py-12">
+    <main className="bg-background min-h-dvh px-4 py-12">
       <div className="border-border bg-card mx-auto w-full max-w-md rounded-[var(--radius)] border p-6 shadow-sm">
         <h1 className="text-xl font-semibold tracking-tight">Đặt lại mật khẩu</h1>
         <p className="text-muted-foreground mt-1 text-sm">
@@ -112,12 +112,6 @@ export function ResetPasswordForm() {
         </p>
 
         <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
-          {errors.root ? (
-            <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-              {errors.root.message}
-            </p>
-          ) : null}
-
           <div>
             <label className="text-muted-foreground text-xs font-medium" htmlFor="new-password">
               Mật khẩu mới

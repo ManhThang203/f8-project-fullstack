@@ -52,7 +52,6 @@ export function CreatePostModal({
   const [drafts, setDrafts] = useState<DraftEntry[]>([]);
   const [phase, setPhase] = useState<ComposePhase>('idle');
   const [uploadLabel, setUploadLabel] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -60,7 +59,7 @@ export function CreatePostModal({
   const displayName = name ?? username ?? 'Bạn';
   const placeholder = parentPost
     ? `Trả lời ${parentPost.author.name ?? parentPost.author.username}...`
-    : `${displayName} ơi, bạn đang nghĩ gì thế?`;
+    : 'Có gì mới?';
 
   const imageCount = drafts.filter((d) => isImageMime(d.file.type)).length;
   const videoCount = drafts.filter((d) => isVideoMime(d.file.type)).length;
@@ -83,7 +82,6 @@ export function CreatePostModal({
         if (d.url.startsWith('blob:')) URL.revokeObjectURL(d.url);
       }
       setDrafts([]);
-      setError(null);
       setPhase('idle');
       setUploadLabel(null);
     }
@@ -95,7 +93,7 @@ export function CreatePostModal({
     const incoming = Array.from(files);
     const { ok, errors } = validateFiles(incoming, { images: imageCount, videos: videoCount });
     if (errors.length > 0) {
-      setError(errors[0]!);
+      toast.error(errors[0]!);
       return;
     }
     const newDrafts: DraftEntry[] = ok.map((file) => ({
@@ -107,7 +105,6 @@ export function CreatePostModal({
       status: 'done' as const,
     }));
     setDrafts((prev) => prev.concat(newDrafts));
-    setError(null);
   }
 
   function removeDraft(tempId: string) {
@@ -127,7 +124,6 @@ export function CreatePostModal({
     if (phase !== 'idle') return;
     if (!text && drafts.length === 0) return;
 
-    setError(null);
     setPhase('uploading');
     const files = drafts.map((d) => d.file);
 
@@ -150,7 +146,6 @@ export function CreatePostModal({
       setPhase('idle');
       setUploadLabel(null);
       setDrafts((prev) => prev.map((d) => ({ ...d, status: 'done' as const, progress: 100 })));
-      setError(result.message);
       toast.error(result.message);
       return;
     }
@@ -246,11 +241,6 @@ export function CreatePostModal({
             />
           )}
 
-          {error && (
-            <p className="mt-3 text-sm text-red-500 dark:text-red-400" role="alert">
-              {error}
-            </p>
-          )}
         </div>
 
         <div className="border-border shrink-0 border-t px-4 py-3">

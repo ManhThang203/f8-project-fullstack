@@ -17,6 +17,7 @@ import { createNotification } from '../notifications/notifications.service.js';
 
 import { canViewPost, getTopReactionsMap } from './posts.access.js';
 import { mapPostToFeedItemDto, postFeedInclude } from './posts.mapper.js';
+import { getCommentCountForRoot, getCommentCountMap } from './posts-count.js';
 import {
   emitCommentCountChanged,
   emitCommentCreated,
@@ -91,6 +92,19 @@ export async function createPost(opts: {
     }
   }
 
+  // Tính rootPostId trước transaction (nếu là comment/reply).
+  // rootPostId = root của cha nếu cha đã có, ngược lại = id của cha (cha là gốc của thread).
+  let rootPostIdForCreate: string | null = null;
+  if (opts.body.parentId) {
+    const parentForRoot = await prisma.post.findUnique({
+      where: { id: opts.body.parentId },
+      select: { id: true, parentId: true, rootPostId: true },
+    });
+    if (parentForRoot) {
+      rootPostIdForCreate = parentForRoot.rootPostId ?? parentForRoot.id;
+    }
+  }
+
   try {
     const postId = await prisma.$transaction(async (tx) => {
       const post = await tx.post.create({
@@ -98,6 +112,7 @@ export async function createPost(opts: {
           authorId: opts.authorId,
           content: content || '',
           parentId: opts.body.parentId ?? null,
+          rootPostId: rootPostIdForCreate,
           visibility: opts.body.visibility ?? 'PUBLIC',
         },
       });
@@ -138,15 +153,17 @@ export async function createPost(opts: {
 
     void enqueueModerationJob(postId, content);
 
-    let commentRootPostId: string | null = null;
+    let commentRootPostId: string | null = rootPostIdForCreate;
     if (opts.body.parentId) {
+      // Vẫn cần fetch parent để gửi notification (author, likers, commenters)
       const parentPost = await prisma.post.findUnique({
         where: { id: opts.body.parentId },
-        select: { id: true, authorId: true, parentId: true },
+        select: { id: true, authorId: true, parentId: true, rootPostId: true },
       });
 
       if (parentPost) {
-        commentRootPostId = resolveRootPostId(parentPost);
+        // Ưu tiên dùng rootPostId đã tính trước (denormalized). Fallback resolve 1 cấp nếu chưa có.
+        commentRootPostId = commentRootPostId ?? resolveRootPostId(parentPost);
         if (parentPost.authorId !== opts.authorId) {
           await createNotification({
             recipientId: parentPost.authorId,
@@ -197,7 +214,8 @@ export async function createPost(opts: {
     if (!opts.body.parentId) {
       void emitPostCreated(opts.authorId, dto, row.visibility);
     } else {
-      const rootPostId = commentRootPostId ?? opts.body.parentId!;
+      // Sử dụng rootPostId đã tính (ưu tiên denormalized rootPostId)
+      const rootPostId = commentRootPostId ?? rootPostIdForCreate ?? opts.body.parentId!;
       emitCommentCreated(rootPostId, dto, opts.authorId);
       emitCommentCountChanged(rootPostId, 1, opts.authorId);
     }
@@ -291,11 +309,16 @@ export async function editPost(
   if (like) myReaction = like.type;
 
   const topReactionsMap = await getTopReactionsMap([postId]);
+  let cCount: number | undefined;
+  if (!row.parentId && row.rootPostId === null) {
+    cCount = await getCommentCountForRoot(postId);
+  }
   return mapPostToFeedItemDto(
     row,
     myReaction,
     false,
     topReactionsMap.get(postId) ?? [],
+    cCount,
   );
 }
 
@@ -408,6 +431,7 @@ export async function listSavedPosts(
   }
 
   const topReactionsMap = await getTopReactionsMap(page.map((r) => r.postId));
+  const commentCountMap = await getCommentCountMap(page.map((r) => r.postId));
 
   const items = page.map((r) =>
     mapPostToFeedItemDto(
@@ -415,6 +439,7 @@ export async function listSavedPosts(
       reactionMap.get(r.postId) ?? null,
       true,
       topReactionsMap.get(r.postId) ?? [],
+      commentCountMap.get(r.postId),
     ),
   );
 
@@ -428,7 +453,13 @@ export async function listSavedPosts(
 export async function deletePost(postId: string, userId: string) {
   const post = await prisma.post.findUnique({
     where: { id: postId, deletedAt: null },
-    include: { parent: { select: { authorId: true, id: true, parentId: true } } },
+    select: {
+      id: true,
+      authorId: true,
+      parentId: true,
+      rootPostId: true,
+      parent: { select: { authorId: true, id: true, parentId: true, rootPostId: true } },
+    },
   });
 
   if (!post) {
@@ -448,7 +479,9 @@ export async function deletePost(postId: string, userId: string) {
   });
 
   if (post.parentId) {
-    const rootPostId = post.parent ? resolveRootPostId(post.parent) : post.parentId;
+    // Ưu tiên dùng rootPostId đã lưu trên chính comment hoặc trên parent
+    const rootPostId =
+      post.rootPostId ?? (post.parent ? (post.parent.rootPostId ?? resolveRootPostId(post.parent)) : post.parentId);
     emitCommentDeleted(rootPostId, postId, userId);
     emitCommentCountChanged(rootPostId, -1, userId);
   }

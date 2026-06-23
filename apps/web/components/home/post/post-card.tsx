@@ -24,6 +24,8 @@ type Props = {
   onCommentClick?: () => void;
   hideDismiss?: boolean;
   replyCountOverride?: number;
+  /** Cho phép override tổng commentCount từ parent (detail) */
+  commentCount?: number;
 };
 
 export function PostCard({
@@ -33,6 +35,7 @@ export function PostCard({
   onCommentClick,
   hideDismiss,
   replyCountOverride,
+  commentCount,
 }: Props) {
   const [isReplyOpen, setIsReplyOpen] = useState(false);
   const { data: session } = authClient.useSession();
@@ -122,6 +125,7 @@ export function PostCard({
             authorUsername={post.author.username}
             hasVideo={post.media.some((m) => m.type === 'video')}
             replyCount={replyCountOverride ?? post.replyCount}
+            commentCount={commentCount ?? post.commentCount ?? post.replyCount}
             initialLikeCount={post.likeCount}
             initialReaction={post.myReaction as PostReactionId | null}
             topReactions={post.topReactions}

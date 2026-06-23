@@ -13,6 +13,7 @@ const fakePostNoMedia: PostFeedItemDto = {
   createdAt: new Date().toISOString(),
   visibility: 'PUBLIC',
   replyCount: 0,
+  commentCount: 0,
   likeCount: 0,
   shareCount: 0,
   myReaction: null,

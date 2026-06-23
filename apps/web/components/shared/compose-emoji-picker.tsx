@@ -17,8 +17,8 @@ type Props = {
 };
 
 const triggerSizeClass = {
-  sm: 'min-h-11 min-w-11 p-1.5',
-  md: 'min-h-11 min-w-11',
+  sm: 'h-11 w-11',
+  md: 'h-11 w-11',
 } as const;
 
 const OVERLAY_Z = 'z-[120]';
@@ -119,7 +119,7 @@ export function ComposeEmojiPicker({ onSelect, disabled = false, size = 'md', cl
       disabled={disabled}
       onClick={toggleOpen}
       className={cn(
-        'text-muted-foreground hover:bg-muted shrink-0 rounded-full transition-colors',
+        'text-muted-foreground hover:bg-muted inline-flex shrink-0 items-center justify-center rounded-full transition-colors',
         'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
         'disabled:pointer-events-none disabled:opacity-40',
         triggerSizeClass[size],

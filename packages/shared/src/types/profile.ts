@@ -31,6 +31,8 @@ export interface ProfileGridItemDto {
   mediaCount: number;
   likeCount: number;
   replyCount: number;
+  /** Tổng số bình luận mọi cấp (gốc + reply + reply-of-reply). */
+  commentCount: number;
   createdAt: string;
   isVideo: boolean;
 }

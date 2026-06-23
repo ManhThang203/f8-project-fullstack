@@ -10,6 +10,7 @@ import { AccountMenu } from './account-menu';
 import { NotificationDropdown } from './notification-dropdown';
 
 import { iconButtonClass } from '@/components/shared/icon-button';
+import { handleHomeNavClick } from '@/lib/home-feed-refresh';
 import { cn } from '@/lib/utils';
 
 type AccountUser = {
@@ -112,6 +113,7 @@ export function SiteHeaderCompact({
         <div className="flex items-center justify-center">
           <Link
             href="/"
+            onClick={(e) => handleHomeNavClick(pathname, e)}
             aria-label="Cotsy — Trang chủ"
             className="text-foreground hover:text-foreground/90 focus-visible:ring-ring focus-visible:ring-offset-background flex min-h-11 items-center gap-2 rounded-lg px-1 text-base font-semibold tracking-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
           >

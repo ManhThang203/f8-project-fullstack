@@ -107,7 +107,7 @@ export function ForgotPasswordSsrFallback() {
 /** Shell — `reset-password-form` (hai ô mật khẩu). */
 export function ResetPasswordSsrFallback() {
   return (
-    <main className="bg-background min-h-screen px-4 py-12">
+    <main className="bg-background min-h-dvh px-4 py-12">
       <div className="border-border bg-card mx-auto w-full max-w-md rounded-[var(--radius)] border p-6 shadow-sm">
         <div className="bg-muted/50 h-7 w-56 rounded" aria-hidden />
         <div className="bg-muted/40 mt-2 h-4 w-full max-w-sm rounded" aria-hidden />

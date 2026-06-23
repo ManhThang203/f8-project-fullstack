@@ -11,9 +11,11 @@ import {
   ShieldAlert,
   CheckCircle,
   XCircle,
+  Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import type { Socket } from 'socket.io-client';
 
 import {
@@ -28,8 +30,8 @@ import {
   useUnreadNotificationCount,
   useMarkNotificationReadMutation,
 } from '@/hooks/queries/use-notifications';
-import { getAuthedSocket } from '@/lib/socket';
 import { queryKeys } from '@/lib/query-keys';
+import { getAuthedSocket } from '@/lib/socket';
 import { cn } from '@/lib/utils';
 
 function getRelativeTime(dateString: string) {
@@ -204,7 +206,14 @@ function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose:
 export function NotificationDropdown() {
   const [open, setOpen] = useState(false);
   const { data: countData } = useUnreadNotificationCount();
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useNotifications();
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+  } = useNotifications();
   const { mutate: markRead } = useMarkNotificationReadMutation();
   const queryClient = useQueryClient();
   const unreadCount = countData?.count || 0;
@@ -258,8 +267,14 @@ export function NotificationDropdown() {
       </button>
 
       {open && (
-        <div className="border-border bg-card absolute right-0 top-full z-50 mt-2 flex max-h-[80vh] w-[360px] flex-col overflow-hidden rounded-xl border shadow-lg">
-          <div className="border-border bg-card flex items-center justify-between border-b p-4">
+        <div
+          className={cn(
+            'border-border bg-card z-50 flex flex-col overflow-hidden border shadow-lg',
+            'fixed inset-x-3 top-16 max-h-[70dvh] rounded-xl',
+            'sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:max-h-[80vh] sm:w-[360px]',
+          )}
+        >
+          <div className="border-border bg-card flex shrink-0 items-center justify-between border-b p-4">
             <h3 className="text-lg font-semibold">Thông báo</h3>
             {unreadCount > 0 && (
               <button
@@ -275,27 +290,41 @@ export function NotificationDropdown() {
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-0">
-            {notifications.length === 0 ? (
-              <div className="text-muted-foreground p-8 text-center">
+          <div className="h-[min(calc(70dvh-4rem),28rem)] overflow-hidden sm:h-[min(calc(80vh-4rem),28rem)]">
+            {isLoading ? (
+              <div className="text-muted-foreground flex h-full items-center justify-center">
+                <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+              </div>
+            ) : isError ? (
+              <div className="text-muted-foreground p-8 text-center text-sm">
+                <p>Không thể tải thông báo.</p>
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="text-muted-foreground flex h-full items-center justify-center p-8 text-center">
                 <p>Bạn chưa có thông báo nào.</p>
               </div>
             ) : (
-              <div className="flex flex-col">
-                {notifications.map((n) => (
-                  <NotificationItem key={n.id} notif={n} onClose={() => setOpen(false)} />
-                ))}
-                {hasNextPage && (
-                  <button
-                    type="button"
-                    onClick={() => fetchNextPage()}
-                    disabled={isFetchingNextPage}
-                    className="text-primary p-3 text-center text-sm hover:underline"
-                  >
-                    {isFetchingNextPage ? 'Đang tải...' : 'Xem thêm'}
-                  </button>
+              <Virtuoso
+                style={{ height: '100%' }}
+                data={notifications}
+                computeItemKey={(_, n) => n.id}
+                endReached={() => {
+                  if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+                }}
+                overscan={400}
+                defaultItemHeight={72}
+                itemContent={(_, n) => (
+                  <NotificationItem notif={n} onClose={() => setOpen(false)} />
                 )}
-              </div>
+                components={{
+                  Footer: () =>
+                    isFetchingNextPage ? (
+                      <div className="text-muted-foreground flex min-h-10 items-center justify-center py-3">
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                      </div>
+                    ) : null,
+                }}
+              />
             )}
           </div>
         </div>

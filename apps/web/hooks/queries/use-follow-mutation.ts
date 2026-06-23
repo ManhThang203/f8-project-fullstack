@@ -10,6 +10,13 @@ type FollowVars = {
   follow: boolean;
 };
 
+/** Invalidate danh sách followers/following và search; profile do profile-view patch optimistic. */
+function invalidateFollowRelatedQueries(queryClient: ReturnType<typeof useQueryClient>) {
+  void queryClient.invalidateQueries({ queryKey: ['users', 'followers'] });
+  void queryClient.invalidateQueries({ queryKey: ['users', 'following'] });
+  void queryClient.invalidateQueries({ queryKey: ['users', 'search'] });
+}
+
 export function useFollowMutation(options?: {
   onSuccess?: (data: FollowStateDto, variables: FollowVars) => void;
   onError?: (error: Error, variables: FollowVars) => void;
@@ -22,7 +29,7 @@ export function useFollowMutation(options?: {
         method: follow ? 'POST' : 'DELETE',
       }),
     onSuccess: (data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: ['users'] });
+      invalidateFollowRelatedQueries(queryClient);
       options?.onSuccess?.(data, variables);
     },
     onError: (error, variables) => {

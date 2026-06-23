@@ -15,7 +15,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="bg-background text-foreground flex min-h-screen flex-col">
+    <div className="bg-background text-foreground flex min-h-dvh flex-col">
       <div className="flex flex-1 flex-col px-6 pt-16">
         <div className="flex flex-1 flex-col items-center justify-center pb-24 text-center">
           <h1 className="max-w-md text-base font-semibold leading-snug">

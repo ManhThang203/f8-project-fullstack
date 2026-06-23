@@ -37,13 +37,17 @@ export function useCommentRealtime(opts: {
     }
 
     function onCommentCreated(payload: CommentCreatedPayload) {
-      if (payload.comment.parentId !== postId || isSelf(payload.actorId)) return;
-      insertCommentInCache(queryClient, postId, payload.comment);
+      if (isSelf(payload.actorId)) return;
+      // Insert vào đúng list của parent (có thể là root hoặc 1 comment)
+      // Nếu parent list chưa load trong cache, item sẽ xuất hiện khi user mở replies.
+      const targetParent = payload.comment.parentId ?? postId;
+      insertCommentInCache(queryClient, targetParent, payload.comment);
     }
 
     function onCommentDeleted(payload: CommentDeletedPayload) {
-      if (payload.parentId !== postId) return;
-      removeCommentFromCache(queryClient, postId, payload.commentId);
+      // Xóa khỏi cache list của đúng parent
+      const targetParent = payload.parentId ?? postId;
+      removeCommentFromCache(queryClient, targetParent, payload.commentId);
     }
 
     function onCountChanged(payload: CommentCountPayload) {

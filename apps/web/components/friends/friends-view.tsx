@@ -1,13 +1,14 @@
 'use client';
 
-import type { FriendAction } from '@/hooks/queries/use-friend-mutation';
 import type { FriendUserDto } from '@costy/shared';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { toast } from 'sonner';
 
 import { Avatar } from '@/components/shared/avatar';
 import { Button } from '@/components/shared/button';
+import type { FriendAction } from '@/hooks/queries/use-friend-mutation';
 import {
   flattenFriendPages,
   useFriendMutation,
@@ -27,7 +28,8 @@ const TABS: { id: FriendTab; label: string }[] = [
 type FriendRowProps = {
   user: FriendUserDto;
   tab: FriendTab;
-  pending: boolean;
+  pendingUserId: string | null;
+  pendingAction: FriendAction | null;
   onAction: (user: FriendUserDto, action: FriendAction) => void;
 };
 
@@ -48,9 +50,11 @@ function FriendSkeleton() {
   );
 }
 
-function FriendRow({ user, tab, pending, onAction }: FriendRowProps) {
+function FriendRow({ user, tab, pendingUserId, pendingAction, onAction }: FriendRowProps) {
+  const isRowPending = pendingUserId === user.id;
+
   return (
-    <li className="border-border bg-card flex items-center gap-3 rounded-xl border p-3">
+    <div className="border-border bg-card flex items-center gap-3 rounded-xl border p-3">
       <Link
         href={`/${encodeURIComponent(user.username)}`}
         className="rounded-full focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2"
@@ -73,7 +77,8 @@ function FriendRow({ user, tab, pending, onAction }: FriendRowProps) {
         <Button
           variant="secondary"
           size="sm"
-          loading={pending}
+          loading={isRowPending && pendingAction === 'unfriend'}
+          disabled={isRowPending}
           onClick={() => onAction(user, 'unfriend')}
         >
           Hủy bạn
@@ -84,7 +89,8 @@ function FriendRow({ user, tab, pending, onAction }: FriendRowProps) {
         <div className="flex shrink-0 gap-2">
           <Button
             size="sm"
-            loading={pending}
+            loading={isRowPending && pendingAction === 'accept'}
+            disabled={isRowPending}
             onClick={() => onAction(user, 'accept')}
           >
             Chấp nhận
@@ -92,7 +98,8 @@ function FriendRow({ user, tab, pending, onAction }: FriendRowProps) {
           <Button
             variant="secondary"
             size="sm"
-            disabled={pending}
+            loading={isRowPending && pendingAction === 'reject'}
+            disabled={isRowPending}
             onClick={() => onAction(user, 'reject')}
           >
             Từ chối
@@ -104,13 +111,14 @@ function FriendRow({ user, tab, pending, onAction }: FriendRowProps) {
         <Button
           variant="secondary"
           size="sm"
-          loading={pending}
+          loading={isRowPending && pendingAction === 'cancel'}
+          disabled={isRowPending}
           onClick={() => onAction(user, 'cancel')}
         >
           Hủy lời mời
         </Button>
       ) : null}
-    </li>
+    </div>
   );
 }
 
@@ -118,10 +126,12 @@ function FriendRow({ user, tab, pending, onAction }: FriendRowProps) {
 export function FriendsView() {
   const [tab, setTab] = useState<FriendTab>('friends');
   const [search, setSearch] = useState('');
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [actionLoadingType, setActionLoadingType] = useState<FriendAction | null>(null);
 
-  const friendsQuery = useFriendsList(search);
-  const incomingQuery = useFriendRequests('incoming');
-  const outgoingQuery = useFriendRequests('outgoing');
+  const friendsQuery = useFriendsList(search, { enabled: tab === 'friends' });
+  const incomingQuery = useFriendRequests('incoming', { enabled: tab === 'incoming' });
+  const outgoingQuery = useFriendRequests('outgoing', { enabled: tab === 'outgoing' });
   const friendMutation = useFriendMutation({
     onError: (error) => toast.error(error.message),
   });
@@ -153,8 +163,7 @@ export function FriendsView() {
         ? incomingQuery.isFetchingNextPage
         : outgoingQuery.isFetchingNextPage;
 
-  /** Tải page tiếp theo cho tab đang mở. */
-  function fetchMore() {
+  const fetchMore = useCallback(() => {
     if (tab === 'friends') {
       void friendsQuery.fetchNextPage();
       return;
@@ -164,27 +173,42 @@ export function FriendsView() {
       return;
     }
     void outgoingQuery.fetchNextPage();
-  }
+  }, [tab, friendsQuery, incomingQuery, outgoingQuery]);
+
+  const handleEndReached = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) fetchMore();
+  }, [hasNextPage, isFetchingNextPage, fetchMore]);
 
   /** Thực hiện thao tác kết bạn từ từng dòng và hiển thị kết quả ngắn gọn. */
-  function handleAction(user: FriendUserDto, action: FriendAction) {
-    friendMutation.mutate(
-      { userId: user.id, action },
-      {
-        onSuccess: () => {
-          const message =
-            action === 'accept'
-              ? 'Đã chấp nhận lời mời'
-              : action === 'reject'
-                ? 'Đã từ chối lời mời'
-                : action === 'cancel'
-                  ? 'Đã hủy lời mời'
-                  : 'Đã hủy kết bạn';
-          toast.success(message);
+  const handleAction = useCallback(
+    (user: FriendUserDto, action: FriendAction) => {
+      setActionLoadingId(user.id);
+      setActionLoadingType(action);
+      friendMutation.mutate(
+        { userId: user.id, action, user },
+        {
+          onSuccess: () => {
+            const message =
+              action === 'accept'
+                ? 'Đã chấp nhận lời mời'
+                : action === 'reject'
+                  ? 'Đã từ chối lời mời'
+                  : action === 'cancel'
+                    ? 'Đã hủy lời mời'
+                    : 'Đã hủy kết bạn';
+            toast.success(message);
+          },
+          onSettled: () => {
+            setActionLoadingId(null);
+            setActionLoadingType(null);
+          },
         },
-      },
-    );
-  }
+      );
+    },
+    [friendMutation],
+  );
+
+  const listKey = tab === 'friends' ? `friends-${search}` : tab;
 
   return (
     <section className="mx-auto flex w-full max-w-xl flex-col gap-4 px-4">
@@ -233,17 +257,36 @@ export function FriendsView() {
       {isLoading ? (
         <FriendSkeleton />
       ) : items.length > 0 ? (
-        <ul className="space-y-3">
-          {items.map((user) => (
-            <FriendRow
-              key={user.id}
-              user={user}
-              tab={tab}
-              pending={friendMutation.isPending}
-              onAction={handleAction}
-            />
-          ))}
-        </ul>
+        <Virtuoso
+          key={listKey}
+          useWindowScroll
+          data={items}
+          computeItemKey={(_, user) => user.id}
+          endReached={handleEndReached}
+          overscan={400}
+          components={{
+            Footer: () => (
+              <div className="flex min-h-11 items-center justify-center py-4">
+                {isFetchingNextPage ? (
+                  <p className="text-muted-foreground text-sm" aria-live="polite">
+                    Đang tải thêm…
+                  </p>
+                ) : null}
+              </div>
+            ),
+          }}
+          itemContent={(_, user) => (
+            <div className="pb-3">
+              <FriendRow
+                user={user}
+                tab={tab}
+                pendingUserId={actionLoadingId}
+                pendingAction={actionLoadingType}
+                onAction={handleAction}
+              />
+            </div>
+          )}
+        />
       ) : (
         <div className="border-border bg-card rounded-2xl border px-4 py-8 text-center">
           <p className="text-foreground text-sm font-medium">Chưa có dữ liệu</p>
@@ -254,12 +297,6 @@ export function FriendsView() {
           </p>
         </div>
       )}
-
-      {hasNextPage ? (
-        <Button variant="secondary" loading={isFetchingNextPage} onClick={fetchMore}>
-          Tải thêm
-        </Button>
-      ) : null}
     </section>
   );
 }

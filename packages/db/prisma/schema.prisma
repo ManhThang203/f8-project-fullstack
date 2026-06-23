@@ -445,6 +445,13 @@ model Post {
   content  String
   parentId String?
 
+  /**
+   * rootPostId trỏ đến bài viết gốc (cấp cao nhất) của chuỗi bình luận.
+   * Dùng để đếm tổng số bình luận ở mọi cấp (gốc + reply mọi cấp) một cách nhanh chóng.
+   * null nếu đây là bài viết gốc (không phải comment).
+   */
+  rootPostId String?
+
   visibility PostVisibility @default(PUBLIC)
 
   createdAt DateTime  @default(now())
@@ -455,6 +462,8 @@ model Post {
   author    User           @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   parent    Post?          @relation("PostReplies", fields: [parentId], references: [id], onDelete: SetNull)
   replies   Post[]         @relation("PostReplies")
+  root      Post?          @relation("PostRoot", fields: [rootPostId], references: [id], onDelete: SetNull)
+  rootOf    Post[]         @relation("PostRoot")
   likes     PostLike[]
   media     Media[]
   embedding PostEmbedding?
@@ -464,6 +473,7 @@ model Post {
 
   @@index([authorId, createdAt(sort: Desc)])
   @@index([parentId])
+  @@index([rootPostId])
   @@index([deletedAt])
   @@index([createdAt])
   @@index([hiddenAt])
