@@ -15,6 +15,7 @@ import {
   patchPeerReceipt,
 } from '@/lib/chat-cache';
 import { getChatSocket } from '@/lib/chat-socket';
+import { queryKeys } from '@/lib/query-keys';
 import type { ChatMessageDto, MessageReactionDto } from '@/types/chat';
 
 /**
@@ -57,11 +58,17 @@ export function useChatRoomSocket(meId: string | null, roomId: string | null) {
       const viewingRoom = roomId === payload.roomId;
       const fromPeer = payload.senderId !== meId;
 
-      if (viewingRoom) {
+      // Append vào cache phòng nếu đang xem, hoặc phòng đó đã có cache
+      // (tránh tạo cache thiếu cho phòng chưa từng mở).
+      const hasRoomCache =
+        queryClient.getQueryData(queryKeys.chat.roomMessages(payload.roomId)) !== undefined;
+      if (viewingRoom || hasRoomCache) {
         appendRoomMessage(queryClient, payload.roomId, payload);
-        if (fromPeer) {
-          chatSocket.emit('chat:delivered', { roomId: payload.roomId });
-        }
+      }
+
+      if (viewingRoom && fromPeer) {
+        chatSocket.emit('chat:delivered', { roomId: payload.roomId });
+        chatSocket.emit('chat:read', { roomId: payload.roomId });
       }
 
       const patched = patchConversationAfterMessage(queryClient, payload.roomId, payload, {

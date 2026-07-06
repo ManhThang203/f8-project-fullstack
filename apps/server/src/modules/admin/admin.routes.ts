@@ -11,6 +11,7 @@ import {
   adminReportReviewSchema,
   adminUserListQuerySchema,
   adminUserPermissionsPutSchema,
+  adminUserRolePatchSchema,
   adminUserStatusPatchSchema,
   appealReviewSchema,
   cursorPageQuerySchema,
@@ -48,7 +49,12 @@ import {
   getStatsOverview,
   getTopHashtags,
 } from './admin-stats.service.js';
-import { getAdminUserDetail, listAdminUsers, patchAdminUserStatus } from './admin-users.service.js';
+import {
+  getAdminUserDetail,
+  listAdminUsers,
+  patchAdminUserRole,
+  patchAdminUserStatus,
+} from './admin-users.service.js';
 import {
   getModerationCase,
   listModerationCases,
@@ -68,7 +74,7 @@ adminRouter.use(requireAuth, requireActiveAccount, requireAdminPanelAccess);
 adminRouter.get('/me/permissions', async (req, res, next) => {
   try {
     const perms = await getMyAdminPermissions(req.auth!.userId);
-    res.json(ok({ permissions: perms, role: req.auth!.role }));
+    res.json(ok({ id: req.auth!.userId, permissions: perms, role: req.auth!.role }));
   } catch (e) {
     next(e);
   }
@@ -161,6 +167,16 @@ adminRouter.patch('/users/:id/status', requirePermission('user:lock'), async (re
   try {
     const body = adminUserStatusPatchSchema.parse(req.body);
     const data = await patchAdminUserStatus(req.auth!.userId, paramId(req.params.id), body);
+    res.json(ok(data));
+  } catch (e) {
+    next(e);
+  }
+});
+
+adminRouter.patch('/users/:id/role', requirePermission('moderator:manage'), async (req, res, next) => {
+  try {
+    const body = adminUserRolePatchSchema.parse(req.body);
+    const data = await patchAdminUserRole(req.auth!.userId, paramId(req.params.id), body);
     res.json(ok(data));
   } catch (e) {
     next(e);

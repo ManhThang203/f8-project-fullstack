@@ -1,5 +1,11 @@
-import { prisma } from '@costy/db';
+import { prisma, type Prisma } from '@costy/db';
 import type { AdminAuditLogDto } from '@costy/shared';
+
+import {
+  createdCursorOrderBy,
+  createdCursorWhere,
+  encodeCreatedCursor,
+} from '../../lib/admin/cursor.js';
 
 /** Danh sách audit log cho admin. */
 export async function listAuditLogs(query: {
@@ -11,23 +17,26 @@ export async function listAuditLogs(query: {
   to?: string;
 }): Promise<{ items: AdminAuditLogDto[]; nextCursor: string | null }> {
   const take = query.limit + 1;
-  const where = {
-    ...(query.actorId ? { actorId: query.actorId } : {}),
-    ...(query.action ? { action: { contains: query.action } } : {}),
+  const and: Prisma.AdminAuditLogWhereInput[] = [
+    ...(query.actorId ? [{ actorId: query.actorId }] : []),
+    ...(query.action ? [{ action: { contains: query.action } }] : []),
     ...(query.from || query.to
-      ? {
-          createdAt: {
-            ...(query.from ? { gte: new Date(query.from) } : {}),
-            ...(query.to ? { lte: new Date(query.to) } : {}),
+      ? [
+          {
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
           },
-        }
-      : {}),
-    ...(query.cursor ? { id: { lt: query.cursor } } : {}),
-  };
+        ]
+      : []),
+  ];
+  const cursorWhere = createdCursorWhere(query.cursor);
+  if (cursorWhere) and.push(cursorWhere);
 
   const rows = await prisma.adminAuditLog.findMany({
-    where,
-    orderBy: { createdAt: 'desc' },
+    where: and.length ? { AND: and } : undefined,
+    orderBy: createdCursorOrderBy,
     take,
     include: {
       actor: { select: { id: true, username: true, name: true } },
@@ -47,6 +56,8 @@ export async function listAuditLogs(query: {
 
   const hasMore = items.length > query.limit;
   const page = hasMore ? items.slice(0, query.limit) : items;
-  const nextCursor = hasMore && page.length ? page[page.length - 1]!.id : null;
+  // nextCursor theo thứ tự DB (rows gốc)
+  const lastRaw = hasMore ? rows[query.limit - 1] : null;
+  const nextCursor = lastRaw ? encodeCreatedCursor(lastRaw) : null;
   return { items: page, nextCursor };
 }

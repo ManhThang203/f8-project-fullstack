@@ -39,7 +39,7 @@ export function ActionButton({
 
   const styles = cn(
     'text-muted-foreground dark:text-gray-400 font-semibold',
-    'flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1',
+    'flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-1',
     'transition-all duration-200',
     'hover:bg-black/5 dark:hover:bg-white/10 active:scale-95',
     'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',

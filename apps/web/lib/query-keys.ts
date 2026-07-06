@@ -31,5 +31,7 @@ export const queryKeys = {
   },
   me: {
     saved: ['me', 'saved'] as const,
+    settings: ['me', 'settings'] as const,
+    blocked: ['me', 'blocked'] as const,
   },
 } as const;

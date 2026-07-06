@@ -18,6 +18,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { createContext, useContext, useEffect, useId, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
+import { useScrollLock } from '@/hooks/use-scroll-lock';
 import { cn } from '@/lib/utils';
 
 /** z-index cao hơn site-header (z-50) để phủ toàn màn hình kể cả header. */
@@ -62,17 +63,7 @@ export function Modal({
 }: ModalProps) {
   const titleId = useId();
 
-  // Body scroll lock
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [open]);
+  useScrollLock(open);
 
   // Escape key
   useEffect(() => {

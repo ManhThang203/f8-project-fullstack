@@ -2,12 +2,15 @@
 
 import type { PostFeedItemDto } from '@costy/shared';
 import { MoreHorizontal } from 'lucide-react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { EditPostModal } from './edit-post-modal';
 
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { ReportModal } from '@/components/shared/report-modal';
+import { useBlockMutation } from '@/hooks/queries/use-block-mutation';
+import { useRequireAuth } from '@/hooks/use-require-auth';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -18,12 +21,9 @@ type Props = {
   post?: PostFeedItemDto;
 };
 
-const MENU_ITEMS = [
-  { id: 'copy', label: 'Sao chép liên kết' },
-  { id: 'edit', label: 'Chỉnh sửa bài viết' },
-  { id: 'report', label: 'Báo cáo bài viết' },
-  { id: 'hide', label: 'Ẩn bài viết' },
-] as const;
+type MenuItemId = 'copy' | 'edit' | 'report' | 'hide' | 'block';
+
+type MenuItem = { id: MenuItemId; label: string };
 
 export function PostOptionsMenu({
   postId,
@@ -35,8 +35,25 @@ export function PostOptionsMenu({
   const [open, setOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [blockConfirmOpen, setBlockConfirmOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
+
+  const blockMutation = useBlockMutation();
+  const { requireAuth } = useRequireAuth();
+
+  const menuItems = useMemo((): MenuItem[] => {
+    const items: MenuItem[] = [
+      { id: 'copy', label: 'Sao chép liên kết' },
+      { id: 'edit', label: 'Chỉnh sửa bài viết' },
+      { id: 'report', label: 'Báo cáo bài viết' },
+      { id: 'hide', label: 'Ẩn bài viết' },
+    ];
+    if (!isOwnPost && post?.author) {
+      items.push({ id: 'block', label: `Chặn @${post.author.username}` });
+    }
+    return items;
+  }, [isOwnPost, post?.author]);
 
   useEffect(() => {
     if (!open) return;
@@ -59,7 +76,7 @@ export function PostOptionsMenu({
     };
   }, [open]);
 
-  function handleAction(id: (typeof MENU_ITEMS)[number]['id']) {
+  function handleAction(id: MenuItemId) {
     setOpen(false);
     switch (id) {
       case 'copy': {
@@ -77,13 +94,33 @@ export function PostOptionsMenu({
         setEditModalOpen(true);
         break;
       case 'report':
+        if (!requireAuth()) return;
         setReportModalOpen(true);
         break;
       case 'hide':
         onHidePost?.();
         toast.message('Đã ẩn bài viết khỏi feed');
         break;
+      case 'block':
+        if (!requireAuth()) return;
+        setBlockConfirmOpen(true);
+        break;
     }
+  }
+
+  function confirmBlock() {
+    if (!post?.author) return;
+    blockMutation.mutate(
+      { userId: post.author.id, block: true },
+      {
+        onSuccess: () => {
+          setBlockConfirmOpen(false);
+          onHidePost?.();
+          toast.success(`Đã chặn @${post.author.username}`);
+        },
+        onError: (err) => toast.error(err.message),
+      },
+    );
   }
 
   return (
@@ -113,25 +150,27 @@ export function PostOptionsMenu({
             'rounded-xl border py-1 shadow-lg',
           )}
         >
-          {MENU_ITEMS.filter(
-            (item) =>
-              !(item.id === 'report' && isOwnPost) &&
-              !(item.id === 'edit' && !(isOwnPost && post)),
-          ).map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              role="menuitem"
-              onClick={() => handleAction(item.id)}
-              className={cn(
-                'text-foreground w-full px-4 py-3 text-left text-sm',
-                'hover:bg-muted transition-colors duration-150',
-                'focus-visible:bg-muted focus-visible:outline-none',
-              )}
-            >
-              {item.label}
-            </button>
-          ))}
+          {menuItems
+            .filter(
+              (item) =>
+                !(item.id === 'report' && isOwnPost) &&
+                !(item.id === 'edit' && !(isOwnPost && post)),
+            )
+            .map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="menuitem"
+                onClick={() => handleAction(item.id)}
+                className={cn(
+                  'text-foreground w-full px-4 py-3 text-left text-sm',
+                  'hover:bg-muted transition-colors duration-150',
+                  'focus-visible:bg-muted focus-visible:outline-none',
+                )}
+              >
+                {item.label}
+              </button>
+            ))}
         </div>
       )}
 
@@ -145,6 +184,20 @@ export function PostOptionsMenu({
       {post && (
         <EditPostModal open={editModalOpen} onClose={() => setEditModalOpen(false)} post={post} />
       )}
+
+      {post?.author ? (
+        <ConfirmDialog
+          open={blockConfirmOpen}
+          onClose={() => setBlockConfirmOpen(false)}
+          onConfirm={confirmBlock}
+          title={`Chặn @${post.author.username}?`}
+          description="Họ sẽ không thể theo dõi, nhắn tin hoặc tìm kiếm bạn. Bài viết của họ sẽ bị ẩn khỏi feed."
+          confirmLabel="Chặn"
+          cancelLabel="Huỷ"
+          confirming={blockMutation.isPending}
+          destructive
+        />
+      ) : null}
     </div>
   );
 }

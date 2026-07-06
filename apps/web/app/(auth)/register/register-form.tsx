@@ -108,9 +108,11 @@ export function RegisterForm() {
 
   async function onSubmit(data: RegisterFormValues) {
     const name = (data.name?.trim() || data.username).trim() || 'Người dùng';
-    const nextQ =
-      nextParam != null && nextParam !== '' ? `?next=${encodeURIComponent(nextParam)}` : '';
-    const callbackURL = `${window.location.origin}/verify-email${nextQ}`;
+    const callbackParams = new URLSearchParams({ verified: '1' });
+    if (nextParam != null && nextParam !== '') {
+      callbackParams.set('next', nextParam);
+    }
+    const callbackURL = `${window.location.origin}/verify-email?${callbackParams.toString()}`;
 
     const res = await authClient.signUp.email({
       email: data.email,

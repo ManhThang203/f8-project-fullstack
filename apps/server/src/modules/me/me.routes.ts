@@ -4,6 +4,7 @@ import {
   cursorPageQuerySchema,
   ok,
   updateMyProfileSchema,
+  updateUserSettingsSchema,
   type CursorPageQuery,
 } from '@costy/shared';
 
@@ -16,6 +17,7 @@ import { validate } from '../../middleware/validate.middleware.js';
 import { getMyModerationCase, submitAppeal } from '../moderation/moderation.service.js';
 import { listSavedPosts } from '../posts/posts.service.js';
 import { setProfileImage, updateMyProfile } from '../users/users.service.js';
+import { getMySettings, updateMySettings } from './me.settings.service.js';
 
 export const meRouter = Router();
 
@@ -47,6 +49,26 @@ meRouter.patch('/profile', validate(updateMyProfileSchema, 'body'), async (req, 
   try {
     const profile = await updateMyProfile(req.auth!.userId, req.body);
     res.json(ok(profile));
+  } catch (e) {
+    next(e);
+  }
+});
+
+/** GET /me/settings — lấy cài đặt quyền riêng tư và thông báo. */
+meRouter.get('/settings', async (req, res, next) => {
+  try {
+    const data = await getMySettings(req.auth!.userId);
+    res.json(ok(data));
+  } catch (e) {
+    next(e);
+  }
+});
+
+/** PATCH /me/settings — cập nhật cài đặt quyền riêng tư và thông báo. */
+meRouter.patch('/settings', validate(updateUserSettingsSchema, 'body'), async (req, res, next) => {
+  try {
+    const data = await updateMySettings(req.auth!.userId, req.body);
+    res.json(ok(data));
   } catch (e) {
     next(e);
   }

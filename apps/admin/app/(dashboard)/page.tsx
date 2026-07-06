@@ -23,13 +23,19 @@ import { TopHashtagsBarChart } from '@/components/admin/charts/top-hashtags-bar-
 import { KpiCard } from '@/components/admin/kpi-card';
 import {
   useActiveUsers,
+  useAdminMe,
   usePostsPerDay,
   useStatsOverview,
   useTopHashtags,
 } from '@/hooks/queries/use-admin-queries';
+import { hasAdminPermission } from '@/lib/has-admin-permission';
 
 export default function DashboardPage() {
   const { t } = useTranslation();
+  const { data: meData } = useAdminMe();
+  const permissions = meData?.data?.permissions ?? [];
+  const canReadUsers = hasAdminPermission(permissions, 'user:read');
+  const canReadHashtags = hasAdminPermission(permissions, 'hashtag:read');
   const { data: overview, isLoading: overviewLoading } = useStatsOverview('30d');
   const { data: postsPerDay, isLoading: postsLoading } = usePostsPerDay('30d');
   const { data: activeUsers, isLoading: activeLoading } = useActiveUsers('30d');
@@ -43,8 +49,8 @@ export default function DashboardPage() {
         <KpiCard
           title={t('dashboard.totalUsers')}
           value={stats?.totalUsers ?? '—'}
-          href="/users"
-          linkLabel={t('dashboard.linkUsers')}
+          href={canReadUsers ? '/users' : undefined}
+          linkLabel={canReadUsers ? t('dashboard.linkUsers') : undefined}
           icon={Users}
         />
         <KpiCard
@@ -91,8 +97,8 @@ export default function DashboardPage() {
         <KpiCard
           title={t('dashboard.activeHashtags')}
           value={stats?.activeHashtags ?? '—'}
-          href="/hashtags"
-          linkLabel={t('dashboard.linkHashtags')}
+          href={canReadHashtags ? '/hashtags' : undefined}
+          linkLabel={canReadHashtags ? t('dashboard.linkHashtags') : undefined}
           icon={Hash}
         />
       </div>

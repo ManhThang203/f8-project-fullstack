@@ -30,22 +30,10 @@ import {
   useUnreadNotificationCount,
   useMarkNotificationReadMutation,
 } from '@/hooks/queries/use-notifications';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import { queryKeys } from '@/lib/query-keys';
 import { getAuthedSocket } from '@/lib/socket';
 import { cn } from '@/lib/utils';
-
-function getRelativeTime(dateString: string) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (diffInSeconds < 60) return 'Vừa xong';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} phút trước`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} giờ trước`;
-  if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} ngày trước`;
-  if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 2592000)} tháng trước`;
-  return `${Math.floor(diffInSeconds / 31536000)} năm trước`;
-}
 
 function getSystemNotificationText(notif: NotificationDto): string | null {
   if (notif.type !== 'SYSTEM') return null;
@@ -85,7 +73,6 @@ function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose:
     USER_FOLLOWED: <UserPlus className="h-4 w-4 text-green-500" />,
     FRIEND_REQUEST: <UserPlus className="h-4 w-4 text-blue-500" />,
     FRIEND_ACCEPTED: <CheckCircle className="h-4 w-4 text-green-500" />,
-    MESSAGE_RECEIVED: <MessageCircle className="h-4 w-4 text-blue-500" />,
     MENTION: <Info className="h-4 w-4 text-yellow-500" />,
     SYSTEM: <Info className="h-4 w-4 text-gray-500" />,
     MODERATION_ACTION: <ShieldAlert className="h-4 w-4 text-orange-500" />,
@@ -101,7 +88,6 @@ function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose:
     USER_FOLLOWED: 'đã bắt đầu theo dõi bạn',
     FRIEND_REQUEST: 'đã gửi cho bạn lời mời kết bạn',
     FRIEND_ACCEPTED: 'đã chấp nhận lời mời kết bạn',
-    MESSAGE_RECEIVED: 'đã gửi cho bạn một tin nhắn',
     MENTION: 'đã nhắc đến bạn',
     SYSTEM: 'thông báo hệ thống',
     MODERATION_ACTION: 'đã xử lý nội dung của bạn',
@@ -141,7 +127,6 @@ function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose:
     if (notif.type === 'USER_FOLLOWED' && notif.actor) return `/${notif.actor.username}`;
     if (notif.type === 'FRIEND_REQUEST') return '/friends';
     if (notif.type === 'FRIEND_ACCEPTED' && notif.actor) return `/${notif.actor.username}`;
-    if (notif.type === 'MESSAGE_RECEIVED') return '/messages';
     if (
       (notif.type === 'POST_LIKED' ||
         notif.type === 'POST_REPLIED' ||
@@ -196,7 +181,7 @@ function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose:
             </>
           )}
         </p>
-        <p className="text-muted-foreground mt-1 text-xs">{getRelativeTime(notif.createdAt)}</p>
+        <p className="text-muted-foreground mt-1 text-xs">{formatRelativeTime(notif.createdAt)}</p>
       </div>
       {!notif.readAt && <div className="bg-primary mt-2 h-2 w-2 shrink-0 rounded-full" />}
     </Link>

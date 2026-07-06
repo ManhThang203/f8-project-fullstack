@@ -5,3 +5,4 @@ export * from './profile.schema.js';
 export * from './friend.schema.js';
 export * from './admin.schema.js';
 export * from './moderation.schema.js';
+export * from './settings.schema.js';

@@ -1,10 +1,16 @@
-import { prisma } from '@costy/db';
+import { type ChatMessage, Prisma, prisma } from '@costy/db';
 
 import { AppError } from '../../lib/errors.js';
+import {
+  areUsersBlocked,
+  assertUsersNotBlocked,
+  getBlockedRelatedUserIds,
+} from '../../lib/blocks/block-utils.js';
 
 import { getPresence } from './presence.service.js';
 
 type ListMsgOpts = { limit?: number; beforeId?: string };
+type DirectRoomAccess = { blocked: boolean; peerId: string | null };
 
 const userSelect = {
   id: true,
@@ -21,6 +27,34 @@ const mediaSelect = {
   height: true,
 } as const;
 
+/** Kiểm tra phòng direct có bị chặn bởi quan hệ block hai chiều không. */
+export async function getDirectRoomBlockState(
+  userId: string,
+  roomId: string,
+): Promise<DirectRoomAccess> {
+  const room = await prisma.chatRoom.findUnique({
+    where: { id: roomId },
+    select: {
+      type: true,
+      members: { select: { userId: true } },
+    },
+  });
+  if (!room || room.type !== 'DIRECT') return { blocked: false, peerId: null };
+
+  const peerId = room.members.find((member) => member.userId !== userId)?.userId ?? null;
+  if (!peerId) return { blocked: false, peerId: null };
+
+  return { blocked: await areUsersBlocked(userId, peerId), peerId };
+}
+
+/** Ném lỗi nếu user đang dùng phòng direct với người đã block hoặc bị block. */
+export async function assertDirectRoomNotBlocked(userId: string, roomId: string): Promise<void> {
+  const { blocked } = await getDirectRoomBlockState(userId, roomId);
+  if (blocked) {
+    throw AppError.forbidden('Không thể nhắn tin với người dùng này');
+  }
+}
+
 /**
  * Lịch sử tin nhắn trong một phòng chat (kèm media, reply, reactions)
  */
@@ -34,6 +68,7 @@ export async function listRoomMessages(userId: string, roomId: string, opts: Lis
   if (!mem) {
     throw AppError.forbidden('Bạn không thuộc phòng này.');
   }
+  await assertDirectRoomNotBlocked(userId, roomId);
 
   const rows = await prisma.chatMessage.findMany({
     where: {
@@ -99,6 +134,11 @@ export async function createChatRoom(input: {
     throw AppError.badRequest('Chat 1-1 chỉ được có 2 người.');
   }
 
+  if (!isGroup) {
+    const peerId = allIds.find((id) => id !== creatorId)!;
+    await assertUsersNotBlocked(creatorId, peerId);
+  }
+
   const users = await prisma.user.findMany({
     where: { id: { in: allIds }, deletedAt: null },
     select: { id: true, name: true, username: true },
@@ -155,8 +195,42 @@ export async function createChatRoom(input: {
   });
 }
 
+/** Lấy tin nhắn cuối của mỗi phòng trong 1 lần query (DISTINCT ON + findMany theo id). */
+async function getLastMessagesByRoom(roomIds: string[]) {
+  if (roomIds.length === 0) return new Map<string, ChatMessage>();
+
+  const latest = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT DISTINCT ON ("roomId") "id"
+    FROM chat_messages
+    WHERE "roomId" IN (${Prisma.join(roomIds)})
+    ORDER BY "roomId", "createdAt" DESC
+  `;
+  const ids = latest.map((r) => r.id);
+  if (ids.length === 0) return new Map<string, ChatMessage>();
+
+  const messages = await prisma.chatMessage.findMany({ where: { id: { in: ids } } });
+  return new Map(messages.map((msg) => [msg.roomId, msg]));
+}
+
+/** Đếm số tin chưa đọc cho mỗi phòng trong 1 lần query (GROUP BY, tôn trọng lastReadAt riêng từng phòng). */
+async function getUnreadCountByRoom(userId: string, roomIds: string[]) {
+  if (roomIds.length === 0) return new Map<string, number>();
+
+  const rows = await prisma.$queryRaw<{ roomId: string; unread: number }[]>`
+    SELECT m."roomId" AS "roomId", COUNT(*)::int AS "unread"
+    FROM chat_messages msg
+    JOIN chat_room_members m ON m."roomId" = msg."roomId" AND m."userId" = ${userId}
+    WHERE msg."roomId" IN (${Prisma.join(roomIds)})
+      AND msg."senderId" <> ${userId}
+      AND (m."lastReadAt" IS NULL OR msg."createdAt" > m."lastReadAt")
+    GROUP BY m."roomId"
+  `;
+  return new Map(rows.map((r) => [r.roomId, r.unread]));
+}
+
 /**
- * Lấy danh sách hội thoại của user (kèm tin nhắn cuối + số chưa đọc)
+ * Lấy danh sách hội thoại của user (kèm tin nhắn cuối + số chưa đọc).
+ * Dùng truy vấn batch (block set + last message + unread) để tránh N+1 theo số phòng.
  */
 export async function listConversationsForUser(userId: string) {
   const memberships = await prisma.chatRoomMember.findMany({
@@ -172,43 +246,42 @@ export async function listConversationsForUser(userId: string) {
     },
   });
 
-  const items = await Promise.all(
-    memberships.map(async (m) => {
-      const room = m.room;
+  const blockedSet = new Set(await getBlockedRelatedUserIds(userId));
 
-      const lastMsg = await prisma.chatMessage.findFirst({
-        where: { roomId: room.id },
-        orderBy: { createdAt: 'desc' },
-      });
+  // Bỏ các phòng direct với người đã chặn / bị chặn (group không bị ảnh hưởng)
+  const visibleMemberships = memberships.filter((m) => {
+    if (m.room.type !== 'DIRECT') return true;
+    const peerId = m.room.members.find((mem) => mem.userId !== userId)?.userId ?? null;
+    return !(peerId && blockedSet.has(peerId));
+  });
 
-      const unreadCount = await prisma.chatMessage.count({
-        where: {
-          roomId: room.id,
-          senderId: { not: userId },
-          ...(m.lastReadAt ? { createdAt: { gt: m.lastReadAt } } : {}),
-        },
-      });
+  const roomIds = visibleMemberships.map((m) => m.room.id);
+  const [lastMsgByRoom, unreadByRoom] = await Promise.all([
+    getLastMessagesByRoom(roomIds),
+    getUnreadCountByRoom(userId, roomIds),
+  ]);
 
-      // Lấy danh sách thành viên khác để lấy tên/avatar
-      const otherMembers = room.members.filter((mem) => mem.userId !== userId);
+  const items = visibleMemberships.map((m) => {
+    const room = m.room;
+    const lastMsg = lastMsgByRoom.get(room.id) ?? null;
+    const otherMembers = room.members.filter((mem) => mem.userId !== userId);
 
-      return {
-        id: room.id,
-        isGroup: room.type === 'GROUP',
-        name: room.name,
-        // Thông tin members (để FE tự render tên/avatar)
-        peers: otherMembers.map((om) => ({
-          ...om.user,
-          lastReadAt: om.lastReadAt?.toISOString(),
-          lastDeliveredAt: om.lastDeliveredAt?.toISOString(),
-        })),
+    return {
+      id: room.id,
+      isGroup: room.type === 'GROUP',
+      name: room.name,
+      // Thông tin members (để FE tự render tên/avatar)
+      peers: otherMembers.map((om) => ({
+        ...om.user,
+        lastReadAt: om.lastReadAt?.toISOString(),
+        lastDeliveredAt: om.lastDeliveredAt?.toISOString(),
+      })),
 
-        lastMessage: lastMsg,
-        unreadCount,
-        updatedAt: lastMsg?.createdAt || room.createdAt,
-      };
-    }),
-  );
+      lastMessage: lastMsg,
+      unreadCount: unreadByRoom.get(room.id) ?? 0,
+      updatedAt: lastMsg?.createdAt || room.createdAt,
+    };
+  });
 
   const directPeerIds = items
     .filter((item) => !item.isGroup)

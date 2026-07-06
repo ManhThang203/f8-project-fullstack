@@ -20,6 +20,11 @@ export const adminUserStatusPatchSchema = z.object({
   bannedUntil: z.string().datetime().optional(),
 });
 
+export const adminUserRolePatchSchema = z.object({
+  role: z.enum(['USER', 'MODERATOR', 'ADMIN']),
+  reason: z.string().max(500).optional(),
+});
+
 export const adminReportListQuerySchema = z.object({
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
@@ -106,6 +111,7 @@ export const adminAuditLogQuerySchema = z.object({
 export type AdminDateRangeQuery = z.infer<typeof adminDateRangeQuerySchema>;
 export type AdminUserListQuery = z.infer<typeof adminUserListQuerySchema>;
 export type AdminUserStatusPatch = z.infer<typeof adminUserStatusPatchSchema>;
+export type AdminUserRolePatch = z.infer<typeof adminUserRolePatchSchema>;
 export type AdminReportListQuery = z.infer<typeof adminReportListQuerySchema>;
 export type AdminReportReview = z.infer<typeof adminReportReviewSchema>;
 export type AdminReportAction = z.infer<typeof adminReportActionSchema>;

@@ -13,3 +13,15 @@ export function usePost(postId: string | null) {
     enabled: !!postId,
   });
 }
+
+/** Lấy chuỗi tổ tiên (cấp 1 → chính nó) của 1 comment/reply để ghim + cuộn tới khi deep-link sâu nhiều cấp. */
+export function usePostAncestry(commentId: string | null) {
+  return useQuery({
+    queryKey: ['posts', commentId, 'ancestry'],
+    queryFn: async () => {
+      const res = await apiQuery<PostFeedItemDto[]>(`/posts/${commentId}/ancestry`);
+      return res.data;
+    },
+    enabled: !!commentId,
+  });
+}

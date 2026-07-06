@@ -9,6 +9,7 @@ import { SiteAppGate } from '@/components/layout/site-app-gate';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SiteHeaderSsrFallback } from '@/components/layout/site-header-ssr-fallback';
 import { ClientOnly } from '@/components/shared/client-only';
+import { CurrentUserProvider } from '@/components/shared/current-user-context';
 import { authClient } from '@/lib/auth-client';
 import type { ServerAuthUser } from '@/lib/auth-user.types';
 
@@ -20,6 +21,17 @@ type Props = {
 /** Kiểm tra route không cần padding-bottom cho bottom nav (Reels tự trừ chiều cao). */
 function isReelsRoute(pathname: string): boolean {
   return pathname.startsWith('/reel');
+}
+
+function SiteLayoutHeader({ initialUser }: { initialUser: ServerAuthUser | null }) {
+  const pathname = usePathname();
+  const hideHeaderBelowLg = isReelsRoute(pathname);
+
+  return (
+    <ClientOnly fallback={<SiteHeaderSsrFallback hideBelowLg={hideHeaderBelowLg} />}>
+      <SiteHeader initialUser={initialUser} />
+    </ClientOnly>
+  );
 }
 
 /** Bọc nội dung trang: chừa chỗ bottom nav khi đã đăng nhập (<lg). */
@@ -41,11 +53,11 @@ function SiteLayoutBody({ children, initialUser }: Props) {
 /** Client-side layout cho trang web. */
 export function SiteLayoutClient({ children, initialUser }: Props) {
   return (
-    <SiteAppGate>
-      <ClientOnly fallback={<SiteHeaderSsrFallback />}>
-        <SiteHeader initialUser={initialUser} />
-      </ClientOnly>
-      <SiteLayoutBody initialUser={initialUser}>{children}</SiteLayoutBody>
-    </SiteAppGate>
+    <CurrentUserProvider value={initialUser}>
+      <SiteAppGate>
+        <SiteLayoutHeader initialUser={initialUser} />
+        <SiteLayoutBody initialUser={initialUser}>{children}</SiteLayoutBody>
+      </SiteAppGate>
+    </CurrentUserProvider>
   );
 }

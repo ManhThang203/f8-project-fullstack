@@ -8,3 +8,4 @@ export * from './notification.js';
 export * from './admin.js';
 export * from './moderation.js';
 export * from './search.js';
+export * from './settings.js';

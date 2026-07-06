@@ -13,6 +13,7 @@ import { ReelsSlide } from './reels-slide';
 
 import { Button } from '@/components/shared/button';
 import { flattenReelsFeedPages, useReelsFeed } from '@/hooks/queries/use-reels-feed';
+import { useScrollLock } from '@/hooks/use-scroll-lock';
 import { authClient } from '@/lib/auth-client';
 import { isApiQueryError } from '@/lib/api-query';
 
@@ -50,21 +51,7 @@ export function ReelsFeed({ initialPostId }: Props) {
     error.code === ErrorCode.NOT_FOUND &&
     Boolean(initialPostId);
 
-  useEffect(() => {
-    const { body, documentElement: html } = document;
-    const prevBodyOverflow = body.style.overflow;
-    const prevHtmlOverflow = html.style.overflow;
-
-    html.classList.add('reels-scroll-lock');
-    body.style.overflow = 'hidden';
-    html.style.overflow = 'hidden';
-
-    return () => {
-      html.classList.remove('reels-scroll-lock');
-      body.style.overflow = prevBodyOverflow;
-      html.style.overflow = prevHtmlOverflow;
-    };
-  }, []);
+  useScrollLock(true, { htmlClass: 'reels-scroll-lock' });
 
   const scrollToSlide = useCallback((index: number) => {
     virtuosoRef.current?.scrollToIndex({ index, behavior: 'auto' });

@@ -2,8 +2,8 @@
 
 import type { PostFeedItemDto } from '@costy/shared';
 import { useQueryClient } from '@tanstack/react-query';
-import { Image } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { Image, X } from 'lucide-react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useMemo } from 'react';
 import type { Socket } from 'socket.io-client';
 import { toast } from 'sonner';
 
@@ -23,6 +23,11 @@ import { handleCommentEnterKey } from '@/lib/comment-input';
 import { createPostWithMedia } from '@/lib/create-post';
 import { applyEmojiInsert } from '@/lib/insert-text-at-cursor';
 import { isImageMime, isVideoMime, validateFiles } from '@/lib/media-validation';
+import {
+  appendReplyToCache,
+  bumpReplyCountInCommentCaches,
+  insertCommentInCache,
+} from '@/lib/post-cache';
 import { queryKeys } from '@/lib/query-keys';
 import { getAuthedSocket } from '@/lib/socket';
 import { cn } from '@/lib/utils';
@@ -47,9 +52,17 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
   const [drafts, setDrafts] = useState<DraftEntry[]>([]);
   const [busy, setBusy] = useState(false);
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
+  const [replyingToUsername, setReplyingToUsername] = useState<string | null>(null);
+  const [expandParentId, setExpandParentId] = useState<string | null>(null);
+  const [focusReplyId, setFocusReplyId] = useState<string | null>(null);
   const [commentCount, setCommentCount] = useState(post.commentCount ?? post.replyCount);
   const [scrollParent, setScrollParent] = useState<HTMLElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useLayoutEffect(() => {
+    if (open && scrollRef.current) setScrollParent(scrollRef.current);
+  }, [open]);
 
   const { data, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage } = usePostComments(post.id);
   const comments = useMemo(() => data?.pages.flatMap((p) => p.items) || [], [data]);
@@ -73,6 +86,10 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
         return [];
       });
       setReplyingToCommentId(null);
+      setReplyingToUsername(null);
+      setExpandParentId(null);
+      setFocusReplyId(null);
+      setScrollParent(null);
     }
   }, [open]);
 
@@ -88,7 +105,7 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
   });
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !me?.id) return;
 
     let cancelled = false;
     let activeSocket: Socket | null = null;
@@ -106,17 +123,19 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
       queryClient.invalidateQueries({ queryKey: ['posts', 'comments', post.id] });
     }
 
-    void getAuthedSocket('/feed').then((socket) => {
-      if (cancelled) return;
-      activeSocket = socket;
-      socket.on('post:hidden', onPostHidden);
-    });
+    void getAuthedSocket('/feed')
+      .then((socket) => {
+        if (cancelled) return;
+        activeSocket = socket;
+        socket.on('post:hidden', onPostHidden);
+      })
+      .catch(() => undefined);
 
     return () => {
       cancelled = true;
       activeSocket?.off('post:hidden', onPostHidden);
     };
-  }, [open, post.id, onClose, queryClient]);
+  }, [open, me?.id, post.id, onClose, queryClient]);
 
   /** Giảm số bình luận hiển thị khi xóa comment cấp 1 của bài viết. */
   function handleCommentDeleted(_deletedComment: PostFeedItemDto) {
@@ -170,11 +189,17 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
 
     setBusy(true);
     const files = drafts.map((d) => d.file);
+    const targetParentId = replyingToCommentId;
+
+    /** Ghép mention vào đầu nội dung để server parseMentions vẫn nhận được. */
+    const finalContent = replyingToUsername && !text.startsWith(`@${replyingToUsername}`)
+      ? `@${replyingToUsername} ${text}`
+      : text;
 
     const result = await createPostWithMedia({
-      content: text,
+      content: finalContent,
       files,
-      parentId: replyingToCommentId ?? post.id,
+      parentId: targetParentId ?? post.id,
       onUploadProgress: (fileIndex, percent) => {
         setDrafts((prev) =>
           prev.map((d, i) =>
@@ -193,25 +218,35 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
 
     setContent('');
     setDrafts([]);
+    setReplyingToCommentId(null);
+    setReplyingToUsername(null);
     toast.success('Đã gửi bình luận');
 
     setCommentCount((prev) => prev + 1);
 
-    // Invalidate root comments
-    queryClient.invalidateQueries({ queryKey: ['posts', 'comments', post.id] });
-
-    // Invalidate nested comments if replied to a specific comment
-    if (replyingToCommentId) {
-      queryClient.invalidateQueries({ queryKey: ['posts', 'comments', replyingToCommentId] });
-      setReplyingToCommentId(null);
+    if (targetParentId) {
+      appendReplyToCache(queryClient, targetParentId, result.post);
+      bumpReplyCountInCommentCaches(queryClient, targetParentId, 1);
+      setExpandParentId(targetParentId);
+      setFocusReplyId(result.post.id);
+    } else {
+      insertCommentInCache(queryClient, post.id, result.post);
     }
+
     queryClient.invalidateQueries({ queryKey: queryKeys.posts.feed });
   }
 
+  /** Ghi đè chip trả lời mỗi lần bấm Trả lời — không cộng dồn vào textarea. */
   function handleReplyTo(username: string, commentId: string) {
-    setContent((prev) => (prev ? `${prev} @${username} ` : `@${username} `));
     setReplyingToCommentId(commentId);
+    setReplyingToUsername(username);
     textareaRef.current?.focus();
+  }
+
+  /** Hủy chế độ trả lời, comment sẽ gửi về bài viết gốc. */
+  function cancelReply() {
+    setReplyingToCommentId(null);
+    setReplyingToUsername(null);
   }
 
   return (
@@ -231,7 +266,7 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
           closeDisabled={busy}
         />
 
-        <div ref={setScrollParent} className="min-h-0 flex-1 overflow-y-auto">
+        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <div className="pointer-events-none">
             {/* Display post but disable interaction inside slightly or just render it */}
           </div>
@@ -239,6 +274,7 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
             post={post}
             onDismiss={() => {}}
             hideDismiss
+            variant="embedded"
             onCommentClick={() => textareaRef.current?.focus()}
             replyCountOverride={commentCount}
             commentCount={commentCount}
@@ -246,7 +282,7 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
 
           <div className="border-border mt-2 border-t" />
 
-          <div className="py-2">
+          <div className="pb-4 py-2">
             {isLoading && (
               <p className="text-muted-foreground py-4 text-center text-sm">
                 Đang tải bình luận...
@@ -257,7 +293,7 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
                 Chưa có bình luận nào. Hãy là người đầu tiên bình luận!
               </p>
             )}
-            {comments.length > 0 ? (
+            {scrollParent && comments.length > 0 ? (
               <CommentList
                 customScrollParent={scrollParent}
                 comments={comments}
@@ -270,6 +306,8 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
                     onReply={handleReplyTo}
                     rootPostId={post.id}
                     onDeleted={handleCommentDeleted}
+                    scrollTargetId={focusReplyId ?? undefined}
+                    expandCommentId={expandParentId}
                   />
                 )}
               />
@@ -278,7 +316,7 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
         </div>
 
         {/* Comment Input Area */}
-        <div className="border-border bg-card border-t p-3 shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
+        <div className="border-border bg-card relative z-30 shrink-0 border-t p-3 shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
           <div className="flex gap-3">
             <Avatar
               src={me?.image || null}
@@ -288,15 +326,28 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
               className="mt-1"
             />
             <div className="bg-muted/50 min-w-0 flex-1 rounded-2xl p-3">
+              {replyingToUsername && (
+                <div className="mb-2 flex items-center gap-1.5">
+                  <span className="text-muted-foreground text-xs">
+                    Đang trả lời{' '}
+                    <span className="text-primary font-semibold">@{replyingToUsername}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={cancelReply}
+                    aria-label="Hủy trả lời"
+                    className="text-muted-foreground hover:text-foreground rounded-full p-0.5 transition-colors"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
               <textarea
                 ref={textareaRef}
                 value={content}
-                onChange={(e) => {
-                  setContent(e.target.value);
-                  if (e.target.value.trim() === '') setReplyingToCommentId(null);
-                }}
+                onChange={(e) => setContent(e.target.value)}
                 onKeyDown={(e) => handleCommentEnterKey(e, () => void handleSubmit())}
-                placeholder="Viết bình luận..."
+                placeholder={replyingToUsername ? `Trả lời @${replyingToUsername}...` : 'Viết bình luận...'}
                 maxLength={2000}
                 className="placeholder:text-muted-foreground w-full resize-none bg-transparent text-sm outline-none"
                 rows={drafts.length > 0 ? 2 : 1}

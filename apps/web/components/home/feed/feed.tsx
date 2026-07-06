@@ -3,9 +3,9 @@
 import type { PostFeedItemDto } from '@costy/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { Virtuoso } from 'react-virtuoso';
 import type { Socket } from 'socket.io-client';
+import { toast } from 'sonner';
 
 import { CreatePostModal } from '../compose/create-post-modal';
 import { CreatePostTrigger } from '../compose/create-post-trigger';
@@ -19,6 +19,7 @@ import {
   type FeedScope,
   type FeedSort,
 } from '@/hooks/queries/use-posts-feed';
+import { useRequireAuth } from '@/hooks/use-require-auth';
 import { authClient } from '@/lib/auth-client';
 import type { ServerAuthUser } from '@/lib/auth-user.types';
 import { onHomeFeedRefresh } from '@/lib/home-feed-refresh';
@@ -75,6 +76,7 @@ function FeedToggleButton({
 export function HomeFeed({ initialUser }: Props) {
   const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
+  const { requireAuth } = useRequireAuth();
 
   const [sort, setSort] = useState<FeedSort>('recent');
   const [scope, setScope] = useState<FeedScope>('all');
@@ -129,6 +131,7 @@ export function HomeFeed({ initialUser }: Props) {
   );
 
   function openModal(openFilePicker = false) {
+    if (!requireAuth()) return;
     setAutoOpenFilePicker(openFilePicker);
     setModalOpen(true);
   }
@@ -149,6 +152,8 @@ export function HomeFeed({ initialUser }: Props) {
   }
 
   useEffect(() => {
+    if (!me?.id) return;
+
     let cancelled = false;
     let activeSocket: Socket | null = null;
 
@@ -219,14 +224,16 @@ export function HomeFeed({ initialUser }: Props) {
       queryClient.invalidateQueries({ queryKey: ['posts', 'comments'] });
     }
 
-    void getAuthedSocket('/feed').then((socket) => {
-      if (cancelled) return;
-      activeSocket = socket;
-      socket.on('post:created', onPostCreated);
-      socket.on('post:reacted', onPostReacted);
-      socket.on('post:hidden', onPostHidden);
-      socket.on('comment:countChanged', onCommentCountChanged);
-    });
+    void getAuthedSocket('/feed')
+      .then((socket) => {
+        if (cancelled) return;
+        activeSocket = socket;
+        socket.on('post:created', onPostCreated);
+        socket.on('post:reacted', onPostReacted);
+        socket.on('post:hidden', onPostHidden);
+        socket.on('comment:countChanged', onCommentCountChanged);
+      })
+      .catch(() => undefined);
 
     return () => {
       cancelled = true;

@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useMemo, type ReactNode } from 'react';
 
 import { NotificationBadge } from '@/components/shared/notification-badge';
+import { useChatUnreadTotal } from '@/hooks/queries/use-chat-queries';
 import { authClient } from '@/lib/auth-client';
 import type { ServerAuthUser } from '@/lib/auth-user.types';
 import { handleHomeNavClick } from '@/lib/home-feed-refresh';
@@ -56,10 +57,10 @@ export function BottomNav({ initialUser }: Props) {
     return initialUser;
   }, [session?.user, initialUser]);
 
+  const chatUnreadTotal = useChatUnreadTotal(Boolean(me));
+
   if (!me) return null;
   if (pathname.startsWith('/messages')) return null;
-
-  const chatUnreadTotal = 0;
 
   return (
     <nav

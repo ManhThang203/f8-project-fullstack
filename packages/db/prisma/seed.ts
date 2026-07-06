@@ -3,6 +3,8 @@ import { fileURLToPath } from 'node:url';
 
 import dotenv from 'dotenv';
 
+import { seedBlockedUsersForUser } from './seed-blocked-users.js';
+import { seedNestedRepliesForTesting } from './seed-nested-replies.js';
 import { seedSavedPostsForUser } from './seed-saved-posts.js';
 
 const prismaDir = path.dirname(fileURLToPath(import.meta.url));
@@ -30,6 +32,9 @@ const SEED_FRIENDSHIPS_PER_TAB = 100;
 
 /** Username nhận seed bạn bè / bài đã lưu (user dev chính). */
 const SEED_FRIEND_TARGET_USERNAME = process.env.SEED_FRIEND_TARGET_USERNAME ?? 'dongthang848';
+
+/** Username nhận seed danh sách đã chặn. */
+const SEED_BLOCK_TARGET_USERNAME = process.env.SEED_BLOCK_TARGET_USERNAME ?? 'thangdmf8';
 
 /** Tổng user seed riêng cho friendships (100 × 3 tab). */
 const SEED_FRIEND_USER_COUNT = SEED_FRIENDSHIPS_PER_TAB * 3;
@@ -450,6 +455,8 @@ async function main() {
 
   const commentResult = await seedPostComments(rootPostsForComments, commentAuthorIds);
 
+  const nestedReplyResult = await seedNestedRepliesForTesting(prisma, commentAuthorIds);
+
   const friendTarget = await prisma.user.findUnique({
     where: { username: SEED_FRIEND_TARGET_USERNAME },
     select: { id: true, username: true },
@@ -467,9 +474,27 @@ async function main() {
     console.warn(`[seed] skip friends/saved: user @${SEED_FRIEND_TARGET_USERNAME} not found`);
   }
 
+  const blockTarget = await prisma.user.findUnique({
+    where: { username: SEED_BLOCK_TARGET_USERNAME },
+    select: { id: true, username: true },
+  });
+
+  let blockLog = `blocks skipped (@${SEED_BLOCK_TARGET_USERNAME} not found)`;
+  if (blockTarget) {
+    const blockResult = await seedBlockedUsersForUser(prisma, blockTarget.id);
+    blockLog = `blocks @${blockTarget.username} users ${blockResult.users} removed ${blockResult.removed} created ${blockResult.created}`;
+  } else {
+    // eslint-disable-next-line no-console
+    console.warn(`[seed] skip blocks: user @${SEED_BLOCK_TARGET_USERNAME} not found`);
+  }
+
+  const nestedLog = nestedReplyResult
+    ? `nested @${nestedReplyResult.username} post=${nestedReplyResult.rootPostId} deep=${nestedReplyResult.deepRootId}→${nestedReplyResult.deepLeafId} wide=${nestedReplyResult.wideRootId} removed ${nestedReplyResult.removed} created ${nestedReplyResult.created}`
+    : 'nested replies skipped (target post not found)';
+
   // eslint-disable-next-line no-console
   console.log(
-    `[seed] permissions ok | users demo+admin+bulk(${bulkResult.userCount}) | bulk posts removed ${bulkResult.removedPosts} created ${bulkResult.createdPosts} | demo posts removed ${deleted.count} created ${created.count} | comments removed ${commentResult.removed} created ${commentResult.created} (${SEED_COMMENTS_PER_POST}/post × ${rootPostsForComments.length} posts) | ${friendLog} | ${savedLog}`,
+    `[seed] permissions ok | users demo+admin+bulk(${bulkResult.userCount}) | bulk posts removed ${bulkResult.removedPosts} created ${bulkResult.createdPosts} | demo posts removed ${deleted.count} created ${created.count} | comments removed ${commentResult.removed} created ${commentResult.created} (${SEED_COMMENTS_PER_POST}/post × ${rootPostsForComments.length} posts) | ${nestedLog} | ${friendLog} | ${savedLog} | ${blockLog}`,
   );
 }
 

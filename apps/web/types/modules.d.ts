@@ -2,6 +2,16 @@
 declare module 'sonner' {
   import type { ReactNode } from 'react';
 
+  export interface ToastAction {
+    label: ReactNode;
+    onClick: () => void;
+  }
+
+  export interface ToastOptions {
+    action?: ToastAction;
+    duration?: number;
+  }
+
   export interface ToasterProps {
     richColors?: boolean;
     position?:
@@ -17,8 +27,9 @@ declare module 'sonner' {
   export function Toaster(props?: ToasterProps): ReactNode;
 
   export const toast: {
-    success: (message: string) => void;
-    error: (message: string) => void;
-    message: (message: string) => void;
+    (message: string, options?: ToastOptions): void;
+    success: (message: string, options?: ToastOptions) => void;
+    error: (message: string, options?: ToastOptions) => void;
+    message: (message: string, options?: ToastOptions) => void;
   };
 }

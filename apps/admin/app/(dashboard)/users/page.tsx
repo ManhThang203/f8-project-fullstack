@@ -5,14 +5,16 @@ import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { BanUserModal } from '@/components/admin/ban-user-modal';
+import { ChangeRoleModal } from '@/components/admin/change-role-modal';
 import { UsersCardList } from '@/components/admin/users/users-card-list';
 import { UsersCardSkeleton } from '@/components/admin/users/users-card-skeleton';
 import { UsersTable } from '@/components/admin/users/users-table';
 import { UsersTableSkeleton } from '@/components/admin/users/users-table-skeleton';
 import { CursorPagination } from '@/components/shared/cursor-pagination';
 import { useDebounce } from '@/hooks/use-debounce';
-import { useAdminUsers } from '@/hooks/queries/use-admin-queries';
+import { useAdminMe, useAdminUsers } from '@/hooks/queries/use-admin-queries';
 import { useCursorPagination } from '@/hooks/use-cursor-pagination';
+import { hasAdminPermission } from '@/lib/has-admin-permission';
 import { cn } from '@/lib/utils';
 import type { AdminUserListItemDto } from '@costy/shared';
 
@@ -59,6 +61,15 @@ export default function UsersPage() {
   const debouncedTerm = useDebounce(searchTerm, 400);
   const [selectedUser, setSelectedUser] = useState<AdminUserListItemDto | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [roleUser, setRoleUser] = useState<AdminUserListItemDto | null>(null);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+
+  const { data: meData } = useAdminMe();
+  const currentUserId = meData?.data?.id;
+  const permissions = meData?.data?.permissions ?? [];
+  const canReadUsers = hasAdminPermission(permissions, 'user:read');
+  const canManageRole = hasAdminPermission(permissions, 'moderator:manage');
+  const currentUserIsSuperAdmin = meData?.data?.role === 'SUPER_ADMIN';
 
   const { limit, setLimit, cursor, pageIndex, handleNext, handlePrev, reset } =
     useCursorPagination(10);
@@ -67,11 +78,14 @@ export default function UsersPage() {
     reset();
   }, [debouncedTerm]);
 
-  const { data, isFetching, isLoading } = useAdminUsers({
-    q: debouncedTerm || undefined,
-    cursor,
-    limit,
-  });
+  const { data, isFetching, isLoading } = useAdminUsers(
+    {
+      q: debouncedTerm || undefined,
+      cursor,
+      limit,
+    },
+    { enabled: canReadUsers },
+  );
 
   const users = data?.data ?? [];
   const nextCursor = data?.meta?.nextCursor;
@@ -82,6 +96,16 @@ export default function UsersPage() {
     setSelectedUser(user);
     setIsModalOpen(true);
   }, []);
+
+  /** Mở modal đổi vai trò cho user được chọn (không cho tự đổi role của mình). */
+  const handleManageRole = useCallback(
+    (user: AdminUserListItemDto) => {
+      if (currentUserId && user.id === currentUserId) return;
+      setRoleUser(user);
+      setIsRoleModalOpen(true);
+    },
+    [currentUserId],
+  );
 
   return (
     <div className="space-y-4">
@@ -99,9 +123,18 @@ export default function UsersPage() {
           <UsersTable
             users={users}
             isFetching={isFetching && !isLoading}
+            canManageRole={canManageRole}
+            currentUserId={currentUserId}
             onManageStatus={handleManageStatus}
+            onManageRole={handleManageRole}
           />
-          <UsersCardList users={users} onManageStatus={handleManageStatus} />
+          <UsersCardList
+            users={users}
+            canManageRole={canManageRole}
+            currentUserId={currentUserId}
+            onManageStatus={handleManageStatus}
+            onManageRole={handleManageRole}
+          />
           <CursorPagination
             limit={limit}
             onLimitChange={setLimit}
@@ -120,6 +153,16 @@ export default function UsersPage() {
           setSelectedUser(null);
         }}
         user={selectedUser}
+      />
+
+      <ChangeRoleModal
+        isOpen={isRoleModalOpen}
+        onClose={() => {
+          setIsRoleModalOpen(false);
+          setRoleUser(null);
+        }}
+        user={roleUser}
+        currentUserIsSuperAdmin={currentUserIsSuperAdmin}
       />
     </div>
   );

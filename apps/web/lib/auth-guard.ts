@@ -15,22 +15,23 @@ export function hasBetterAuthSessionCookie(request: NextRequest): boolean {
 /**
  * Paths that do not require a session. Adjust as the app grows.
  *
- * In **development**, `/` is public so local testing with `x-dev-user-id` still works.
+ * Home (`/`) public mọi môi trường — feed hỗ trợ guest; dev-auth (`x-dev-user-id`) chỉ ở API.
  */
 export function isPathPublic(pathname: string): boolean {
   if (pathname.startsWith('/api')) return true;
   if (pathname === '/favicon.ico' || pathname === '/robots.txt' || pathname === '/manifest.json') {
     return true;
   }
+  if (pathname === '/') return true;
   if (
     pathname === '/login' ||
     pathname === '/register' ||
     pathname === '/forgot-password' ||
-    pathname === '/reset-password'
+    pathname === '/reset-password' ||
+    pathname === '/verify-email'
   ) {
     return true;
   }
-  if (process.env.NODE_ENV === 'development' && pathname === '/') return true;
   return false;
 }
 

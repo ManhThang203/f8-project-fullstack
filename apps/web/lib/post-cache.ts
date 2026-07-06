@@ -98,6 +98,55 @@ export function insertCommentInCache(
   );
 }
 
+/** Nối reply mới vào cuối cache danh sách reply (order asc, dedupe theo id). */
+export function appendReplyToCache(
+  queryClient: QueryClient,
+  parentId: string,
+  reply: PostFeedItemDto,
+): void {
+  queryClient.setQueriesData<CommentsCache>(
+    { queryKey: ['posts', 'comments', parentId] },
+    (old) => {
+      if (!old || old.pages.length === 0) {
+        return {
+          pages: [{ items: [reply], nextCursor: null }],
+          pageParams: [null],
+        };
+      }
+      const exists = old.pages.some((page) => page.items.some((c) => c.id === reply.id));
+      if (exists) return old;
+      const lastIndex = old.pages.length - 1;
+      return {
+        ...old,
+        pages: old.pages.map((page, i) =>
+          i === lastIndex ? { ...page, items: [...page.items, reply] } : page,
+        ),
+      };
+    },
+  );
+}
+
+/** Tăng/giảm replyCount của comment trong mọi cache danh sách comment. */
+export function bumpReplyCountInCommentCaches(
+  queryClient: QueryClient,
+  commentId: string,
+  delta: number,
+): void {
+  queryClient.setQueriesData<CommentsCache>({ queryKey: ['posts', 'comments'] }, (old) => {
+    if (!old) return old;
+    let changed = false;
+    const pages = old.pages.map((page) => ({
+      ...page,
+      items: page.items.map((c) => {
+        if (c.id !== commentId) return c;
+        changed = true;
+        return { ...c, replyCount: Math.max(0, c.replyCount + delta) };
+      }),
+    }));
+    return changed ? { ...old, pages } : old;
+  });
+}
+
 /** Gỡ comment khỏi cache danh sách comment. */
 export function removeCommentFromCache(
   queryClient: QueryClient,

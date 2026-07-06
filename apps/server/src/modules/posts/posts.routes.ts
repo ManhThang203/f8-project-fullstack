@@ -231,6 +231,30 @@ router.get('/:postId/root', async (req, res, next) => {
 
 /**
  * @openapi
+ * /posts/{postId}/ancestry:
+ *   get:
+ *     summary: Chuỗi tổ tiên (cấp 1 → chính nó) của 1 comment/reply, dùng để cuộn tới khi deep-link sâu nhiều cấp
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: OK
+ */
+router.get('/:postId/ancestry', async (req, res, next) => {
+  try {
+    const viewerId = req.auth?.userId ?? null;
+    const items = await postsService.getCommentAncestryChain(req.params.postId as string, viewerId);
+    res.json(ok(items));
+  } catch (e) {
+    next(e);
+  }
+});
+
+/**
+ * @openapi
  * /posts/{postId}/comments:
  *   get:
  *     summary: Danh sách comment của bài viết

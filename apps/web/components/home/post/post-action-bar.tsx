@@ -1,15 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { PostFooter } from './post-footer';
-import { ReactionFace, type PostReactionId } from './reaction-face';
+import type { PostReactionId } from './reaction-face';
 
 import { useSharePost, useToggleSavePost } from '@/hooks/queries/use-save-post';
+import { useReactionPickerHover } from '@/hooks/use-reaction-picker-hover';
+import { useRequireAuth } from '@/hooks/use-require-auth';
 import { useReactPost } from '@/hooks/use-react-post';
 import { displayTopReactions } from '@/lib/reaction-utils';
-import { cn } from '@/lib/utils';
 
 export type { PostReactionId };
 
@@ -23,7 +24,6 @@ const REACTIONS: { id: PostReactionId; label: string }[] = [
   { id: 'angry', label: 'Phẫn nộ' },
 ];
 
-const PICKER_HIDE_MS = 200;
 const LONG_PRESS_MS = 400;
 
 type Props = {
@@ -56,35 +56,18 @@ export function PostActionBar({
 }: Props) {
   const [shareCount, setShareCount] = useState(initialShareCount);
   const [saved, setSaved] = useState(initialSavedByMe);
-  const [showPicker, setShowPicker] = useState(false);
 
+  const { requireAuth } = useRequireAuth();
   const reactMutation = useReactPost();
   const saveMutation = useToggleSavePost();
   const shareMutation = useSharePost();
 
-  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { showPicker, setShowPicker, openPicker, scheduleHidePicker } = useReactionPickerHover();
+
   const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const clearHideTimer = useCallback(() => {
-    if (hideTimerRef.current) {
-      clearTimeout(hideTimerRef.current);
-      hideTimerRef.current = null;
-    }
-  }, []);
-
-  const scheduleHidePicker = useCallback(() => {
-    clearHideTimer();
-    hideTimerRef.current = setTimeout(() => setShowPicker(false), PICKER_HIDE_MS);
-  }, [clearHideTimer]);
-
-  const openPicker = useCallback(() => {
-    clearHideTimer();
-    setShowPicker(true);
-  }, [clearHideTimer]);
-
-  useEffect(() => () => clearHideTimer(), [clearHideTimer]);
-
   function submitReaction(newReaction: PostReactionId | null) {
+    if (!requireAuth()) return;
     reactMutation.mutate(
       { postId, type: newReaction },
       {
@@ -115,11 +98,13 @@ export function PostActionBar({
   }
 
   function handleComment() {
+    if (!requireAuth()) return;
     onCommentClick?.();
   }
 
   /** Toggle lưu bài với optimistic update, revert khi lỗi. */
   function handleSave() {
+    if (!requireAuth()) return;
     const next = !saved;
     setSaved(next);
     saveMutation.mutate(
@@ -139,6 +124,7 @@ export function PostActionBar({
 
   /** Chia sẻ bài: copy link + ghi nhận lượt chia sẻ ở backend. */
   async function handleShare() {
+    if (!requireAuth()) return;
     const sharePath = hasVideo
       ? `/reel/${postId}`
       : `/${authorUsername}/post/${postId}`;
@@ -171,39 +157,7 @@ export function PostActionBar({
   );
 
   return (
-    <div className="relative mt-3">
-      {showPicker && (
-        <div
-          role="toolbar"
-          aria-label="Chọn cảm xúc"
-          className={cn(
-            'bg-card absolute bottom-full left-0 z-20 mb-2 flex items-center',
-            'rounded-full px-1.5 py-1.5 shadow-lg',
-          )}
-          onMouseEnter={openPicker}
-          onMouseLeave={scheduleHidePicker}
-        >
-          <div className="flex items-center gap-0.5">
-            {REACTIONS.map((r) => (
-              <button
-                key={r.id}
-                type="button"
-                aria-label={r.label}
-                title={r.label}
-                onClick={() => selectReaction(r.id)}
-                className={cn(
-                  'flex h-11 w-11 shrink-0 items-center justify-center rounded-full',
-                  'transition-transform duration-150 motion-safe:hover:z-10 motion-safe:hover:scale-125',
-                  'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
-                )}
-              >
-                <ReactionFace id={r.id} />
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
+    <div className="relative mt-4">
       <PostFooter
         likeCount={initialLikeCount}
         replyCount={replyCount}
@@ -213,8 +167,13 @@ export function PostActionBar({
         onLikeClick={toggleLike}
         onCommentClick={handleComment}
         onShareClick={() => void handleShare()}
-        onLikeHoverEnter={openPicker}
-        onLikeHoverLeave={scheduleHidePicker}
+        reactionPicker={{
+          open: showPicker,
+          onOpen: openPicker,
+          onScheduleClose: scheduleHidePicker,
+          reactions: REACTIONS,
+          onSelect: selectReaction,
+        }}
         onLikePointerDown={() => {
           longPressRef.current = setTimeout(() => openPicker(), LONG_PRESS_MS);
         }}

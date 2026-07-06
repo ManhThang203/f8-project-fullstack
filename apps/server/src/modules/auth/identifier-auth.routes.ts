@@ -3,6 +3,7 @@ import { fromNodeHeaders } from 'better-auth/node';
 import type { RequestHandler } from 'express';
 
 import { authWeb } from '../../lib/auth.js';
+import { logger } from '../../lib/logger.js';
 
 /**
  * POST /api/auth/sign-in/identifier — body `{ identifier, password }`.
@@ -18,20 +19,20 @@ export const handleSignInIdentifier: RequestHandler = async (req, res) => {
 
   const { identifier, password } = parsed.data;
   const raw = identifier.trim();
-  const key = raw.toLowerCase();
-  const useEmail = key.includes('@');
-  // địa chỉ email hoặc tên đăng nhập
+  const useEmail = raw.includes('@');
+  const email = raw.toLowerCase();
+  const username = raw.toLowerCase();
   const headers = fromNodeHeaders(req.headers);
 
   try {
     const upstream = useEmail
       ? await authWeb.api.signInEmail({
-          body: { email: key, password },
+          body: { email, password },
           headers,
           asResponse: true,
         })
       : await authWeb.api.signInUsername({
-          body: { username: key, password },
+          body: { username, password },
           headers,
           asResponse: true,
         });
@@ -56,7 +57,8 @@ export const handleSignInIdentifier: RequestHandler = async (req, res) => {
 
     const body = Buffer.from(await upstream.arrayBuffer());
     res.send(body);
-  } catch {
+  } catch (err) {
+    logger.error({ err }, 'sign-in/identifier failed');
     res.status(500).json({ message: 'Đăng nhập thất bại — vui lòng thử lại.' });
   }
 };

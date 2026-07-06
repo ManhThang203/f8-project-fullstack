@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 
 import { EmojiPickerPanel } from '@/components/shared/emoji-picker-panel';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { useScrollLock } from '@/hooks/use-scroll-lock';
 import { computePopoverPosition, getDesktopPopoverSize } from '@/lib/emoji-picker-position';
 import { cn } from '@/lib/utils';
 
@@ -74,14 +75,7 @@ export function ComposeEmojiPicker({ onSelect, disabled = false, size = 'md', cl
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [open, close]);
 
-  useEffect(() => {
-    if (!open || isDesktop) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [open, isDesktop]);
+  useScrollLock(open && !isDesktop);
 
   useEffect(() => {
     if (!open || !isDesktop) return;

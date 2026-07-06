@@ -3,6 +3,7 @@
 import { Bookmark, MessageCircle, Share2, ThumbsUp } from 'lucide-react';
 
 import { ActionButton } from './action-button';
+import { ReactionPickerPopover } from './reaction-picker-popover';
 import {
   ReactionFace,
   type PostReactionId,
@@ -24,6 +25,13 @@ type Props = {
   onShareClick?: () => void;
   onLikeHoverEnter?: () => void;
   onLikeHoverLeave?: () => void;
+  reactionPicker?: {
+    open: boolean;
+    onOpen: () => void;
+    onScheduleClose: () => void;
+    reactions: { id: PostReactionId; label: string }[];
+    onSelect: (id: PostReactionId) => void;
+  };
   onLikePointerDown?: () => void;
   onLikePointerUp?: () => void;
   onLikePointerLeave?: () => void;
@@ -43,6 +51,7 @@ export function PostFooter({
   onShareClick,
   onLikeHoverEnter,
   onLikeHoverLeave,
+  reactionPicker,
   onLikePointerDown,
   onLikePointerUp,
   onLikePointerLeave,
@@ -77,28 +86,50 @@ export function PostFooter({
   return (
     <footer
       className={cn(
-        'border-border/60 dark:border-white/10',
-        'bg-muted dark:bg-[#242526]',
-        'flex h-12 items-center justify-between border-t px-4',
+        'bg-muted flex min-h-12 items-center justify-between rounded-2xl px-3 py-1',
       )}
     >
       <div className="flex flex-1 items-center justify-between gap-1">
-        <div
-          className="relative flex flex-1"
-          onMouseEnter={onLikeHoverEnter}
-          onMouseLeave={onLikeHoverLeave}
-        >
-          <ActionButton
-            icon={likeIcon}
-            count={likeCount > 0 ? likeCount : undefined}
-            label={likeLabel}
-            onClick={onLikeClick}
-            onPointerDown={onLikePointerDown}
-            onPointerUp={onLikePointerUp}
-            onPointerLeave={onLikePointerLeave}
-            className={likeColor}
-          />
-        </div>
+        {reactionPicker ? (
+          <ReactionPickerPopover
+            open={reactionPicker.open}
+            onOpen={reactionPicker.onOpen}
+            onScheduleClose={reactionPicker.onScheduleClose}
+            reactions={reactionPicker.reactions}
+            onSelect={reactionPicker.onSelect}
+            className="flex flex-1"
+            toolbarClassName="border-0"
+            zIndexClassName="z-20"
+          >
+            <ActionButton
+              icon={likeIcon}
+              count={likeCount > 0 ? likeCount : undefined}
+              label={likeLabel}
+              onClick={onLikeClick}
+              onPointerDown={onLikePointerDown}
+              onPointerUp={onLikePointerUp}
+              onPointerLeave={onLikePointerLeave}
+              className={likeColor}
+            />
+          </ReactionPickerPopover>
+        ) : (
+          <div
+            className="relative flex flex-1"
+            onMouseEnter={onLikeHoverEnter}
+            onMouseLeave={onLikeHoverLeave}
+          >
+            <ActionButton
+              icon={likeIcon}
+              count={likeCount > 0 ? likeCount : undefined}
+              label={likeLabel}
+              onClick={onLikeClick}
+              onPointerDown={onLikePointerDown}
+              onPointerUp={onLikePointerUp}
+              onPointerLeave={onLikePointerLeave}
+              className={likeColor}
+            />
+          </div>
+        )}
 
         <ActionButton
           icon={<MessageCircle className="h-5 w-5" strokeWidth={1.75} />}
@@ -135,7 +166,7 @@ export function PostFooter({
               <ReactionFace
                 id={id}
                 size="sm"
-                className="ring-background rounded-full ring-2 dark:ring-[#242526]"
+                className="ring-muted rounded-full ring-2"
               />
             </span>
           ))}

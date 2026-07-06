@@ -27,7 +27,7 @@ export function useCommentRealtime(opts: {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!enabled || !postId) return;
+    if (!enabled || !postId || !meId) return;
 
     let cancelled = false;
     let activeSocket: Socket | null = null;
@@ -55,14 +55,16 @@ export function useCommentRealtime(opts: {
       onCountDelta(payload.delta);
     }
 
-    void getAuthedSocket('/feed').then((socket) => {
-      if (cancelled) return;
-      activeSocket = socket;
-      socket.emit('post:join', postId);
-      socket.on('comment:created', onCommentCreated);
-      socket.on('comment:deleted', onCommentDeleted);
-      socket.on('comment:countChanged', onCountChanged);
-    });
+    void getAuthedSocket('/feed')
+      .then((socket) => {
+        if (cancelled) return;
+        activeSocket = socket;
+        socket.emit('post:join', postId);
+        socket.on('comment:created', onCommentCreated);
+        socket.on('comment:deleted', onCommentDeleted);
+        socket.on('comment:countChanged', onCountChanged);
+      })
+      .catch(() => undefined);
 
     return () => {
       cancelled = true;

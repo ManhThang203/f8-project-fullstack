@@ -1,55 +1,70 @@
 'use client';
 
 import type { PostFeedItemDto } from '@costy/shared';
-import { MoreHorizontal } from 'lucide-react';
+import { CornerDownRight, MoreHorizontal } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
 
 import { PostMediaCarousel } from '../post-media/post-media-carousel';
 
 import type { PostReactionId } from './reaction-face';
 import { ReactionFace, REACTION_COLORS, REACTION_LABELS } from './reaction-face';
+import { ReactionPickerPopover } from './reaction-picker-popover';
 
 import { Avatar } from '@/components/shared/avatar';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { RelativeTime } from '@/components/shared/relative-time';
 import { useDeletePost, buildDeleteCommentInput } from '@/hooks/queries/use-delete-post';
 import { usePostComments } from '@/hooks/queries/use-post-comments';
+import { useReactionPickerHover } from '@/hooks/use-reaction-picker-hover';
 import { useReactPost } from '@/hooks/use-react-post';
 import { authClient } from '@/lib/auth-client';
-import {
-  displayTopReactions,
-  patchTopReactionsOptimistic,
-} from '@/lib/reaction-utils';
+import { displayTopReactions, patchTopReactionsOptimistic } from '@/lib/reaction-utils';
 import { cn } from '@/lib/utils';
 
-const COMMENT_REACTIONS: PostReactionId[] = [
-  'like',
-  'love',
-  'care',
-  'haha',
-  'wow',
-  'sad',
-  'angry',
-];
+const COMMENT_REACTIONS: PostReactionId[] = ['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry'];
 
-const PICKER_HIDE_MS = 200;
+/** Số cấp thụt lề tối đa hiển thị; từ cấp này trở đi reply vẫn đúng cha nhưng không thụt thêm (tránh tràn màn hình). */
+const MAX_INDENT_DEPTH = 4;
+/** Bề rộng avatar 'xs' + khoảng cách (gap-2) mà mỗi cấp reply đóng góp vào thụt lề tự nhiên. */
+const REPLY_INDENT_PX = 32;
+
+/** Tách mention "@username" ở đầu nội dung reply để hiển thị đậm + link, giúp biết đang trả lời ai. */
+function splitLeadingMention(content: string): { username: string; rest: string } | null {
+  const match = content.match(/^@([a-zA-Z0-9_.]+)\s?/);
+  if (!match) return null;
+  return { username: match[1]!, rest: content.slice(match[0].length) };
+}
 
 type Props = {
   comment: PostFeedItemDto;
   onReply: (username: string, commentId: string) => void;
-  isReply?: boolean;
+  /** Cấp lồng của comment này trong cây bình luận; 0 = comment gốc cấp 1. */
+  depth?: number;
   rootPostId?: string;
   onDeleted?: (comment: PostFeedItemDto) => void;
+  /** Id comment/reply đang được deep-link tới (từ URL) — component tự cuộn tới khi mount. */
+  scrollTargetId?: string;
+  /** Chuỗi tổ tiên (cấp 1 → target) từ API ancestry, dùng để ghim đúng nhánh vào mọi cấp dù reply nằm ở trang sau. */
+  pinnedPath?: PostFeedItemDto[];
+  /** Id comment cha cần tự mở rộng sau khi user vừa gửi reply. */
+  expandCommentId?: string | null;
 };
 
 export function CommentItem({
   comment,
   onReply,
-  isReply = false,
+  depth = 0,
   rootPostId,
   onDeleted,
+  scrollTargetId,
+  pinnedPath,
+  expandCommentId,
 }: Props) {
+  const isReply = depth > 0;
+  const isScrollTarget = comment.id === scrollTargetId;
+  const itemRef = useRef<HTMLDivElement>(null);
   const { data: session } = authClient.useSession();
   const me = session?.user;
   const isOwner = me?.id === comment.author.id;
@@ -57,47 +72,78 @@ export function CommentItem({
   const reactMutation = useReactPost();
   const deleteMutation = useDeletePost();
 
+  const pinnedChild = useMemo(
+    () => pinnedPath?.find((p) => p.parentId === comment.id) ?? null,
+    [pinnedPath, comment.id],
+  );
+
+  const [expanded, setExpanded] = useState(() => Boolean(pinnedChild));
+
+  const isExpanded = expanded || expandCommentId === comment.id;
+
+  /** Chỉ fetch reply khi user mở rộng hoặc nhánh nằm trên đường deep-link. */
+  const shouldFetchReplies =
+    (isExpanded || Boolean(pinnedChild)) &&
+    (comment.replyCount > 0 || expandCommentId === comment.id);
+
   const {
     data: repliesData,
     hasNextPage: hasMoreReplies,
     fetchNextPage: fetchReplies,
-  } = usePostComments(comment.id, 'asc', !isReply && comment.replyCount > 0);
-  const replies = repliesData?.pages.flatMap((p) => p.items) || [];
+    isLoading: isLoadingReplies,
+  } = usePostComments(comment.id, 'asc', shouldFetchReplies);
 
-  const [showPicker, setShowPicker] = useState(false);
+  const rawReplies = useMemo(
+    () => repliesData?.pages.flatMap((p) => p.items) ?? [],
+    [repliesData],
+  );
+
+  /** Ghim reply trên đường deep-link và dedupe tránh trùng khi optimistic + phân trang. */
+  const replies = useMemo(() => {
+    const merged =
+      pinnedChild && !rawReplies.some((r) => r.id === pinnedChild.id)
+        ? [pinnedChild, ...rawReplies]
+        : rawReplies;
+    const seen = new Set<string>();
+    return merged.filter((r) => {
+      if (seen.has(r.id)) return false;
+      seen.add(r.id);
+      return true;
+    });
+  }, [rawReplies, pinnedChild]);
+
+  const { showPicker, setShowPicker, openPicker, scheduleHidePicker } = useReactionPickerHover();
   const [showMenu, setShowMenu] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /** Tự cuộn tới đúng comment/reply khi mở link deep-link (không highlight nền, chỉ cuộn). */
+  useEffect(() => {
+    if (!isScrollTarget) return;
+    const t = setTimeout(() => {
+      itemRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+    return () => clearTimeout(t);
+  }, [isScrollTarget]);
+
+  /** Mở nhánh khi ancestry deep-link load async hoặc sau khi user vừa gửi reply. */
+  useEffect(() => {
+    if (pinnedChild) setExpanded(true);
+  }, [pinnedChild]);
+
+  useEffect(() => {
+    if (expandCommentId === comment.id) setExpanded(true);
+  }, [expandCommentId, comment.id]);
 
   const [localReaction, setLocalReaction] = useState(comment.myReaction);
   const [localLikeCount, setLocalLikeCount] = useState(comment.likeCount);
   const [localTopReactions, setLocalTopReactions] = useState(comment.topReactions ?? []);
-
-  const clearHideTimer = useCallback(() => {
-    if (hideTimerRef.current) {
-      clearTimeout(hideTimerRef.current);
-      hideTimerRef.current = null;
-    }
-  }, []);
-
-  const openPicker = useCallback(() => {
-    clearHideTimer();
-    setShowPicker(true);
-  }, [clearHideTimer]);
-
-  const scheduleHidePicker = useCallback(() => {
-    clearHideTimer();
-    hideTimerRef.current = setTimeout(() => setShowPicker(false), PICKER_HIDE_MS);
-  }, [clearHideTimer]);
 
   useEffect(() => {
     setLocalReaction(comment.myReaction);
     setLocalLikeCount(comment.likeCount);
     setLocalTopReactions(comment.topReactions ?? []);
   }, [comment.myReaction, comment.likeCount, comment.topReactions]);
-
-  useEffect(() => () => clearHideTimer(), [clearHideTimer]);
 
   useEffect(() => {
     if (!showMenu) return;
@@ -175,31 +221,27 @@ export function CommentItem({
   }
 
   const reactionId = (localReaction as PostReactionId | null) ?? null;
-  const reactionStack = displayTopReactions(
-    localTopReactions,
-    localLikeCount,
-    reactionId,
-  );
-  const likeLabel =
-    reactionId && reactionId !== 'like'
-      ? REACTION_LABELS[reactionId]
-      : 'Thích';
+  const reactionStack = displayTopReactions(localTopReactions, localLikeCount, reactionId);
+  const likeLabel = reactionId && reactionId !== 'like' ? REACTION_LABELS[reactionId] : 'Thích';
   const hasReactions = localLikeCount > 0 && reactionStack.length > 0;
   const profileHref = `/${encodeURIComponent(comment.author.username)}`;
   const profileLabel = comment.author.name ?? comment.author.username;
+  const leadingMention = isReply ? splitLeadingMention(comment.content) : null;
 
   return (
     <div
+      ref={itemRef}
       className={cn(
-        'hover:bg-muted/30 flex gap-2 px-4 py-2 transition-colors',
+        'hover:bg-muted/30 flex gap-2 px-4 py-2 transition-colors duration-300',
         isReply && 'px-0 py-1',
       )}
     >
       <div className="shrink-0 pt-1">
         <Link
           href={profileHref}
+          prefetch={false}
           aria-label={`Xem trang cá nhân của ${profileLabel}`}
-          className="inline-flex rounded-full transition-opacity duration-150 hover:opacity-90 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2"
+          className="focus-visible:ring-ring inline-flex rounded-full transition-opacity duration-150 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2"
         >
           <Avatar
             as="span"
@@ -214,20 +256,33 @@ export function CommentItem({
       <div className="min-w-0 flex-1">
         <div className="relative inline-block max-w-full">
           <div
-            className={cn(
-              'bg-muted/50 inline-block rounded-2xl px-3 py-2',
-              hasReactions && 'pr-8',
-            )}
+            className={cn('bg-muted/50 inline-block rounded-2xl px-3 py-2', hasReactions && 'pr-8')}
           >
             <div className="mb-0.5 flex items-center gap-2">
               <Link
                 href={profileHref}
-                className="text-foreground text-sm font-semibold hover:underline focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2"
+                prefetch={false}
+                className="text-foreground focus-visible:ring-ring text-sm font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2"
               >
                 {profileLabel}
               </Link>
             </div>
-            <p className="whitespace-pre-wrap break-words text-sm">{comment.content}</p>
+            <p className="whitespace-pre-wrap break-words text-sm">
+              {leadingMention ? (
+                <>
+                  <Link
+                    href={`/${encodeURIComponent(leadingMention.username)}`}
+                    prefetch={false}
+                    className="text-primary font-semibold hover:underline"
+                  >
+                    @{leadingMention.username}
+                  </Link>{' '}
+                  {leadingMention.rest}
+                </>
+              ) : (
+                comment.content
+              )}
+            </p>
           </div>
 
           {hasReactions && (
@@ -242,11 +297,11 @@ export function CommentItem({
                     className={cn('relative', index > 0 && '-ml-1.5')}
                     style={{ zIndex: reactionStack.length - index }}
                   >
-                    <ReactionFace id={id} size="sm" className="h-4 w-4 min-h-4 min-w-4" />
+                    <ReactionFace id={id} size="sm" className="h-4 min-h-4 w-4 min-w-4" />
                   </span>
                 ))}
               </span>
-              <span className="text-foreground pl-0.5 text-[11px] font-semibold leading-none tabular-nums">
+              <span className="text-foreground pl-0.5 text-[11px] font-semibold tabular-nums leading-none">
                 {localLikeCount}
               </span>
             </div>
@@ -260,52 +315,23 @@ export function CommentItem({
         )}
 
         <div
-          className={cn(
-            'relative flex items-center gap-4 px-2',
-            hasReactions ? 'mt-2' : 'mt-0.5',
-          )}
+          className={cn('relative flex items-center gap-4 px-2', hasReactions ? 'mt-2' : 'mt-0.5')}
         >
-          <span className="text-muted-foreground text-xs">
-            {new Date(comment.createdAt).toLocaleString('vi-VN', {
-              dateStyle: 'short',
-              timeStyle: 'short',
-            })}
-          </span>
+          <RelativeTime
+            dateTime={comment.createdAt}
+            variant="post"
+            className="text-muted-foreground text-xs"
+          />
 
-          <div className="relative">
-            {showPicker && (
-              <div
-                role="toolbar"
-                aria-label="Chọn cảm xúc"
-                className="bg-card border-border absolute bottom-full left-0 z-30 mb-2 flex items-center rounded-full border px-1.5 py-1.5 shadow-lg"
-                onMouseEnter={openPicker}
-                onMouseLeave={scheduleHidePicker}
-              >
-                <div className="flex items-center gap-0.5">
-                  {COMMENT_REACTIONS.map((r) => (
-                    <button
-                      key={r}
-                      type="button"
-                      aria-label={REACTION_LABELS[r]}
-                      title={REACTION_LABELS[r]}
-                      onClick={() => handleReaction(r)}
-                      className={cn(
-                        'flex h-11 w-11 shrink-0 items-center justify-center rounded-full',
-                        'transition-transform duration-150 motion-safe:hover:z-10 motion-safe:hover:scale-125',
-                        'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
-                      )}
-                    >
-                      <ReactionFace id={r} size="md" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
+          <ReactionPickerPopover
+            open={showPicker}
+            onOpen={openPicker}
+            onScheduleClose={scheduleHidePicker}
+            reactions={COMMENT_REACTIONS.map((id) => ({ id, label: REACTION_LABELS[id] }))}
+            onSelect={handleReaction}
+          >
             <button
               onClick={handleLike}
-              onMouseEnter={openPicker}
-              onMouseLeave={scheduleHidePicker}
               className={cn(
                 'text-xs font-semibold hover:underline',
                 reactionId
@@ -315,19 +341,17 @@ export function CommentItem({
             >
               {likeLabel}
             </button>
-          </div>
+          </ReactionPickerPopover>
 
           <button
-            onClick={() =>
-              onReply(comment.author.username, isReply ? comment.parentId! : comment.id)
-            }
+            onClick={() => onReply(comment.author.username, comment.id)}
             className="text-muted-foreground hover:text-foreground text-xs font-semibold hover:underline"
           >
             Trả lời
           </button>
 
           {isOwner ? (
-            <div className="relative ml-auto shrink-0" ref={menuRef}>
+            <div className="relative shrink-0" ref={menuRef}>
               <button
                 onClick={() => setShowMenu((v) => !v)}
                 className="text-muted-foreground hover:text-foreground hover:bg-muted rounded-full p-1"
@@ -350,19 +374,61 @@ export function CommentItem({
           ) : null}
         </div>
 
-        {!isReply && replies.length > 0 && (
+        {!isExpanded && comment.replyCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="text-muted-foreground hover:text-foreground mt-1 flex min-h-11 items-center gap-1.5 pl-1 text-left text-xs font-semibold hover:underline"
+          >
+            <CornerDownRight className="h-4 w-4 shrink-0" aria-hidden />
+            Xem tất cả {comment.replyCount} phản hồi
+          </button>
+        )}
+
+        {isExpanded && (comment.replyCount > 0 || replies.length > 0) && (
           <div className="mt-1 flex flex-col gap-1">
-            {replies.map((reply) => (
-              <CommentItem key={reply.id} comment={reply} onReply={onReply} isReply={true} rootPostId={rootPostId} onDeleted={onDeleted} />
-            ))}
+            {isLoadingReplies && replies.length === 0 && (
+              <p className="text-muted-foreground ml-9 text-xs">Đang tải phản hồi...</p>
+            )}
+            {replies.map((reply) => {
+              const childDepth = depth + 1;
+              const cancelIndent = childDepth > MAX_INDENT_DEPTH;
+              return (
+                <div
+                  key={reply.id}
+                  style={cancelIndent ? { marginLeft: -REPLY_INDENT_PX } : undefined}
+                >
+                  <CommentItem
+                    comment={reply}
+                    onReply={onReply}
+                    depth={childDepth}
+                    rootPostId={rootPostId}
+                    onDeleted={onDeleted}
+                    scrollTargetId={scrollTargetId}
+                    pinnedPath={pinnedPath}
+                    expandCommentId={expandCommentId}
+                  />
+                </div>
+              );
+            })}
             {hasMoreReplies && (
               <button
+                type="button"
                 onClick={() => fetchReplies()}
-                className="text-muted-foreground ml-9 mt-1 text-left text-xs font-semibold hover:underline"
+                className="text-muted-foreground hover:text-foreground ml-9 mt-1 flex min-h-11 items-center gap-1.5 text-left text-xs font-semibold hover:underline"
               >
-                Xem thêm trả lời...
+                <CornerDownRight className="h-4 w-4 shrink-0" aria-hidden />
+                Xem thêm phản hồi
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => setExpanded(false)}
+              className="text-muted-foreground hover:text-foreground ml-9 mt-1 flex min-h-11 items-center gap-1.5 text-left text-xs font-semibold hover:underline"
+            >
+              <CornerDownRight className="h-4 w-4 shrink-0" aria-hidden />
+              Ẩn phản hồi
+            </button>
           </div>
         )}
       </div>

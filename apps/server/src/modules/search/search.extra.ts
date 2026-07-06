@@ -1,6 +1,8 @@
 import { HashtagStatus, prisma } from '@costy/db';
 import type { HashtagSearchResultDto, UserSearchResultDto } from '@costy/shared';
 
+import { blockedUsersWhere, getBlockedRelatedUserIds } from '../../lib/blocks/block-utils.js';
+
 /** Tìm người dùng theo username / tên hiển thị, kèm trạng thái follow của viewer. */
 export async function searchUsers(
   query: string,
@@ -10,9 +12,12 @@ export async function searchUsers(
   const needle = query.trim().replace(/^@/, '');
   if (!needle) return [];
 
+  const blockedIds = viewerId ? await getBlockedRelatedUserIds(viewerId) : [];
+
   const users = await prisma.user.findMany({
     where: {
       deletedAt: null,
+      ...blockedUsersWhere(blockedIds),
       OR: [
         { username: { contains: needle, mode: 'insensitive' } },
         { name: { contains: needle, mode: 'insensitive' } },
