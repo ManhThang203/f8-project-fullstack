@@ -10,10 +10,15 @@ import type { ReelsPlayerProps } from '../reels-types';
 import { ReelsVideoSurface } from './reels-video-surface';
 import { useFacebookReelsPlayer } from './use-facebook-reels-player';
 
-import { PostDetailModal } from '@/components/home/post/post-detail-modal';
+import { PostDetailModal } from '@/components/home/post/detail';
 import { cn } from '@/lib/utils';
 
-export function FacebookReelsPlayer({ item, isActive }: ReelsPlayerProps) {
+export function FacebookReelsPlayer({
+  item,
+  isActive,
+  currentUserId,
+  currentUser,
+}: ReelsPlayerProps) {
   const {
     containerRef,
     videoRef,
@@ -50,7 +55,7 @@ export function FacebookReelsPlayer({ item, isActive }: ReelsPlayerProps) {
     handleSeek,
     handleFollowClick,
     handleAvatarClick,
-  } = useFacebookReelsPlayer(item, isActive);
+  } = useFacebookReelsPlayer(item, isActive, { currentUserId, currentUser });
 
   return (
     <div

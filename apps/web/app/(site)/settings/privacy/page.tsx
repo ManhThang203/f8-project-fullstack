@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import { PrivacySettingsSection } from '@/components/settings/privacy-settings-section';
+import { PrivacySettingsSection } from '@/components/settings/sections';
 import { SettingsShell } from '@/components/settings/settings-shell';
 
 export const metadata: Metadata = {

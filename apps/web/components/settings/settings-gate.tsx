@@ -4,8 +4,8 @@ import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 
-import { useInitialUser } from '@/components/shared/current-user-context';
-import { authClient } from '@/lib/auth-client';
+import { useInitialUser } from '@/components/shared/providers/current-user-context';
+import { authClient } from '@/lib/auth';
 
 type Props = {
   children: ReactNode;

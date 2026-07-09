@@ -3,11 +3,10 @@
 import { Check, Loader2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { Avatar } from '@/components/shared/avatar';
-import { Modal } from '@/components/shared/modal';
-import { EMPTY_USER_SEARCH, useUsersSearch } from '@/hooks/queries/use-users-search';
-import { useDebounced } from '@/hooks/use-debounced';
-import { authClient } from '@/lib/auth-client';
+import { Avatar, Modal } from '@/components/shared/ui';
+import { EMPTY_USER_SEARCH, useUsersSearch } from '@/hooks/queries/chat';
+import { useDebounced } from '@/hooks/ui';
+import { authClient } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
 type PickedUser = {

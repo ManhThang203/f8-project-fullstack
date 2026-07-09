@@ -2,8 +2,7 @@
 
 import { Loader2, Plus, Users } from 'lucide-react';
 
-import { Avatar } from '@/components/shared/avatar';
-import { RelativeTime } from '@/components/shared/relative-time';
+import { Avatar, RelativeTime } from '@/components/shared/ui';
 import { cn } from '@/lib/utils';
 import type { ChatMessageDto, ChatPeerDto, Conversation } from '@/types/chat';
 

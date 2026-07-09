@@ -4,9 +4,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 
-import { useInitialUser } from '@/components/shared/current-user-context';
-import { authClient } from '@/lib/auth-client';
-import * as authGuard from '@/lib/auth-guard';
+import { useCurrentUser } from '@/components/shared/providers/current-user-context';
+import * as authGuard from '@/lib/server/auth-guard';
 
 const DEFAULT_MESSAGE = 'Vui lòng đăng nhập để sử dụng tính năng này.';
 
@@ -33,9 +32,7 @@ function showLoginPrompt(router: ReturnType<typeof useRouter>, message: string, 
 export function useRequireAuth() {
   const router = useRouter();
   const pathname = usePathname();
-  const { data: session } = authClient.useSession();
-  const initialUser = useInitialUser();
-  const isAuthed = Boolean(session?.user ?? initialUser);
+  const { isAuthed } = useCurrentUser();
 
   /** Trả true nếu đã đăng nhập; nếu chưa thì toast + false. */
   const requireAuth = useCallback(

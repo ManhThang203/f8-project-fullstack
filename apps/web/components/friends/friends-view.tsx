@@ -6,15 +6,14 @@ import { useCallback, useMemo, useState } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { toast } from 'sonner';
 
-import { Avatar } from '@/components/shared/avatar';
-import { Button } from '@/components/shared/button';
-import type { FriendAction } from '@/hooks/queries/use-friend-mutation';
+import { Avatar, Button } from '@/components/shared/ui';
 import {
   flattenFriendPages,
   useFriendMutation,
   useFriendRequests,
   useFriendsList,
-} from '@/hooks/queries/use-friend-mutation';
+  type FriendAction,
+} from '@/hooks/queries/social';
 import { cn } from '@/lib/utils';
 
 type FriendTab = 'friends' | 'incoming' | 'outgoing';

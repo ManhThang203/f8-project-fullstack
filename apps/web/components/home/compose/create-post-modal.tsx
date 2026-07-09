@@ -7,14 +7,14 @@ import { toast } from 'sonner';
 
 import type { DraftMedia } from '../post-media/post-media-carousel';
 import { PostMediaCarousel } from '../post-media/post-media-carousel';
+
 import { VisibilitySelect } from './visibility-select';
 
-import { Avatar } from '@/components/shared/avatar';
 import { ComposeEmojiPicker } from '@/components/shared/compose-emoji-picker';
-import { Modal } from '@/components/shared/modal';
-import { createPostWithMedia } from '@/lib/create-post';
-import { applyEmojiInsert } from '@/lib/insert-text-at-cursor';
-import { ACCEPT_MEDIA, isImageMime, isVideoMime, validateFiles } from '@/lib/media-validation';
+import { Avatar, Modal } from '@/components/shared/ui';
+import { createPostWithMedia } from '@/lib/api';
+import { applyEmojiInsert } from '@/lib/emoji';
+import { ACCEPT_MEDIA, isImageMime, isVideoMime, validateFiles } from '@/lib/post';
 import { cn } from '@/lib/utils';
 
 type Props = {

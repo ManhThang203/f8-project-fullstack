@@ -1,4 +1,4 @@
-export { formatCount } from '@/lib/format-count';
+export { formatCount } from '@/lib/format';
 
 /** Format milliseconds to mm:ss (e.g. 83000 → "1:23"). */
 export function formatDuration(ms: number): string {

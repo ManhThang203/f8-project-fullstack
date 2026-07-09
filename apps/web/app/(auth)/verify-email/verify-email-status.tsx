@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect } from 'react';
 
-import { sanitizeReturnTo } from '@/lib/auth-guard';
+import { sanitizeReturnTo } from '@/lib/server/auth-guard';
 
 function VerifyEmailStatusInner() {
   const router = useRouter();

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 import { SavedFeed } from '@/components/saved/saved-feed';
-import { ClientOnly } from '@/components/shared/client-only';
+import { ClientOnly } from '@/components/shared/ui';
 
 export const metadata: Metadata = {
   title: 'Đã lưu',

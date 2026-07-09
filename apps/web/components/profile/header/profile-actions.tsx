@@ -8,12 +8,14 @@ import { toast } from 'sonner';
 
 import { EditProfileModal } from './edit-profile-modal';
 
-import { Button } from '@/components/shared/button';
-import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { ReportModal } from '@/components/shared/report-modal';
-import { useBlockMutation } from '@/hooks/queries/use-block-mutation';
-import { useFollowMutation } from '@/hooks/queries/use-follow-mutation';
-import { useFriendMutation, type FriendAction } from '@/hooks/queries/use-friend-mutation';
+import { Button, ConfirmDialog } from '@/components/shared/ui';
+import {
+  useBlockMutation,
+  useFollowMutation,
+  useFriendMutation,
+  type FriendAction,
+} from '@/hooks/queries/social';
 import { useRequireAuth } from '@/hooks/use-require-auth';
 import { cn } from '@/lib/utils';
 

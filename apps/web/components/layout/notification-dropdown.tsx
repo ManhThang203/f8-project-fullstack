@@ -21,17 +21,15 @@ import type { Socket } from 'socket.io-client';
 import {
   ReactionFace,
   type PostReactionId,
-} from '@/components/home/post/reaction-face';
-import { Avatar } from '@/components/shared/avatar';
-import { iconButtonClass } from '@/components/shared/icon-button';
-import { NotificationBadge } from '@/components/shared/notification-badge';
+} from '@/components/home/post/reactions';
+import { Avatar, iconButtonClass, NotificationBadge } from '@/components/shared/ui';
 import {
   useNotifications,
   useUnreadNotificationCount,
   useMarkNotificationReadMutation,
-} from '@/hooks/queries/use-notifications';
-import { formatRelativeTime } from '@/lib/format-relative-time';
-import { queryKeys } from '@/lib/query-keys';
+} from '@/hooks/queries/notifications';
+import { formatRelativeTime } from '@/lib/format';
+import { queryKeys } from '@/lib/query';
 import { getAuthedSocket } from '@/lib/socket';
 import { cn } from '@/lib/utils';
 

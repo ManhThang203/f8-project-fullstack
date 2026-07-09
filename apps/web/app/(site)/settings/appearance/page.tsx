@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import { AppearanceSettingsSection } from '@/components/settings/appearance-settings-section';
+import { AppearanceSettingsSection } from '@/components/settings/sections';
 import { SettingsShell } from '@/components/settings/settings-shell';
 
 export const metadata: Metadata = {

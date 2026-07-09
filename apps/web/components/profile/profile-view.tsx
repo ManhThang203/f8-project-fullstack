@@ -16,12 +16,11 @@ import { ProfileStats } from '@/components/profile/header/profile-stats';
 import { ProfileSkeleton } from '@/components/profile/profile-skeleton';
 import { parseProfileTab } from '@/components/profile/profile-utils';
 import { ProfileTabs } from '@/components/profile/tabs/profile-tabs';
-import { Button } from '@/components/shared/button';
-import { useProfile } from '@/hooks/queries/use-profile';
-import { isApiQueryError } from '@/lib/api-query';
-import { authClient } from '@/lib/auth-client';
-import type { ServerAuthUser } from '@/lib/auth-user.types';
-import { queryKeys } from '@/lib/query-keys';
+import { Button } from '@/components/shared/ui';
+import { useProfile } from '@/hooks/queries/profile';
+import { isApiQueryError } from '@/lib/api';
+import { authClient, type ServerAuthUser } from '@/lib/auth';
+import { queryKeys } from '@/lib/query';
 
 type Props = {
   username: string;

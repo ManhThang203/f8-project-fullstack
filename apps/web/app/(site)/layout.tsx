@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { SiteLayoutClient } from '@/components/layout/site-layout-client';
-import { getServerSession } from '@/lib/auth-session.server';
+import { getServerSession } from '@/lib/server/auth-session.server';
 
 export default async function SiteLayout({ children }: { children: ReactNode }) {
   const serverSession = await getServerSession();

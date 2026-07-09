@@ -1,17 +1,15 @@
 'use client';
 
-import type { ReactNode } from 'react';
-import { useMemo } from 'react';
 import { usePathname } from 'next/navigation';
+import type { ReactNode } from 'react';
 
 import { BottomNav } from '@/components/layout/bottom-nav';
 import { SiteAppGate } from '@/components/layout/site-app-gate';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SiteHeaderSsrFallback } from '@/components/layout/site-header-ssr-fallback';
-import { ClientOnly } from '@/components/shared/client-only';
-import { CurrentUserProvider } from '@/components/shared/current-user-context';
-import { authClient } from '@/lib/auth-client';
-import type { ServerAuthUser } from '@/lib/auth-user.types';
+import { CurrentUserProvider, useCurrentUser } from '@/components/shared/providers/current-user-context';
+import { ClientOnly } from '@/components/shared/ui';
+import type { ServerAuthUser } from '@/lib/auth';
 
 type Props = {
   children: ReactNode;
@@ -35,17 +33,16 @@ function SiteLayoutHeader({ initialUser }: { initialUser: ServerAuthUser | null 
 }
 
 /** Bọc nội dung trang: chừa chỗ bottom nav khi đã đăng nhập (<lg). */
-function SiteLayoutBody({ children, initialUser }: Props) {
+function SiteLayoutBody({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { data: session } = authClient.useSession();
-  const me = useMemo(() => session?.user ?? initialUser, [session?.user, initialUser]);
+  const { user: me } = useCurrentUser();
   const padBottom =
     me && !isReelsRoute(pathname) && !pathname.startsWith('/messages') ? 'pb-16 lg:pb-0' : undefined;
 
   return (
     <>
       <div className={padBottom}>{children}</div>
-      <BottomNav initialUser={initialUser} />
+      <BottomNav />
     </>
   );
 }
@@ -53,10 +50,10 @@ function SiteLayoutBody({ children, initialUser }: Props) {
 /** Client-side layout cho trang web. */
 export function SiteLayoutClient({ children, initialUser }: Props) {
   return (
-    <CurrentUserProvider value={initialUser}>
+    <CurrentUserProvider initialUser={initialUser}>
       <SiteAppGate>
         <SiteLayoutHeader initialUser={initialUser} />
-        <SiteLayoutBody initialUser={initialUser}>{children}</SiteLayoutBody>
+        <SiteLayoutBody>{children}</SiteLayoutBody>
       </SiteAppGate>
     </CurrentUserProvider>
   );

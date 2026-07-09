@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation';
 
 import { FollowListView } from '@/components/profile/follow/follow-list-view';
-import { Modal } from '@/components/shared/modal';
+import { Modal } from '@/components/shared/ui';
 
 export default function FollowingModal() {
   const router = useRouter();

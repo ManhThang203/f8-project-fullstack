@@ -9,21 +9,22 @@ import { toast } from 'sonner';
 
 import { CreatePostModal } from '../compose/create-post-modal';
 import { CreatePostTrigger } from '../compose/create-post-trigger';
-import { PostCard } from '../post/post-card';
 
 import { FeedSkeletonList } from './feed-skeleton-list';
 
+import { PostCard } from '@/components/home/post/card';
+import { Button } from '@/components/shared/ui';
 import {
   flattenPostsFeedPages,
   usePostsFeed,
   type FeedScope,
   type FeedSort,
-} from '@/hooks/queries/use-posts-feed';
+} from '@/hooks/queries/posts';
 import { useRequireAuth } from '@/hooks/use-require-auth';
-import { authClient } from '@/lib/auth-client';
-import type { ServerAuthUser } from '@/lib/auth-user.types';
-import { onHomeFeedRefresh } from '@/lib/home-feed-refresh';
-import { queryKeys } from '@/lib/query-keys';
+import { getUserFacingErrorMessage } from '@/lib/api';
+import { authClient, type ServerAuthUser } from '@/lib/auth';
+import { onHomeFeedRefresh } from '@/lib/events';
+import { queryKeys } from '@/lib/query';
 import { getAuthedSocket } from '@/lib/socket';
 import { cn } from '@/lib/utils';
 
@@ -82,7 +83,7 @@ export function HomeFeed({ initialUser }: Props) {
   const [scope, setScope] = useState<FeedScope>('all');
   const feedKey = useMemo(() => [...queryKeys.posts.feed, sort, scope], [sort, scope]);
 
-  const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
+  const { data, isLoading, isError, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
     usePostsFeed({ sort, scope });
 
   const me = useMemo<FeedUser | null>(() => {
@@ -246,7 +247,7 @@ export function HomeFeed({ initialUser }: Props) {
     };
   }, [queryClient, dismissPost, me?.id]);
 
-  const errorMessage = isError ? error.message : null;
+  const errorMessage = isError ? getUserFacingErrorMessage(error) : null;
 
   useEffect(() => {
     if (!errorMessage) return;
@@ -298,21 +299,24 @@ export function HomeFeed({ initialUser }: Props) {
       ) : null}
 
       {errorMessage ? (
-        <p className="text-muted-foreground mb-4 text-sm" role="alert">
-          {errorMessage}
-        </p>
+        <div className="mb-4 space-y-3 rounded-xl border border-border p-6 text-center" role="alert">
+          <p className="text-muted-foreground text-sm">{errorMessage}</p>
+          <Button variant="secondary" size="sm" onClick={() => void refetch()}>
+            Thử lại
+          </Button>
+        </div>
       ) : null}
 
       <section aria-busy={isLoading}>
         {isLoading ? (
           <FeedSkeletonList />
-        ) : visiblePosts.length === 0 ? (
+        ) : isError ? null : visiblePosts.length === 0 ? (
           <p className="text-muted-foreground text-sm">
             {posts.length > 0
-              ? 'Không còn bài hiển thị. Tải lại trang để xem lại feed.'
+              ? 'Không còn bài hiển thị. Tải lại trang để xem lại bảng tin.'
               : scope === 'following'
-                ? 'Chưa có bài từ bạn bè hoặc người bạn theo dõi. Hãy kết bạn / theo dõi thêm nhé.'
-                : 'Chưa có bài đăng. Hãy chạy seed hoặc viết bài mới.'}
+                ? 'Chưa có bài từ bạn bè hoặc người bạn theo dõi. Hãy kết bạn hoặc theo dõi thêm nhé.'
+                : 'Chưa có bài đăng nào. Hãy viết bài đầu tiên hoặc quay lại sau.'}
           </p>
         ) : (
           <Virtuoso

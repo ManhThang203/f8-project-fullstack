@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 
-import { Button } from '@/components/shared/button';
-import { useMyModerationCase, useSubmitAppeal } from '@/hooks/queries/use-moderation';
+import { Button } from '@/components/shared/ui';
+import { useMyModerationCase, useSubmitAppeal } from '@/hooks/queries/moderation';
 import { cn } from '@/lib/utils';
 
 const STATUS_LABELS: Record<string, string> = {

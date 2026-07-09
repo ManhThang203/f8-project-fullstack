@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 import { FollowListView } from '@/components/profile/follow/follow-list-view';
-import { ClientOnly } from '@/components/shared/client-only';
+import { ClientOnly } from '@/components/shared/ui';
 
 type Props = {
   params: Promise<{ username: string }>;

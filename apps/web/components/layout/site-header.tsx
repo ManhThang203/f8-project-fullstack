@@ -7,11 +7,10 @@ import { toast } from 'sonner';
 import { SiteHeaderCompact } from './site-header-compact';
 import { SiteHeaderDesktop } from './site-header-desktop';
 
-import { useChatUnreadSync, useChatUnreadTotal } from '@/hooks/queries/use-chat-queries';
-import { authClient } from '@/lib/auth-client';
-import type { ServerAuthUser } from '@/lib/auth-user.types';
-import { resetChatSocket } from '@/lib/chat-socket';
-import { subscribeAvatarUpdated } from '@/lib/profile-image-sync';
+import { useChatUnreadSync, useChatUnreadTotal } from '@/hooks/queries/chat';
+import { authClient, type ServerAuthUser } from '@/lib/auth';
+import { subscribeAvatarUpdated } from '@/lib/events';
+import { resetChatSocket } from '@/lib/socket';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -39,10 +38,6 @@ export function SiteHeader({ initialUser }: Props) {
   const [avatarOverride, setAvatarOverride] = useState<string | null>(null);
   /** Ngay sau signOut: hiện nav khách, không chờ RSC / nano store bắt kịp. */
   const [forceGuestNav, setForceGuestNav] = useState(false);
-
-  useEffect(() => {
-    void refetch();
-  }, [pathname, refetch]);
 
   useEffect(() => subscribeAvatarUpdated(setAvatarOverride), []);
 

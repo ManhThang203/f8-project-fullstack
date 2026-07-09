@@ -2,8 +2,7 @@
 
 import { X } from 'lucide-react';
 
-import { IconButton } from '@/components/shared/icon-button';
-import { Modal } from '@/components/shared/modal';
+import { IconButton, Modal } from '@/components/shared/ui';
 import { cn } from '@/lib/utils';
 
 type Variant = 'avatar' | 'cover';

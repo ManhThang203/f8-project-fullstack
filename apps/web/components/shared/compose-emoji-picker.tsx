@@ -5,9 +5,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { createPortal } from 'react-dom';
 
 import { EmojiPickerPanel } from '@/components/shared/emoji-picker-panel';
-import { useMediaQuery } from '@/hooks/use-media-query';
-import { useScrollLock } from '@/hooks/use-scroll-lock';
-import { computePopoverPosition, getDesktopPopoverSize } from '@/lib/emoji-picker-position';
+import { useMediaQuery, useScrollLock } from '@/hooks/ui';
+import { computePopoverPosition, getDesktopPopoverSize } from '@/lib/emoji';
 import { cn } from '@/lib/utils';
 
 type Props = {

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
-import { ProvidersShell } from '@/components/shared/providers-shell';
+import { ProvidersShell } from '@/components/shared/providers';
 
 import './globals.css';
 import '@aejkatappaja/phantom-ui/ssr.css';

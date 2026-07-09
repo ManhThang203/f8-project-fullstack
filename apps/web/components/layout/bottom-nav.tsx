@@ -3,18 +3,13 @@
 import { Clapperboard, Home, MessageCircle, UsersRound } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useMemo, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
-import { NotificationBadge } from '@/components/shared/notification-badge';
-import { useChatUnreadTotal } from '@/hooks/queries/use-chat-queries';
-import { authClient } from '@/lib/auth-client';
-import type { ServerAuthUser } from '@/lib/auth-user.types';
-import { handleHomeNavClick } from '@/lib/home-feed-refresh';
+import { useCurrentUser } from '@/components/shared/providers/current-user-context';
+import { NotificationBadge } from '@/components/shared/ui';
+import { useChatUnreadTotal } from '@/hooks/queries/chat';
+import { handleHomeNavClick } from '@/lib/events';
 import { cn } from '@/lib/utils';
-
-type Props = {
-  initialUser: ServerAuthUser | null;
-};
 
 function BottomNavItem({
   href,
@@ -48,15 +43,9 @@ function BottomNavItem({
 }
 
 /** Thanh điều hướng cố định dưới màn hình cho mobile/tablet (<1024px). */
-export function BottomNav({ initialUser }: Props) {
+export function BottomNav() {
   const pathname = usePathname();
-  const { data: session } = authClient.useSession();
-
-  const me = useMemo(() => {
-    if (session?.user) return session.user;
-    return initialUser;
-  }, [session?.user, initialUser]);
-
+  const { user: me } = useCurrentUser();
   const chatUnreadTotal = useChatUnreadTotal(Boolean(me));
 
   if (!me) return null;

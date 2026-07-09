@@ -4,9 +4,10 @@ import { useCallback, useMemo, useState } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 
 import { FeedSkeletonList } from '@/components/home/feed/feed-skeleton-list';
-import { PostCard } from '@/components/home/post/post-card';
-import { Button } from '@/components/shared/button';
-import { flattenProfileFeedPages, useProfileFeed } from '@/hooks/queries/use-profile-feed';
+import { PostCard } from '@/components/home/post/card';
+import { Button } from '@/components/shared/ui';
+import { flattenProfileFeedPages, useProfileFeed } from '@/hooks/queries/profile';
+import { getUserFacingErrorMessage } from '@/lib/api';
 
 type Props = {
   username: string;
@@ -62,7 +63,7 @@ export function ProfileFeed({ username, isOwner, isDeleted, onCreatePost }: Prop
   if (isError) {
     return (
       <div className="space-y-3 px-4 py-8 text-center">
-        <p className="text-muted-foreground text-sm">{error.message}</p>
+        <p className="text-muted-foreground text-sm">{getUserFacingErrorMessage(error)}</p>
         <Button variant="secondary" size="md" onClick={() => void refetch()}>
           Thử lại
         </Button>

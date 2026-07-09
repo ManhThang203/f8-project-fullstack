@@ -1,4 +1,4 @@
-import { PostDetailRoute } from '@/components/home/post/post-detail-route';
+import { PostDetailRoute } from '@/components/home/post/detail';
 
 type Props = {
   params: Promise<{ username: string; postId: string }>;

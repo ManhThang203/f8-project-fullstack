@@ -9,10 +9,9 @@ import { type ReactNode } from 'react';
 import { AccountMenu } from './account-menu';
 import { NotificationDropdown } from './notification-dropdown';
 
-import { iconButtonClass } from '@/components/shared/icon-button';
-import { NotificationBadge } from '@/components/shared/notification-badge';
+import { iconButtonClass, NotificationBadge } from '@/components/shared/ui';
 import { useRequireAuth } from '@/hooks/use-require-auth';
-import { handleHomeNavClick } from '@/lib/home-feed-refresh';
+import { handleHomeNavClick } from '@/lib/events';
 import { cn } from '@/lib/utils';
 
 type AccountUser = {

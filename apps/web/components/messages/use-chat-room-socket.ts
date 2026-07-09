@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import type { Socket } from 'socket.io-client';
 
-import { useInvalidateChatConversations } from '@/hooks/queries/use-chat-queries';
+import { useInvalidateChatConversations } from '@/hooks/queries/chat';
 import {
   appendRoomMessage,
   patchConversationAfterMessage,
@@ -13,9 +13,9 @@ import {
   patchMessageReaction,
   patchMessageUnsent,
   patchPeerReceipt,
-} from '@/lib/chat-cache';
-import { getChatSocket } from '@/lib/chat-socket';
-import { queryKeys } from '@/lib/query-keys';
+  queryKeys,
+} from '@/lib/query';
+import { getChatSocket } from '@/lib/socket';
 import type { ChatMessageDto, MessageReactionDto } from '@/types/chat';
 
 /**

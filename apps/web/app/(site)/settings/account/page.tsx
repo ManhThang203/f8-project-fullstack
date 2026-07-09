@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import { AccountSettingsView } from '@/components/settings/account-settings-section';
+import { AccountSettingsView } from '@/components/settings/sections';
 import { SettingsShell } from '@/components/settings/settings-shell';
 
 export const metadata: Metadata = {

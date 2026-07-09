@@ -39,7 +39,7 @@ RUN pnpm --filter @costy/db generate
 # Truyền qua `docker compose build` (xem docker-compose.yml `args`) hoặc `docker build --build-arg ...`.
 ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
 ARG NEXT_PUBLIC_API_URL=/api
-ARG NEXT_PUBLIC_SOCKET_URL=http://localhost:4000
+ARG NEXT_PUBLIC_SOCKET_URL=http://127.0.0.1:4000
 ARG NEXT_PUBLIC_DEMO_USER_ID=seed_demo_user_001
 # Admin gọi BFF cùng origin; mặc định `/api` (tương đối) hoạt động trên mọi domain.
 ARG NEXT_PUBLIC_ADMIN_API_URL=/api

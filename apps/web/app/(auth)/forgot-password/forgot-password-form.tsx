@@ -10,7 +10,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { z } from 'zod';
 
-import { authClient } from '@/lib/auth-client';
+import { authClient } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
 const inputClass = cn(

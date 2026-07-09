@@ -14,16 +14,23 @@ import {
 } from '../reels-layout.utils';
 import type { ReelsFeedItemDto } from '../reels-types';
 
-import { useFollowMutation } from '@/hooks/queries/use-follow-mutation';
-import { useSharePost, useToggleSavePost } from '@/hooks/queries/use-save-post';
-import { useReactPost } from '@/hooks/use-react-post';
-import { useReelsControlsBehavior } from '@/hooks/use-reels-controls-behavior';
-import { useReelsVideoStage } from '@/hooks/use-reels-video-stage';
-import { authClient } from '@/lib/auth-client';
-import { feedVideoController } from '@/lib/feed-video-controller';
-import { consumeUnmuteOnEntry } from '@/lib/reels-entry-intent';
+import { useReactPost } from '@/hooks/post';
+import { useSharePost, useToggleSavePost } from '@/hooks/queries/posts';
+import { useFollowMutation } from '@/hooks/queries/social';
+import { useReelsControlsBehavior, useReelsVideoStage } from '@/hooks/reels';
+import { consumeUnmuteOnEntry, feedVideoController } from '@/lib/post';
 
 const TIMEUPDATE_THROTTLE_MS = 250;
+
+type PlayerSessionContext = {
+  currentUserId?: string;
+  currentUser?: {
+    id: string;
+    username?: string | null;
+    name?: string | null;
+    image?: string | null;
+  } | null;
+};
 
 function getVolumeVariant(profile: ReelsDeviceProfile): ReelsVolumeVariant {
   if (profile === 'mobile') return 'toggle-only';
@@ -35,11 +42,15 @@ function getVolumeVariant(profile: ReelsDeviceProfile): ReelsVolumeVariant {
  * Toàn bộ state/refs/handler cho trình phát Reels kiểu Facebook.
  * Tách khỏi component để phần JSX chỉ còn khai báo giao diện; hành vi giữ nguyên.
  */
-export function useFacebookReelsPlayer(item: ReelsFeedItemDto, isActive: boolean) {
+export function useFacebookReelsPlayer(
+  item: ReelsFeedItemDto,
+  isActive: boolean,
+  sessionContext: PlayerSessionContext = {},
+) {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const lastTimeUpdateRef = useRef(0);
-  const { data: session } = authClient.useSession();
+  const { currentUserId, currentUser } = sessionContext;
 
   const layoutMode = useReelsLayoutMode();
   const deviceProfile = useReelsDeviceProfile();
@@ -78,7 +89,7 @@ export function useFacebookReelsPlayer(item: ReelsFeedItemDto, isActive: boolean
   const [isFollowing, setIsFollowing] = useState(item.isFollowing);
   const [commentsOpen, setCommentsOpen] = useState(false);
 
-  const me = session?.user;
+  const me = currentUser ?? undefined;
 
   const followMutation = useFollowMutation({
     onError: (err) => toast.error(err.message),
@@ -87,7 +98,7 @@ export function useFacebookReelsPlayer(item: ReelsFeedItemDto, isActive: boolean
   const saveMutation = useToggleSavePost();
   const shareMutation = useSharePost();
 
-  const isOwnReel = session?.user?.id === item.author.id;
+  const isOwnReel = currentUserId === item.author.id;
 
   volumeRef.current = volume;
   mutedRef.current = muted;

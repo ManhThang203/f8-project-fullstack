@@ -10,8 +10,8 @@
  */
 import { type NextRequest } from 'next/server';
 
-import { HOP_BY_HOP_HEADERS, nextResponseFromUpstream } from '@/lib/proxy-to-upstream';
-import { applyUpstreamProxyHeaders } from '@/lib/upstream-client-ip';
+import { HOP_BY_HOP_HEADERS, nextResponseFromUpstream } from '@/lib/server/proxy-to-upstream';
+import { applyUpstreamProxyHeaders } from '@/lib/server/upstream-client-ip';
 
 /**
  * Bắt buộc runtime Node: Edge runtime chưa có `Response#getSetCookie()`, mà
@@ -65,7 +65,7 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
   // Next ghép URL upstream
   const upstream = await fetch(url, init);
   // Helper tách `Set-Cookie` thành nhiều dòng + lọc `content-encoding` để
-  // tránh `ERR_CONTENT_DECODING_FAILED` (xem `lib/proxy-to-upstream.ts`).
+  // tránh `ERR_CONTENT_DECODING_FAILED` (xem `lib/server/proxy-to-upstream.ts`).
   return nextResponseFromUpstream(upstream);
 }
 

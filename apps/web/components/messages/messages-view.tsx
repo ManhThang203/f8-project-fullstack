@@ -13,20 +13,19 @@ import { ConversationList, peerLabel } from './conversation-list';
 import { NewChatModal } from './new-chat-modal';
 import { useChatRoomSocket } from './use-chat-room-socket';
 
-import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { ConfirmDialog } from '@/components/shared/ui';
 import {
   EMPTY_CONVERSATIONS,
   EMPTY_ROOM_MESSAGES,
   useChatConversations,
   useRoomMessages,
   useCreateChatRoomMutation,
-} from '@/hooks/queries/use-chat-queries';
-import { useTick } from '@/hooks/use-tick';
-import { authClient } from '@/lib/auth-client';
-import { patchConversationAfterMessage, patchMessageReaction, patchMessageUnsent } from '@/lib/chat-cache';
-import { getChatSocket } from '@/lib/chat-socket';
-import { formatActivityStatus } from '@/lib/format-relative-time';
-import { queryKeys } from '@/lib/query-keys';
+} from '@/hooks/queries/chat';
+import { useTick } from '@/hooks/ui';
+import { authClient } from '@/lib/auth';
+import { formatActivityStatus } from '@/lib/format';
+import { patchConversationAfterMessage, patchMessageReaction, patchMessageUnsent, queryKeys } from '@/lib/query';
+import { getChatSocket } from '@/lib/socket';
 import { cn } from '@/lib/utils';
 import type { ChatMessageDto, ChatPeerDto } from '@/types/chat';
 

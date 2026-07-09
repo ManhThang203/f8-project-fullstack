@@ -9,8 +9,8 @@ import { useEffect, useRef, useState } from 'react';
 import { AccountMenu } from './account-menu';
 import { NotificationDropdown } from './notification-dropdown';
 
-import { iconButtonClass } from '@/components/shared/icon-button';
-import { handleHomeNavClick } from '@/lib/home-feed-refresh';
+import { iconButtonClass } from '@/components/shared/ui';
+import { handleHomeNavClick } from '@/lib/events';
 import { cn } from '@/lib/utils';
 
 type AccountUser = {
