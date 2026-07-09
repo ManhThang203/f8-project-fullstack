@@ -71,16 +71,18 @@ function buildReelsSlideHeight(hasBottomNav: boolean): string {
     return `calc(100dvh - ${SITE_HEADER_HEIGHT_REM}rem)`;
   }
   if (hasBottomNav) {
-    return `calc(100dvh - ${SITE_HEADER_HEIGHT_REM}rem - ${SITE_BOTTOM_NAV_HEIGHT_REM}rem - env(safe-area-inset-bottom, 0px))`;
+    return `calc(100dvh - ${SITE_BOTTOM_NAV_HEIGHT_REM}rem - env(safe-area-inset-bottom, 0px))`;
   }
-  return `calc(100dvh - ${SITE_HEADER_HEIGHT_REM}rem)`;
+  return '100dvh';
 }
 
-/** Hook trả về chiều cao slide Reels (trừ header; trừ thêm bottom nav trên mobile khi đã đăng nhập). */
+/** Hook trả về chiều cao slide Reels (desktop trừ header; mobile/tablet trừ bottom nav nếu có). */
 export function useReelsSlideHeight(hasBottomNav: boolean): string {
   const [height, setHeight] = useState(() =>
     typeof window === 'undefined'
-      ? `calc(100dvh - ${SITE_HEADER_HEIGHT_REM}rem)`
+      ? hasBottomNav
+        ? `calc(100dvh - ${SITE_BOTTOM_NAV_HEIGHT_REM}rem - env(safe-area-inset-bottom, 0px))`
+        : '100dvh'
       : buildReelsSlideHeight(hasBottomNav),
   );
 

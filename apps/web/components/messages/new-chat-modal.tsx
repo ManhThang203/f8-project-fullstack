@@ -3,10 +3,10 @@
 import { Check, Loader2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { Avatar } from '@/components/shared/avatar';
-import { EMPTY_USER_SEARCH, useUsersSearch } from '@/hooks/queries/use-users-search';
-import { useDebounced } from '@/hooks/use-debounced';
-import { authClient } from '@/lib/auth-client';
+import { Avatar, Modal } from '@/components/shared/ui';
+import { EMPTY_USER_SEARCH, useUsersSearch } from '@/hooks/queries/chat';
+import { useDebounced } from '@/hooks/ui';
+import { authClient } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
 type PickedUser = {
@@ -49,8 +49,6 @@ export function NewChatModal({
     }
   }, [open]);
 
-  if (!open) return null;
-
   const isGroup = selected.length >= 2;
 
   // Thêm/bỏ user khỏi danh sách đã chọn
@@ -72,50 +70,34 @@ export function NewChatModal({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[200] flex items-start justify-center bg-black/40 p-4 pt-24 backdrop-blur-sm supports-[backdrop-filter]:bg-black/30 sm:pt-28"
-      onClick={onClose}
-      role="presentation"
-    >
-      <div
-        className="border-border bg-card flex max-h-[min(80dvh,36rem)] w-full max-w-md flex-col overflow-hidden rounded-2xl border shadow-lg"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="new-chat-title"
-        onClick={(e) => e.stopPropagation()}
+    <Modal open={open} onClose={onClose}>
+      <Modal.Backdrop />
+      <Modal.Panel
+        size="md"
+        className="flex max-h-[min(80dvh,36rem)] max-w-md flex-col rounded-2xl"
       >
-        <div className="border-border flex items-center justify-between border-b px-4 py-3">
-          <h2 id="new-chat-title" className="text-foreground text-sm font-semibold">
-            Tin nhắn mới
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-muted-foreground hover:bg-muted focus-visible:ring-ring flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
-            aria-label="Đóng"
-          >
-            <X className="h-5 w-5" aria-hidden />
-          </button>
-        </div>
+        <Modal.Header title="Tin nhắn mới" />
 
         {selected.length > 0 ? (
-          <div className="border-border flex flex-wrap gap-2 border-b px-3 py-2">
-            {selected.map((u) => (
-              <span
-                key={u.id}
-                className="bg-muted text-foreground inline-flex items-center gap-1 rounded-full py-1 pl-3 pr-1 text-xs font-medium"
-              >
-                {userLabel(u)}
-                <button
-                  type="button"
-                  onClick={() => toggleUser(u)}
-                  className="text-muted-foreground hover:bg-background hover:text-foreground focus-visible:ring-ring flex h-6 w-6 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
-                  aria-label={`Bỏ chọn ${userLabel(u)}`}
+          <div className="border-border max-h-36 shrink-0 overflow-y-auto overscroll-contain border-b px-3 py-2">
+            <div className="flex flex-wrap gap-2">
+              {selected.map((u) => (
+                <span
+                  key={u.id}
+                  className="bg-muted text-foreground inline-flex items-center gap-1 rounded-full py-1 pl-3 pr-1 text-xs font-medium"
                 >
-                  <X className="h-3 w-3" aria-hidden />
-                </button>
-              </span>
-            ))}
+                  {userLabel(u)}
+                  <button
+                    type="button"
+                    onClick={() => toggleUser(u)}
+                    className="text-muted-foreground hover:bg-background hover:text-foreground focus-visible:ring-ring flex h-6 w-6 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
+                    aria-label={`Bỏ chọn ${userLabel(u)}`}
+                  >
+                    <X className="h-3 w-3" aria-hidden />
+                  </button>
+                </span>
+              ))}
+            </div>
           </div>
         ) : null}
 
@@ -143,7 +125,7 @@ export function NewChatModal({
           />
         </div>
 
-        <ul className="min-h-0 flex-1 overflow-y-auto p-2">
+        <ul className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
           {loading ? (
             <li className="text-muted-foreground flex justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
@@ -195,7 +177,7 @@ export function NewChatModal({
             {isGroup ? `Tạo nhóm (${selected.length + 1} người)` : 'Bắt đầu chat'}
           </button>
         </div>
-      </div>
-    </div>
+      </Modal.Panel>
+    </Modal>
   );
 }

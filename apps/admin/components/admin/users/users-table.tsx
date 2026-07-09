@@ -1,7 +1,10 @@
 'use client';
 
 import type { AdminUserListItemDto } from '@costy/shared';
+import { ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+
+import { isRoleChangeDisabled } from './users.utils';
 
 import { StatusBadge } from '@/components/admin/status-badge';
 import { Button } from '@/components/shared/button';
@@ -12,7 +15,10 @@ import { cn } from '@/lib/utils';
 type Props = {
   users: AdminUserListItemDto[];
   isFetching: boolean;
+  canManageRole?: boolean;
+  currentUserId?: string;
   onManageStatus: (user: AdminUserListItemDto) => void;
+  onManageRole?: (user: AdminUserListItemDto) => void;
 };
 
 const colUser = adminCol('grow', 'start');
@@ -22,7 +28,14 @@ const colStatus = adminCol('grow', 'center');
 const colPosts = adminCol('grow', 'center');
 const colActions = adminCol('actions', 'end');
 
-export function UsersTable({ users, isFetching, onManageStatus }: Props) {
+export function UsersTable({
+  users,
+  isFetching,
+  canManageRole = false,
+  currentUserId,
+  onManageStatus,
+  onManageRole,
+}: Props) {
   const { t } = useTranslation();
 
   return (
@@ -71,7 +84,18 @@ export function UsersTable({ users, isFetching, onManageStatus }: Props) {
                 <div className={colPosts.cell}>{user.postCount}</div>
               </td>
               <td className={colActions.td}>
-                <div className={colActions.cell}>
+                <div className={cn(colActions.cell, 'flex flex-wrap justify-end gap-2')}>
+                  {canManageRole && onManageRole ? (
+                    <Button
+                      variant="secondary"
+                      disabled={isRoleChangeDisabled(user, currentUserId)}
+                      className={cn(adminTable.actionBtn, 'gap-1.5 leading-none')}
+                      onClick={() => onManageRole(user)}
+                    >
+                      <ShieldCheck className="size-3.5 shrink-0" aria-hidden />
+                      {t('users.manageRole')}
+                    </Button>
+                  ) : null}
                   <Button
                     variant="secondary"
                     className={adminTable.actionBtn}

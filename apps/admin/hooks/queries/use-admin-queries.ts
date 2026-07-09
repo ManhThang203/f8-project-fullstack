@@ -29,7 +29,8 @@ export function flattenPages<T>(pages: { data: T[] }[] | undefined): T[] {
 export function useAdminMe() {
   return useQuery({
     queryKey: queryKeys.admin.me,
-    queryFn: () => apiQuery<{ permissions: string[]; role: string }>('/admin/me/permissions'),
+    queryFn: () =>
+      apiQuery<{ id: string; permissions: string[]; role: string }>('/admin/me/permissions'),
   });
 }
 
@@ -75,6 +76,7 @@ type CursorMeta = { nextCursor: string | null };
 
 export function useAdminUsers(
   filters: { q?: string; status?: string; cursor?: string; limit?: number } = {},
+  options?: { enabled?: boolean },
 ) {
   const base = new URLSearchParams();
   if (filters.q) base.set('q', filters.q);
@@ -89,6 +91,7 @@ export function useAdminUsers(
       const suffix = filterKey ? `?${filterKey}` : '';
       return apiQuery<AdminUserListItemDto[], CursorMeta>(`/admin/users${suffix}`);
     },
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -267,6 +270,34 @@ export function usePatchUserStatus() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['admin', 'users'] });
       void qc.invalidateQueries({ queryKey: ['admin', 'stats'] });
+    },
+  });
+}
+
+export function usePatchUserRole() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (opts: { id: string; role: string; reason?: string }) =>
+      apiQuery<AdminUserListItemDto>(`/admin/users/${opts.id}/role`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          role: opts.role,
+          reason: opts.reason,
+        }),
+      }),
+    onSuccess: async (res, variables) => {
+      // Cập nhật ngay user trong cache list để UI đổi role tức thì, không đợi refetch
+      qc.setQueriesData<{ data: AdminUserListItemDto[] }>({ queryKey: ['admin', 'users'] }, (old) => {
+        if (!old?.data) return old;
+        return {
+          ...old,
+          data: old.data.map((u) => (u.id === variables.id ? res.data : u)),
+        };
+      });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['admin', 'users'] }),
+        qc.invalidateQueries({ queryKey: ['admin', 'moderators'] }),
+      ]);
     },
   });
 }

@@ -11,10 +11,11 @@ import { useReelsSlideHeight } from './reels-layout.utils';
 import { ReelsSkeleton } from './reels-skeleton';
 import { ReelsSlide } from './reels-slide';
 
-import { Button } from '@/components/shared/button';
-import { flattenReelsFeedPages, useReelsFeed } from '@/hooks/queries/use-reels-feed';
-import { authClient } from '@/lib/auth-client';
-import { isApiQueryError } from '@/lib/api-query';
+import { useInitialUser } from '@/components/shared/providers/current-user-context';
+import { Button } from '@/components/shared/ui';
+import { flattenReelsFeedPages, useReelsFeed } from '@/hooks/queries/reels';
+import { useScrollLock } from '@/hooks/ui';
+import { getUserFacingErrorMessage, isApiQueryError } from '@/lib/api';
 
 const SCROLL_CONTAINER_BASE =
   'overflow-y-auto snap-y snap-mandatory [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden';
@@ -31,18 +32,17 @@ type Props = {
 };
 
 export function ReelsFeed({ initialPostId }: Props) {
-  const { data: session } = authClient.useSession();
-  const slideHeight = useReelsSlideHeight(Boolean(session?.user));
+  const initialUser = useInitialUser();
+  const slideHeight = useReelsSlideHeight(Boolean(initialUser));
   const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useReelsFeed(initialPostId);
 
   const items = flattenReelsFeedPages(data?.pages);
   const [activeIndex, setActiveIndex] = useState(0);
+  const activeId = items[activeIndex]?.id;
 
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const scrollerRef = useRef<HTMLElement | null>(null);
-  const itemsRef = useRef(items);
-  itemsRef.current = items;
 
   const isNotFound =
     isError &&
@@ -50,21 +50,7 @@ export function ReelsFeed({ initialPostId }: Props) {
     error.code === ErrorCode.NOT_FOUND &&
     Boolean(initialPostId);
 
-  useEffect(() => {
-    const { body, documentElement: html } = document;
-    const prevBodyOverflow = body.style.overflow;
-    const prevHtmlOverflow = html.style.overflow;
-
-    html.classList.add('reels-scroll-lock');
-    body.style.overflow = 'hidden';
-    html.style.overflow = 'hidden';
-
-    return () => {
-      html.classList.remove('reels-scroll-lock');
-      body.style.overflow = prevBodyOverflow;
-      html.style.overflow = prevHtmlOverflow;
-    };
-  }, []);
+  useScrollLock(true, { htmlClass: 'reels-scroll-lock' });
 
   const scrollToSlide = useCallback((index: number) => {
     virtuosoRef.current?.scrollToIndex({ index, behavior: 'auto' });
@@ -91,15 +77,9 @@ export function ReelsFeed({ initialPostId }: Props) {
   }, [updateActiveFromScroll, isLoading]);
 
   useEffect(() => {
-    const id = itemsRef.current[activeIndex]?.id;
-    if (id) syncReelUrl(id);
-  }, [activeIndex]);
-
-  useEffect(() => {
-    if (isLoading || items.length === 0) return;
-    const firstId = items[0]?.id;
-    if (firstId) syncReelUrl(firstId);
-  }, [isLoading, items]);
+    if (isLoading || !activeId) return;
+    syncReelUrl(activeId);
+  }, [activeId, isLoading]);
 
   if (isNotFound) notFound();
 
@@ -117,7 +97,7 @@ export function ReelsFeed({ initialPostId }: Props) {
         className="flex w-full flex-col items-center justify-center gap-4 bg-black text-white"
         style={{ height: slideHeight }}
       >
-        <p className="text-sm text-white/70">{error.message}</p>
+        <p className="text-sm text-white/70">{getUserFacingErrorMessage(error)}</p>
         <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>
           Thử lại
         </Button>
@@ -158,6 +138,8 @@ export function ReelsFeed({ initialPostId }: Props) {
               item={item}
               slideHeight={slideHeight}
               isActive={index === activeIndex}
+              currentUserId={initialUser?.id}
+              currentUser={initialUser}
             />
           )}
           components={{

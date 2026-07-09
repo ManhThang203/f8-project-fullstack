@@ -1,23 +1,26 @@
 'use client';
 
 import { useCallback, useEffect, useMemo } from 'react';
-import { toast } from 'sonner';
 import { Virtuoso } from 'react-virtuoso';
+import { toast } from 'sonner';
+
 import { FeedSkeletonList } from '@/components/home/feed/feed-skeleton-list';
-import { PostCard } from '@/components/home/post/post-card';
-import { flattenSavedPages, useSavedPosts } from '@/hooks/queries/use-saved-posts';
+import { PostCard } from '@/components/home/post/card';
+import { Button } from '@/components/shared/ui';
+import { flattenSavedPages, useSavedPosts } from '@/hooks/queries/posts';
+import { getUserFacingErrorMessage } from '@/lib/api';
 
 /** Feed bài viết đã lưu với infinite scroll (Virtuoso). */
 export function SavedFeed() {
-  const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
+  const { data, isLoading, isError, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useSavedPosts();
 
   const posts = useMemo(() => flattenSavedPages(data?.pages), [data?.pages]);
 
   useEffect(() => {
     if (!isError) return;
-    toast.error(error?.message ?? 'Không tải được dữ liệu. Thử lại sau.');
-  }, [isError, error?.message]);
+    toast.error(getUserFacingErrorMessage(error));
+  }, [isError, error]);
 
   const handleEndReached = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
@@ -27,9 +30,12 @@ export function SavedFeed() {
 
   if (isError) {
     return (
-      <p className="text-muted-foreground text-sm" role="alert">
-        {error.message}
-      </p>
+      <div className="space-y-3 py-8 text-center" role="alert">
+        <p className="text-muted-foreground text-sm">{getUserFacingErrorMessage(error)}</p>
+        <Button variant="secondary" size="md" onClick={() => void refetch()}>
+          Thử lại
+        </Button>
+      </div>
     );
   }
   if (posts.length === 0) {

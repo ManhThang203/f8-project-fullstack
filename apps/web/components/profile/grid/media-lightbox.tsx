@@ -3,7 +3,7 @@
 import type { ProfileGridItemDto } from '@costy/shared';
 import { Heart, MessageCircle } from 'lucide-react';
 
-import { Modal } from '@/components/shared/modal';
+import { Modal } from '@/components/shared/ui';
 
 type Props = {
   item: ProfileGridItemDto | null;

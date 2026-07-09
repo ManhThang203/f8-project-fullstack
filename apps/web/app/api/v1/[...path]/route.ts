@@ -1,7 +1,7 @@
 import { type NextRequest } from 'next/server';
 
-import { HOP_BY_HOP_HEADERS, nextResponseFromUpstream } from '@/lib/proxy-to-upstream';
-import { applyUpstreamProxyHeaders } from '@/lib/upstream-client-ip';
+import { HOP_BY_HOP_HEADERS, nextResponseFromUpstream } from '@/lib/server/proxy-to-upstream';
+import { applyUpstreamProxyHeaders } from '@/lib/server/upstream-client-ip';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

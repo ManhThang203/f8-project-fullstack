@@ -2,9 +2,7 @@
 
 import { Loader2, Plus, Users } from 'lucide-react';
 
-import { Avatar } from '@/components/shared/avatar';
-import { useTick } from '@/hooks/use-tick';
-import { formatRelativeTime } from '@/lib/format-relative-time';
+import { Avatar, RelativeTime } from '@/components/shared/ui';
 import { cn } from '@/lib/utils';
 import type { ChatMessageDto, ChatPeerDto, Conversation } from '@/types/chat';
 
@@ -33,8 +31,6 @@ export function ConversationList({
   onSelect: (roomId: string) => void;
   onNewChat: () => void;
 }) {
-  useTick(60_000);
-
   return (
     <aside
       className={cn(
@@ -64,6 +60,8 @@ export function ConversationList({
           <ul>
             {conversations.map((c) => {
               const active = activeRoomId === c.id;
+              // Không hiện số chưa đọc cho hội thoại đang mở
+              const unread = active ? 0 : c.unreadCount;
               return (
                 <li key={c.id}>
                   <button
@@ -100,7 +98,7 @@ export function ConversationList({
                         <p
                           className={cn(
                             'text-foreground truncate',
-                            c.unreadCount > 0 ? 'font-semibold' : 'font-medium',
+                            unread > 0 ? 'font-semibold' : 'font-medium',
                           )}
                         >
                           {c.isGroup
@@ -110,30 +108,29 @@ export function ConversationList({
                               : 'Unknown'}
                         </p>
                         {c.lastMessage ? (
-                          <span
+                          <RelativeTime
+                            dateTime={c.lastMessage.createdAt}
                             className={cn(
                               'shrink-0 text-xs',
-                              c.unreadCount > 0
+                              unread > 0
                                 ? 'text-foreground font-semibold'
                                 : 'text-muted-foreground',
                             )}
-                          >
-                            {formatRelativeTime(c.lastMessage.createdAt)}
-                          </span>
+                          />
                         ) : null}
                       </div>
                       <p
                         className={cn(
                           'truncate text-xs',
-                          c.unreadCount > 0 ? 'text-foreground font-medium' : 'text-muted-foreground',
+                          unread > 0 ? 'text-foreground font-medium' : 'text-muted-foreground',
                         )}
                       >
                         {c.lastMessage ? lastMessagePreview(c.lastMessage) : 'Chưa có tin nhắn'}
                       </p>
                     </div>
-                    {c.unreadCount > 0 ? (
+                    {unread > 0 ? (
                       <span className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs font-medium">
-                        {c.unreadCount}
+                        {unread}
                       </span>
                     ) : null}
                   </button>

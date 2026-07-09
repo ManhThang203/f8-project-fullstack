@@ -81,9 +81,11 @@ services:
       # Named volumes giữ node_modules của container — tránh host ghi đè layout pnpm.
       - dev_root_node_modules:/app/node_modules
       - dev_web_node_modules:/app/apps/web/node_modules
+      - dev_admin_node_modules:/app/apps/admin/node_modules
       - dev_server_node_modules:/app/apps/server/node_modules
       - dev_db_node_modules:/app/packages/db/node_modules
       - dev_shared_node_modules:/app/packages/shared/node_modules
+      - dev_ui_node_modules:/app/packages/ui/node_modules
       - dev_eslint_node_modules:/app/packages/eslint-config/node_modules
       - dev_tsconfig_node_modules:/app/packages/typescript-config/node_modules
     # Chờ Postgres + Redis healthy trước khi entrypoint migrate + `pnpm dev`.
@@ -98,8 +100,10 @@ volumes:
   redis-data-dev:
   dev_root_node_modules:
   dev_web_node_modules:
+  dev_admin_node_modules:
   dev_server_node_modules:
   dev_db_node_modules:
   dev_shared_node_modules:
+  dev_ui_node_modules:
   dev_eslint_node_modules:
   dev_tsconfig_node_modules:

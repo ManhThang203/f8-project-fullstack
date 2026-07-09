@@ -8,15 +8,16 @@
     "build": "next build --webpack",
     "start": "next start -p 3000 -H 0.0.0.0",
     "lint": "eslint .",
+    "test": "vitest run",
     "type-check": "tsc --noEmit",
     "clean": "rimraf .next .turbo"
   },
   "dependencies": {
     "@aejkatappaja/phantom-ui": "^0.10.1",
-    "@hookform/resolvers": "^3.9.1",
-    "@tanstack/react-query": "^5.62.0",
     "@costy/shared": "workspace:*",
     "@costy/ui": "workspace:*",
+    "@hookform/resolvers": "^3.9.1",
+    "@tanstack/react-query": "^5.62.0",
     "better-auth": "^1.6.11",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -29,6 +30,7 @@
     "lucide-react": "^0.462.0",
     "motion": "^12.39.0",
     "next": "16.2.6",
+    "next-themes": "^0.4.6",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "react-hook-form": "^7.53.2",
@@ -42,19 +44,24 @@
     "zustand": "^5.0.1"
   },
   "devDependencies": {
-    "@tanstack/react-query-devtools": "^5.62.0",
     "@costy/eslint-config": "workspace:*",
     "@costy/typescript-config": "workspace:*",
+    "@tanstack/react-query-devtools": "^5.62.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^22.10.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.15.0",
     "eslint-config-next": "16.2.6",
+    "jsdom": "^29.1.1",
     "postcss": "^8.4.49",
     "prettier-plugin-tailwindcss": "^0.6.8",
     "rimraf": "^6.0.1",
     "tailwindcss": "^3.4.15",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
   }
 }

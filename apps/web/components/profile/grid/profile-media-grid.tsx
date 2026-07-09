@@ -6,8 +6,9 @@ import { VirtuosoGrid } from 'react-virtuoso';
 
 import { ProfileMediaTile } from '@/components/profile/grid/profile-media-tile';
 import type { ProfileTab } from '@/components/profile/profile-utils';
-import { Button } from '@/components/shared/button';
-import { flattenProfileGridPages, useProfileGrid } from '@/hooks/queries/use-profile-grid';
+import { Button } from '@/components/shared/ui';
+import { flattenProfileGridPages, useProfileGrid } from '@/hooks/queries/profile';
+import { getUserFacingErrorMessage } from '@/lib/api';
 
 type Props = {
   username: string;
@@ -70,7 +71,7 @@ export function ProfileMediaGrid({
   if (isError) {
     return (
       <div className="space-y-3 px-4 py-8 text-center">
-        <p className="text-muted-foreground text-sm">{error.message}</p>
+        <p className="text-muted-foreground text-sm">{getUserFacingErrorMessage(error)}</p>
         <Button variant="secondary" size="md" onClick={() => void refetch()}>
           Thử lại
         </Button>

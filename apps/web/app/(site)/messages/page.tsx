@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 
 import { MessagesSsrFallback } from '@/components/messages/messages-ssr-fallback';
 import { MessagesView } from '@/components/messages/messages-view';
-import { ClientOnly } from '@/components/shared/client-only';
+import { ClientOnly } from '@/components/shared/ui';
 
 export const metadata: Metadata = {
   title: 'Tin nhắn',

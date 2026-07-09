@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import type { ReelsLayoutMode } from '../reels-layout.utils';
 
-import { Avatar } from '@/components/shared/avatar';
+import { Avatar } from '@/components/shared/ui';
 import { cn } from '@/lib/utils';
 
 type Props = {

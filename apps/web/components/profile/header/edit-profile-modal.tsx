@@ -6,13 +6,12 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { Avatar } from '@/components/shared/avatar';
-import { Modal } from '@/components/shared/modal';
-import { useUpdateMyProfile } from '@/hooks/queries/use-update-profile';
-import { authClient } from '@/lib/auth-client';
-import { emitAvatarUpdated } from '@/lib/profile-image-sync';
-import { queryKeys } from '@/lib/query-keys';
-import { uploadProfileImage } from '@/lib/update-profile';
+import { Avatar, Modal } from '@/components/shared/ui';
+import { useUpdateMyProfile } from '@/hooks/queries/profile';
+import { uploadProfileImage } from '@/lib/api';
+import { authClient } from '@/lib/auth';
+import { emitAvatarUpdated } from '@/lib/events';
+import { queryKeys } from '@/lib/query';
 import { cn } from '@/lib/utils';
 
 type Props = {

@@ -4,16 +4,20 @@
 
 import { prisma } from '@costy/db';
 
+import { blockedUsersWhere, getBlockedRelatedUserIds } from '../../lib/blocks/block-utils.js';
+
 /**
  * Tìm kiếm user theo username hoặc name (case-insensitive).
  * Loại chính viewer khỏi kết quả; trả tối đa 60 kết quả sắp xếp theo username.
  */
 export async function listUsersForPicker(viewerId: string, q?: string) {
   const needle = q?.trim();
+  const blockedIds = await getBlockedRelatedUserIds(viewerId);
+  const excludeIds = [viewerId, ...blockedIds];
   return prisma.user.findMany({
     where: {
       deletedAt: null,
-      id: { not: viewerId },
+      ...blockedUsersWhere(excludeIds),
       ...(needle
         ? {
             OR: [

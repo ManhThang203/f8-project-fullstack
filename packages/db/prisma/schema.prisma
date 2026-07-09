@@ -247,11 +247,7 @@ model User {
   email         String?   @unique
   /// Better Auth expects boolean; do not use DateTime here.
   emailVerified Boolean   @default(false)
-  phone         String?   @unique
-  phoneVerified DateTime?
   username      String    @unique
-  /// Bcrypt hash for password login; null if user only uses OAuth/other providers.
-  passwordHash  String?
   name          String?
   bio           String?
   image         String?
@@ -270,6 +266,8 @@ model User {
   lastSeenAt         DateTime?
   /// Cho phép người khác thấy trạng thái online / last seen trong chat 1-1.
   showActivityStatus Boolean   @default(true)
+  /// Tùy chọn nhận thông báo theo loại sự kiện (JSON).
+  notificationPreferences Json?
 
   posts         Post[]         @relation("PostAuthor")
   likes         PostLike[]
@@ -302,6 +300,9 @@ model User {
   userPermissions        UserPermission[] @relation("UserPermissionTarget")
   permissionsGranted     UserPermission[] @relation("UserPermissionGrantedBy")
   adminAuditLogs         AdminAuditLog[]  @relation("AdminAuditActor")
+
+  blocksSent     UserBlock[] @relation("UserBlocksSent")
+  blocksReceived UserBlock[] @relation("UserBlocksReceived")
 
   @@index([deletedAt])
   @@index([role])
@@ -616,6 +617,21 @@ model Notification {
   @@index([recipientId, createdAt(sort: Desc)])
   @@index([recipientId, readAt])
   @@map("notifications")
+}
+
+model UserBlock {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker User @relation("UserBlocksSent", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("UserBlocksReceived", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+  @@map("user_blocks")
 }
 
 model Session {

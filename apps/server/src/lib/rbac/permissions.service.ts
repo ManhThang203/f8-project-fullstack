@@ -42,6 +42,55 @@ export async function resolveEffectivePermissions(userId: string, role: Role): P
   return [...defaults];
 }
 
+/** Tính quyền hiệu lực cho nhiều user cùng lúc (batch) — tránh N+1 khi liệt kê moderator. */
+export async function resolveEffectivePermissionsBatch(
+  users: { id: string; role: Role }[],
+): Promise<Map<string, string[]>> {
+  const result = new Map<string, string[]>();
+  if (users.length === 0) return result;
+
+  const normalUsers: { id: string; role: Role }[] = [];
+  for (const u of users) {
+    if (hasWildcardRole(u.role)) result.set(u.id, ['*']);
+    else normalUsers.push(u);
+  }
+  if (normalUsers.length === 0) return result;
+
+  const roles = [...new Set(normalUsers.map((u) => u.role))];
+  const rolePerms = await prisma.rolePermission.findMany({
+    where: { role: { in: roles } },
+    include: { permission: { select: { key: true } } },
+  });
+  const roleDefaults = new Map<Role, Set<string>>();
+  for (const rp of rolePerms) {
+    const set = roleDefaults.get(rp.role) ?? new Set<string>();
+    set.add(rp.permission.key);
+    roleDefaults.set(rp.role, set);
+  }
+
+  const overrides = await prisma.userPermission.findMany({
+    where: { userId: { in: normalUsers.map((u) => u.id) } },
+    include: { permission: { select: { key: true } } },
+  });
+  const overridesByUser = new Map<string, typeof overrides>();
+  for (const o of overrides) {
+    const list = overridesByUser.get(o.userId) ?? [];
+    list.push(o);
+    overridesByUser.set(o.userId, list);
+  }
+
+  for (const u of normalUsers) {
+    const perms = new Set(roleDefaults.get(u.role) ?? []);
+    for (const o of overridesByUser.get(u.id) ?? []) {
+      if (o.effect === 'GRANT') perms.add(o.permission.key);
+      if (o.effect === 'REVOKE') perms.delete(o.permission.key);
+    }
+    result.set(u.id, [...perms]);
+  }
+
+  return result;
+}
+
 /** Đọc auth context từ cache Redis hoặc DB. */
 export async function getAuthContext(userId: string): Promise<AuthContext | null> {
   const cacheKey = `${PERM_CACHE_PREFIX}${userId}`;

@@ -63,7 +63,7 @@ function MediaPreview({
   const [errored, setErrored] = useState(false);
 
   if (!url.trim() || errored) {
-    return <div className={cn('bg-muted min-h-[120px] w-full rounded-xl', className)} aria-hidden />;
+    return <div className={cn('bg-muted min-h-[120px] w-full rounded-2xl', className)} aria-hidden />;
   }
 
   if (type === 'video') {
@@ -185,9 +185,9 @@ export function PostMediaCarousel(props: Props) {
     return (
       <motion.div
         className={cn(
-          'bg-muted relative overflow-hidden rounded-xl',
+          'bg-muted relative overflow-hidden rounded-2xl',
           isCompactEditable
-            ? 'mt-2 h-20 w-20 shrink-0'
+            ? 'mt-2 h-20 w-20 shrink-0 rounded-lg'
             : 'mt-3 flex w-full justify-center',
         )}
       >
@@ -200,7 +200,7 @@ export function PostMediaCarousel(props: Props) {
           width={item.data.width}
           height={item.data.height}
           className={cn(
-            isCompactEditable ? 'h-20 w-20 rounded-lg object-cover' : 'rounded-xl',
+            isCompactEditable ? 'h-20 w-20 rounded-lg object-cover' : 'rounded-2xl',
             props.mode === 'feed'
               ? mediaType === 'video'
                 ? 'w-full'
@@ -213,7 +213,7 @@ export function PostMediaCarousel(props: Props) {
         {isDraft && draft && (
           <>
             {draft.status === 'uploading' && (
-              <div className="absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-xl bg-black/20">
+              <div className="absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-2xl bg-black/20">
                 <div
                   className="bg-primary h-full transition-[width] duration-200"
                   style={{ width: `${draft.progress}%` }}
@@ -253,8 +253,8 @@ export function PostMediaCarousel(props: Props) {
       <div
         key={key}
         className={cn(
-          'bg-muted relative shrink-0 overflow-hidden rounded-xl',
-          isCompactEditable && 'h-20 w-20',
+          'bg-muted relative shrink-0 overflow-hidden rounded-2xl',
+          isCompactEditable && 'h-20 w-20 rounded-lg',
         )}
       >
         <MediaPreview
@@ -267,7 +267,7 @@ export function PostMediaCarousel(props: Props) {
           height={item.data.height}
           className={
             props.mode === 'feed' && mediaType === 'video'
-              ? 'w-full rounded-xl'
+              ? 'w-full rounded-2xl'
               : isCompactEditable
                 ? 'h-20 w-20 select-none rounded-lg object-cover'
                 : props.mode === 'editable'

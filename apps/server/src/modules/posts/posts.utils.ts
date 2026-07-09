@@ -1,5 +1,7 @@
 import { AppError } from '../../lib/errors.js';
 
+export { encodeCursor, decodeCursor } from '../../lib/pagination/cursor.js';
+
 export const IMAGE_MAX_BYTES = 10 * 1024 * 1024; // 10MB
 export const VIDEO_MAX_BYTES = 500 * 1024 * 1024; // 500MB
 export const MAX_IMAGES = 10; // 10 ảnh
@@ -9,27 +11,6 @@ export const MAX_VIDEOS = 1; // 1 video
 const IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 // MIME types cho video
 const VIDEO_MIMES = new Set(['video/mp4', 'video/quicktime']);
-
-// Mã base64url → một chuỗi an toàn đưa lên URL/query (?cursor=...).
-export function encodeCursor(createdAt: Date, id: string): string {
-  return Buffer.from(JSON.stringify({ t: createdAt.toISOString(), id }), 'utf8').toString(
-    'base64url',
-  );
-}
-
-// base64url → { createdAt: Date, id: string }
-export function decodeCursor(cursor: string): { createdAt: Date; id: string } {
-  try {
-    const raw = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as {
-      t?: string;
-      id?: string;
-    };
-    if (!raw.t || !raw.id) throw new Error('invalid cursor shape');
-    return { createdAt: new Date(raw.t), id: raw.id };
-  } catch {
-    throw AppError.badRequest('Invalid cursor');
-  }
-}
 
 // Kiểm tra xem MIME type có phải là ảnh không
 export function isImageMime(mime: string): boolean {

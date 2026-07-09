@@ -7,10 +7,11 @@ import { toast } from 'sonner';
 import { SiteHeaderCompact } from './site-header-compact';
 import { SiteHeaderDesktop } from './site-header-desktop';
 
-import { authClient } from '@/lib/auth-client';
-import type { ServerAuthUser } from '@/lib/auth-user.types';
-import { resetChatSocket } from '@/lib/chat-socket';
-import { subscribeAvatarUpdated } from '@/lib/profile-image-sync';
+import { useChatUnreadSync, useChatUnreadTotal } from '@/hooks/queries/chat';
+import { authClient, type ServerAuthUser } from '@/lib/auth';
+import { subscribeAvatarUpdated } from '@/lib/events';
+import { resetChatSocket } from '@/lib/socket';
+import { cn } from '@/lib/utils';
 
 type Props = {
   /** Session đọc trên server từ cookie + Express (đồng bộ với middleware). */
@@ -37,11 +38,6 @@ export function SiteHeader({ initialUser }: Props) {
   const [avatarOverride, setAvatarOverride] = useState<string | null>(null);
   /** Ngay sau signOut: hiện nav khách, không chờ RSC / nano store bắt kịp. */
   const [forceGuestNav, setForceGuestNav] = useState(false);
-  const chatUnreadTotal = 0; // TODO: fetch unread from query
-
-  useEffect(() => {
-    void refetch();
-  }, [pathname, refetch]);
 
   useEffect(() => subscribeAvatarUpdated(setAvatarOverride), []);
 
@@ -69,6 +65,9 @@ export function SiteHeader({ initialUser }: Props) {
     return { ...me, image: avatarOverride ?? me.image };
   }, [me, avatarOverride]);
 
+  useChatUnreadSync(Boolean(me));
+  const chatUnreadTotal = useChatUnreadTotal(Boolean(me));
+
   async function onLogout() {
     setLoggingOut(true);
     setForceGuestNav(true);
@@ -88,6 +87,9 @@ export function SiteHeader({ initialUser }: Props) {
       }
       resetChatSocket();
       await refetch();
+      if (pathname !== '/') {
+        router.replace('/');
+      }
       router.refresh();
     } catch {
       setForceGuestNav(false);
@@ -104,8 +106,15 @@ export function SiteHeader({ initialUser }: Props) {
     onLogout: () => void onLogout(),
   };
 
+  const hideOnMobileTablet = pathname.startsWith('/reel');
+
   return (
-    <header className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-50 border-b backdrop-blur-sm">
+    <header
+      className={cn(
+        'border-border bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-50 border-b backdrop-blur-sm',
+        hideOnMobileTablet && 'hidden lg:block',
+      )}
+    >
       <SiteHeaderDesktop
         className="hidden w-full lg:flex"
         pathname={pathname}

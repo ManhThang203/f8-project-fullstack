@@ -2,7 +2,7 @@
 
 import type { PostFeedItemDto } from '@costy/shared';
 
-import { PostCard } from '../post/post-card';
+import { PostCard } from '@/components/home/post/card';
 import '@aejkatappaja/phantom-ui';
 
 const fakePostNoMedia: PostFeedItemDto = {

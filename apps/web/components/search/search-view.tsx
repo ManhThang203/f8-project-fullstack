@@ -7,14 +7,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { PostCard } from '@/components/home/post/post-card';
-import { Avatar } from '@/components/shared/avatar';
-import { Button } from '@/components/shared/button';
+import { PostCard } from '@/components/home/post/card';
+import { Avatar, Button } from '@/components/shared/ui';
 import {
   useSearchHashtags,
   useSearchPosts,
   useSearchUsers,
-} from '@/hooks/queries/use-search-queries';
+} from '@/hooks/queries/search';
 import { cn } from '@/lib/utils';
 
 type SearchTab = 'posts' | 'users' | 'hashtags';

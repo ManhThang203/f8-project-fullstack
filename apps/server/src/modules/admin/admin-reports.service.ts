@@ -1,138 +1,28 @@
-import { prisma } from '@costy/db';
-import type { ReportReason, ReportTargetType } from '@costy/db';
+import { prisma, type Prisma } from '@costy/db';
 import type {
   AdminReportDto,
   AdminReportDetailDto,
-  CreateReportBody,
   AdminReportListQuery,
   AdminReportReview,
-  AdminReportAction,
+  CreateReportBody,
 } from '@costy/shared';
 
-import { REPORT_CONFIG } from '../../config/report.config.js';
 import { writeAuditLog } from '../../lib/admin/audit.service.js';
+import {
+  createdCursorOrderBy,
+  createdCursorWhere,
+  encodeCreatedCursor,
+} from '../../lib/admin/cursor.js';
 import { AppError } from '../../lib/errors.js';
-import { createNotification } from '../notifications/notifications.service.js';
-import { patchAdminUserStatus } from './admin-users.service.js';
+
+import {
+  countTargetReports,
+  runAntiAbuseCheck,
+} from './admin-reports.helpers.js';
+import { mapReport } from './admin-reports.mapper.js';
 import { invalidateStatsCache } from './admin-stats.service.js';
 
-// ─────────────────────────────────────────────
-// Mapper
-// ─────────────────────────────────────────────
-
-function mapReport(r: {
-  id: string;
-  reporterId: string;
-  targetType: string;
-  targetId: string;
-  reason: string;
-  description: string | null;
-  status: string;
-  reviewedById: string | null;
-  reviewedAt: Date | null;
-  resolutionNote: string | null;
-  createdAt: Date;
-  reporter?: { id: string; username: string; name: string | null; image: string | null };
-  reportCount?: number;
-  targetPreview?: string | null;
-}): AdminReportDto {
-  return {
-    id: r.id,
-    reporterId: r.reporterId,
-    targetType: r.targetType as AdminReportDto['targetType'],
-    targetId: r.targetId,
-    reason: r.reason as AdminReportDto['reason'],
-    description: r.description,
-    status: r.status as AdminReportDto['status'],
-    reviewedById: r.reviewedById,
-    reviewedAt: r.reviewedAt?.toISOString() ?? null,
-    resolutionNote: r.resolutionNote,
-    createdAt: r.createdAt.toISOString(),
-    reporter: r.reporter,
-    reportCount: r.reportCount,
-    targetPreview: r.targetPreview,
-  };
-}
-
-// ─────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────
-
-/** Đếm số reports trên một target (dùng cho priority queue). */
-async function countTargetReports(
-  targetType: ReportTargetType,
-  targetId: string,
-  reason?: ReportReason,
-): Promise<number> {
-  return prisma.report.count({
-    where: {
-      targetType,
-      targetId,
-      ...(reason ? { reason } : {}),
-    },
-  });
-}
-
-/**
- * Kiểm tra anti-abuse: reporter có quá nhiều reports bị DISMISSED trong ngày?
- * Nếu vượt ngưỡng → ghi audit log cảnh báo (vẫn cho tạo report).
- */
-async function runAntiAbuseCheck(reporterId: string): Promise<void> {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const dismissedCount = await prisma.report.count({
-    where: {
-      reporterId,
-      status: 'DISMISSED',
-      createdAt: { gte: today },
-    },
-  });
-
-  if (dismissedCount >= REPORT_CONFIG.antiAbuseDailyLimit) {
-    await writeAuditLog({
-      actorId: 'SYSTEM',
-      action: 'REPORT_ABUSE_FLAG',
-      targetType: 'USER',
-      targetId: reporterId,
-      metadata: {
-        dismissedToday: dismissedCount,
-        limit: REPORT_CONFIG.antiAbuseDailyLimit,
-      },
-    });
-  }
-}
-
-/**
- * Batch-resolve tất cả reports đang mở trên cùng target
- * sau khi admin đã xử lý xong (giống Facebook — tránh xử lý lại).
- */
-async function batchResolveRelatedReports(
-  targetType: ReportTargetType,
-  targetId: string,
-  excludeReportId: string,
-  actorId: string,
-  resolutionNote: string,
-): Promise<void> {
-  await prisma.report.updateMany({
-    where: {
-      targetType,
-      targetId,
-      status: { in: ['PENDING', 'UNDER_REVIEW', 'AUTO_HIDDEN'] },
-      id: { not: excludeReportId },
-    },
-    data: {
-      status: 'RESOLVED',
-      reviewedById: actorId,
-      reviewedAt: new Date(),
-      resolutionNote: `[Batch resolved] ${resolutionNote}`,
-    },
-  });
-}
-
-// ─────────────────────────────────────────────
-// Public API
-// ─────────────────────────────────────────────
+export { executeReportAction } from './admin-reports.actions.service.js';
 
 /** User gửi báo cáo vi phạm. */
 export async function createReport(
@@ -191,56 +81,78 @@ export async function listAdminReports(
 ): Promise<{ items: AdminReportDto[]; nextCursor: string | null }> {
   const take = query.limit + 1;
   const openQueueStatuses = ['PENDING', 'UNDER_REVIEW', 'AUTO_HIDDEN'] as const;
-  const where = {
+  const and: Prisma.ReportWhereInput[] = [
     ...(query.queue === 'open'
-      ? { status: { in: [...openQueueStatuses] } }
+      ? [{ status: { in: [...openQueueStatuses] } }]
       : query.status
-        ? { status: query.status }
-        : {}),
-    ...(query.targetType ? { targetType: query.targetType } : {}),
-    ...(query.reason ? { reason: query.reason } : {}),
-    ...(query.cursor ? { id: { lt: query.cursor } } : {}),
+        ? [{ status: query.status }]
+        : []),
+    ...(query.targetType ? [{ targetType: query.targetType }] : []),
+    ...(query.reason ? [{ reason: query.reason }] : []),
     ...(query.from || query.to
-      ? {
-          createdAt: {
-            ...(query.from ? { gte: new Date(query.from) } : {}),
-            ...(query.to ? { lte: new Date(query.to) } : {}),
+      ? [
+          {
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
           },
-        }
-      : {}),
-  };
+        ]
+      : []),
+  ];
+  const cursorWhere = createdCursorWhere(query.cursor);
+  if (cursorWhere) and.push(cursorWhere);
 
   const rows = await prisma.report.findMany({
-    where,
-    orderBy: { createdAt: 'desc' },
+    where: and.length ? { AND: and } : undefined,
+    orderBy: createdCursorOrderBy,
     take,
     include: {
       reporter: { select: { id: true, username: true, name: true, image: true } },
     },
   });
 
-  const enriched = await Promise.all(
-    rows.map(async (r) => {
-      const reportCount = await countTargetReports(r.targetType, r.targetId);
-      let targetPreview: string | null = null;
-      if (r.targetType === 'POST') {
-        const post = await prisma.post.findUnique({
-          where: { id: r.targetId },
-          select: { content: true },
-        });
-        targetPreview = post?.content?.slice(0, 120) ?? null;
-      }
-      return { ...mapReport(r), reportCount, targetPreview };
-    }),
+  const hasMore = rows.length > query.limit;
+  const pageRows = hasMore ? rows.slice(0, query.limit) : rows;
+  // Lấy row cuối cùng của trang hiện tại
+  const lastRaw = hasMore ? rows[query.limit - 1] : null;
+  // Encode cursor từ row cuối cùng
+  const nextCursor = lastRaw ? encodeCreatedCursor(lastRaw) : null;
+
+  // Batch: đếm reportCount theo target (groupBy) và lấy preview post (IN) trong 2 query cố định
+  const targetIds = [...new Set(pageRows.map((r) => r.targetId))];
+  const countGroups = targetIds.length
+    ? await prisma.report.groupBy({
+        by: ['targetType', 'targetId'],
+        where: { targetId: { in: targetIds } },
+        _count: { _all: true },
+      })
+    : [];
+  const countMap = new Map(
+    countGroups.map((g) => [`${g.targetType}:${g.targetId}`, g._count._all]),
   );
 
-  // Sort by reportCount desc (priority cao lên đầu) sau khi đã enrich
-  enriched.sort((a, b) => (b.reportCount ?? 0) - (a.reportCount ?? 0));
+  const postIds = [
+    ...new Set(pageRows.filter((r) => r.targetType === 'POST').map((r) => r.targetId)),
+  ];
+  const posts = postIds.length
+    ? await prisma.post.findMany({
+        where: { id: { in: postIds } },
+        select: { id: true, content: true },
+      })
+    : [];
+  const postContentMap = new Map(posts.map((p) => [p.id, p.content]));
 
-  const hasMore = enriched.length > query.limit;
-  const page = hasMore ? enriched.slice(0, query.limit) : enriched;
-  const nextCursor = hasMore && page.length ? page[page.length - 1]!.id : null;
-  return { items: page, nextCursor };
+  const enriched = pageRows.map((r) => {
+    const reportCount = countMap.get(`${r.targetType}:${r.targetId}`) ?? 0;
+    const targetPreview =
+      r.targetType === 'POST' ? (postContentMap.get(r.targetId)?.slice(0, 120) ?? null) : null;
+    return { ...mapReport(r), reportCount, targetPreview };
+  });
+
+  // Không re-sort theo reportCount trong bộ nhớ: cursor phân trang dựa trên thứ tự
+  // createdAt/id của DB, re-sort chỉ trong 1 trang sẽ làm queue lệch cursor (trùng/thiếu).
+  return { items: enriched, nextCursor };
 }
 
 /** Chi tiết một báo cáo — kèm related reports, target content, audit logs. */
@@ -356,202 +268,6 @@ export async function reviewReport(
       newStatus: body.status,
       resolutionNote: body.resolutionNote ?? null,
     },
-  });
-
-  return mapReport(updated);
-}
-
-/** Admin thực thi hành động kiểm duyệt — ẩn/xóa bài, warn/ban user. */
-export async function executeReportAction(
-  actorId: string,
-  reportId: string,
-  body: AdminReportAction,
-): Promise<AdminReportDto> {
-  const report = await prisma.report.findUnique({ where: { id: reportId } });
-  if (!report) throw AppError.notFound('Không tìm thấy báo cáo');
-
-  const auditAction = body.action;
-  let auditMetadata: Record<string, unknown> = {
-    reportId,
-    targetType: report.targetType,
-    targetId: report.targetId,
-    resolutionNote: body.resolutionNote,
-  };
-
-  // ── Xử lý theo action ──────────────────────────────────
-
-  if (body.action === 'DISMISS') {
-    // Không có side-effect — chỉ update status
-    auditMetadata = {
-      ...auditMetadata,
-      reporterUsername: report.reporterId,
-    };
-  }
-
-  if (body.action === 'HIDE_POST' || body.action === 'DELETE_POST') {
-    if (report.targetType !== 'POST') {
-      throw AppError.badRequest('Action này chỉ áp dụng cho báo cáo bài viết');
-    }
-    const post = await prisma.post.findUnique({
-      where: { id: report.targetId },
-      select: { id: true, authorId: true, content: true },
-    });
-    if (!post) throw AppError.notFound('Bài viết không tồn tại');
-
-    if (body.action === 'HIDE_POST') {
-      await prisma.post.update({
-        where: { id: post.id },
-        data: { hiddenAt: new Date() },
-      });
-      auditMetadata = {
-        ...auditMetadata,
-        postId: post.id,
-        postAuthorId: post.authorId,
-        previousState: { hiddenAt: null },
-        reportCount: await countTargetReports(report.targetType, report.targetId),
-      };
-    }
-
-    if (body.action === 'DELETE_POST') {
-      await prisma.post.update({
-        where: { id: post.id },
-        data: { deletedAt: new Date() },
-      });
-      auditMetadata = {
-        ...auditMetadata,
-        postId: post.id,
-        postAuthorId: post.authorId,
-        // Lưu lại content để audit trail
-        postContent: post.content.slice(0, 500),
-        reportCount: await countTargetReports(report.targetType, report.targetId),
-      };
-    }
-  }
-
-  if (body.action === 'WARN_USER') {
-    // Lấy targetUserId: nếu report POST → authorId; nếu report USER → targetId
-    let warnedUserId = report.targetId;
-    if (report.targetType === 'POST') {
-      const post = await prisma.post.findUnique({
-        where: { id: report.targetId },
-        select: { authorId: true },
-      });
-      if (!post) throw AppError.notFound('Bài viết không tồn tại');
-      warnedUserId = post.authorId;
-    }
-
-    const warnedUser = await prisma.user.findUnique({
-      where: { id: warnedUserId },
-      select: { id: true, username: true },
-    });
-
-    // Đếm số warning từ audit logs
-    const warningCount = await prisma.adminAuditLog.count({
-      where: { action: 'WARN_USER', targetType: 'USER', targetId: warnedUserId },
-    });
-
-    // Gửi notification cảnh báo cho user vi phạm
-    const warnNotification = await createNotification({
-      recipientId: warnedUserId,
-      actorId,
-      type: 'SYSTEM',
-      entityType: 'REPORT',
-      entityId: reportId,
-    });
-
-    auditMetadata = {
-      ...auditMetadata,
-      warnedUserId,
-      warnedUsername: warnedUser?.username ?? null,
-      warningCount: warningCount + 1,
-      notificationId: warnNotification.id,
-    };
-  }
-
-  if (body.action === 'BAN_ACCOUNT') {
-    let bannedUserId = report.targetId;
-    if (report.targetType === 'POST') {
-      const post = await prisma.post.findUnique({
-        where: { id: report.targetId },
-        select: { authorId: true },
-      });
-      if (!post) throw AppError.notFound('Bài viết không tồn tại');
-      bannedUserId = post.authorId;
-    }
-
-    const bannedUser = await prisma.user.findUnique({
-      where: { id: bannedUserId },
-      select: { id: true, username: true, status: true },
-    });
-
-    const totalReports = await countTargetReports(report.targetType, bannedUserId);
-
-    await patchAdminUserStatus(actorId, bannedUserId, {
-      action: body.bannedUntil ? 'ban_temp' : 'ban_perm',
-      reason: body.resolutionNote,
-      bannedUntil: body.bannedUntil,
-    });
-
-    auditMetadata = {
-      ...auditMetadata,
-      bannedUserId,
-      bannedUsername: bannedUser?.username ?? null,
-      previousStatus: bannedUser?.status ?? null,
-      banType: body.bannedUntil ? 'temporary' : 'permanent',
-      bannedUntil: body.bannedUntil ?? null,
-      totalReportsAgainst: totalReports,
-    };
-  }
-
-  // ── Cập nhật report status ──────────────────────────
-
-  const finalStatus = body.action === 'DISMISS' ? 'DISMISSED' : 'RESOLVED';
-
-  const updated = await prisma.report.update({
-    where: { id: reportId },
-    data: {
-      status: finalStatus,
-      reviewedById: actorId,
-      reviewedAt: new Date(),
-      resolutionNote: body.resolutionNote,
-    },
-    include: {
-      reporter: { select: { id: true, username: true, name: true, image: true } },
-    },
-  });
-
-  // ── Batch resolve related reports ──────────────────
-
-  if (body.action !== 'DISMISS') {
-    await batchResolveRelatedReports(
-      report.targetType,
-      report.targetId,
-      reportId,
-      actorId,
-      body.resolutionNote,
-    );
-  }
-
-  await invalidateStatsCache();
-
-  // ── Ghi audit log ──────────────────────────────────
-
-  await writeAuditLog({
-    actorId,
-    action: auditAction,
-    targetType: 'REPORT',
-    targetId: reportId,
-    metadata: auditMetadata,
-  });
-
-  // ── Notification cho reporter ───────────────────────
-
-  await createNotification({
-    recipientId: report.reporterId,
-    actorId,
-    type: 'REPORT_RESOLVED',
-    entityType: 'REPORT',
-    entityId: reportId,
   });
 
   return mapReport(updated);

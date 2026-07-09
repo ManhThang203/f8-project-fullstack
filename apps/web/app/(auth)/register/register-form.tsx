@@ -12,8 +12,8 @@ import type { z } from 'zod';
 
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 import { PasswordInput } from '@/components/auth/password-input';
-import { authClient } from '@/lib/auth-client';
-import { sanitizeReturnTo } from '@/lib/auth-guard';
+import { authClient } from '@/lib/auth';
+import { sanitizeReturnTo } from '@/lib/server/auth-guard';
 import { cn } from '@/lib/utils';
 
 const inputClass = cn(
@@ -108,9 +108,11 @@ export function RegisterForm() {
 
   async function onSubmit(data: RegisterFormValues) {
     const name = (data.name?.trim() || data.username).trim() || 'Người dùng';
-    const nextQ =
-      nextParam != null && nextParam !== '' ? `?next=${encodeURIComponent(nextParam)}` : '';
-    const callbackURL = `${window.location.origin}/verify-email${nextQ}`;
+    const callbackParams = new URLSearchParams({ verified: '1' });
+    if (nextParam != null && nextParam !== '') {
+      callbackParams.set('next', nextParam);
+    }
+    const callbackURL = `${window.location.origin}/verify-email?${callbackParams.toString()}`;
 
     const res = await authClient.signUp.email({
       email: data.email,

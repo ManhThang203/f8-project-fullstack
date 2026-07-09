@@ -122,6 +122,26 @@
     border: 2px solid transparent;
     background-clip: padding-box;
   }
+
+  /* datetime-local: icon lịch native theo theme sáng/tối */
+  .datetime-input {
+    color-scheme: light;
+  }
+
+  .dark .datetime-input {
+    color-scheme: dark;
+  }
+
+  .datetime-input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.75;
+    transition: opacity 150ms;
+  }
+
+  .datetime-input:hover::-webkit-calendar-picker-indicator,
+  .datetime-input:focus-visible::-webkit-calendar-picker-indicator {
+    opacity: 1;
+  }
 }
 
 

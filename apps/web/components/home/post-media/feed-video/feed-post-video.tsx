@@ -5,8 +5,8 @@ import { useMemo, useRef } from 'react';
 
 import { FeedVideoControlBar } from './feed-video-control-bar';
 
-import { useFeedPostVideo } from '@/hooks/use-feed-post-video';
-import { markUnmuteOnEntry } from '@/lib/reels-entry-intent';
+import { useFeedPostVideo } from '@/hooks/post';
+import { markUnmuteOnEntry } from '@/lib/post';
 import { cn } from '@/lib/utils';
 
 const DRAG_THRESHOLD_PX = 8;

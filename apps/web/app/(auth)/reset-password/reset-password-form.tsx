@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import type { z } from 'zod';
 
 import { PasswordInput } from '@/components/auth/password-input';
-import { authClient } from '@/lib/auth-client';
+import { authClient } from '@/lib/auth';
 
 const inputClass =
   'w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring';

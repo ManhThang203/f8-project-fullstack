@@ -14,7 +14,6 @@ export const logger = pino({
       'req.headers.cookie',
       '*.password',
       '*.token',
-      '*.phone',
       '*.otp',
     ],
     censor: '[REDACTED]',

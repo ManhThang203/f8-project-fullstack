@@ -1,12 +1,18 @@
-import { prisma } from '@costy/db';
+import { prisma, type Prisma } from '@costy/db';
 import type { AdminModeratorDto, AdminPermissionDto, Role } from '@costy/shared';
 
 import { writeAuditLog } from '../../lib/admin/audit.service.js';
+import {
+  createdCursorOrderBy,
+  createdCursorWhere,
+  encodeCreatedCursor,
+} from '../../lib/admin/cursor.js';
 import { AppError } from '../../lib/errors.js';
 import { ROLE_DEFAULT_PERMISSIONS } from '../../lib/rbac/permission-catalog.js';
 import {
   invalidateUserPermissionCache,
   resolveEffectivePermissions,
+  resolveEffectivePermissionsBatch,
 } from '../../lib/rbac/permissions.service.js';
 
 /** Danh sách moderator/admin trong hệ thống, phân trang cursor. */
@@ -15,13 +21,15 @@ export async function listModerators(query: {
   limit: number;
 }): Promise<{ items: AdminModeratorDto[]; nextCursor: string | null }> {
   const take = query.limit + 1;
+  const cursorWhere = createdCursorWhere(query.cursor);
+  const and: Prisma.UserWhereInput[] = [
+    { role: { in: ['MODERATOR', 'ADMIN', 'SUPER_ADMIN'] } },
+    { deletedAt: null },
+    ...(cursorWhere ? [cursorWhere] : []),
+  ];
   const users = await prisma.user.findMany({
-    where: {
-      role: { in: ['MODERATOR', 'ADMIN', 'SUPER_ADMIN'] },
-      deletedAt: null,
-      ...(query.cursor ? { id: { lt: query.cursor } } : {}),
-    },
-    orderBy: { createdAt: 'desc' },
+    where: { AND: and },
+    orderBy: createdCursorOrderBy,
     take,
     include: {
       userPermissions: {
@@ -32,25 +40,29 @@ export async function listModerators(query: {
     },
   });
 
-  const all = await Promise.all(
-    users.map(async (u) => {
-      const perms = await resolveEffectivePermissions(u.id, u.role);
-      const latest = u.userPermissions[0];
-      return {
-        id: u.id,
-        username: u.username,
-        name: u.name,
-        role: u.role as Role,
-        permissionCount: perms.includes('*') ? 999 : perms.length,
-        grantedAt: latest?.createdAt.toISOString() ?? null,
-        grantedBy: latest?.grantedBy ?? null,
-      };
-    }),
+  // Batch: tính quyền hiệu lực cho tất cả user trong ít query cố định thay vì mỗi user 2 query
+  const permsMap = await resolveEffectivePermissionsBatch(
+    users.map((u) => ({ id: u.id, role: u.role })),
   );
+  const all = users.map((u) => {
+    const perms = permsMap.get(u.id) ?? [];
+    const latest = u.userPermissions[0];
+    return {
+      id: u.id,
+      username: u.username,
+      name: u.name,
+      role: u.role as Role,
+      permissionCount: perms.includes('*') ? 999 : perms.length,
+      grantedAt: latest?.createdAt.toISOString() ?? null,
+      grantedBy: latest?.grantedBy ?? null,
+    };
+  });
 
   const hasMore = all.length > query.limit;
   const items = hasMore ? all.slice(0, query.limit) : all;
-  const nextCursor = hasMore && items.length ? items[items.length - 1]!.id : null;
+  // nextCursor theo thứ tự DB (users gốc), không theo items đã slice
+  const lastRaw = hasMore ? users[query.limit - 1] : null;
+  const nextCursor = lastRaw ? encodeCreatedCursor(lastRaw) : null;
   return { items, nextCursor };
 }
 

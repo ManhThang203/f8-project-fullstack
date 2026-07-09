@@ -6,11 +6,9 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { Avatar } from '@/components/shared/avatar';
-import { Button } from '@/components/shared/button';
-import { flattenFollowListPages, useFollowList } from '@/hooks/queries/use-follow-list';
-import { useFollowMutation } from '@/hooks/queries/use-follow-mutation';
-import { useDebounced } from '@/hooks/use-debounced';
+import { Avatar, Button } from '@/components/shared/ui';
+import { flattenFollowListPages, useFollowList, useFollowMutation } from '@/hooks/queries/social';
+import { useDebounced } from '@/hooks/ui';
 import { cn } from '@/lib/utils';
 
 type Props = {

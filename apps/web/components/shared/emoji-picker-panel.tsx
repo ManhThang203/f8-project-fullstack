@@ -4,8 +4,7 @@ import { EmojiStyle, Theme } from 'emoji-picker-react';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState } from 'react';
 
-import { THREADS_EMOJI_CATEGORIES } from '@/lib/emoji-picker-categories';
-import { addRecentEmoji } from '@/lib/recent-emojis';
+import { addRecentEmoji, THREADS_EMOJI_CATEGORIES } from '@/lib/emoji';
 import { cn } from '@/lib/utils';
 
 const EmojiPickerReact = dynamic(() => import('emoji-picker-react').then((mod) => mod.default), {

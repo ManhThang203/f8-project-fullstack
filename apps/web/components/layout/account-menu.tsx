@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
-import { Avatar } from '@/components/shared/avatar';
-import { iconButtonClass } from '@/components/shared/icon-button';
+import { Avatar, iconButtonClass } from '@/components/shared/ui';
 import { cn } from '@/lib/utils';
 
 type Me = {

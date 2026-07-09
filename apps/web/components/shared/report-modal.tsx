@@ -4,10 +4,8 @@ import { Flag, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { Button } from './button';
-import { Modal } from './modal';
-
-import { apiFetch } from '@/lib/api-client';
+import { Button, Modal } from '@/components/shared/ui';
+import { apiFetch } from '@/lib/api';
 
 type ReportReason =
   | 'SPAM'

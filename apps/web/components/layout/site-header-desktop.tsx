@@ -9,9 +9,9 @@ import { type ReactNode } from 'react';
 import { AccountMenu } from './account-menu';
 import { NotificationDropdown } from './notification-dropdown';
 
-import { iconButtonClass } from '@/components/shared/icon-button';
-import { NotificationBadge } from '@/components/shared/notification-badge';
-import { handleHomeNavClick } from '@/lib/home-feed-refresh';
+import { iconButtonClass, NotificationBadge } from '@/components/shared/ui';
+import { useRequireAuth } from '@/hooks/use-require-auth';
+import { handleHomeNavClick } from '@/lib/events';
 import { cn } from '@/lib/utils';
 
 type AccountUser = {
@@ -36,18 +36,29 @@ function NavTab({
   label,
   isActive,
   onClick,
+  requiresAuth,
+  onAuthRequired,
   children,
 }: {
   href: string;
   label: string;
   isActive: boolean;
   onClick?: (e: React.MouseEvent) => void;
+  requiresAuth?: boolean;
+  onAuthRequired?: (href: string) => void;
   children: ReactNode;
 }) {
   return (
     <Link
       href={href}
-      onClick={onClick}
+      onClick={(e) => {
+        if (requiresAuth && onAuthRequired) {
+          e.preventDefault();
+          onAuthRequired(href);
+          return;
+        }
+        onClick?.(e);
+      }}
       aria-label={label}
       aria-current={isActive ? 'page' : undefined}
       title={label}
@@ -113,6 +124,12 @@ export function SiteHeaderDesktop({
   onLogout,
 }: Props) {
   const router = useRouter();
+  const { requireAuth } = useRequireAuth();
+
+  /** Chặn điều hướng protected khi khách — hiện toast đăng nhập thay vì redirect middleware. */
+  function handleProtectedNav(href: string) {
+    requireAuth({ next: href });
+  }
 
   return (
     <div
@@ -140,7 +157,9 @@ export function SiteHeaderDesktop({
             const form = e.currentTarget;
             const value = new FormData(form).get('q')?.toString().trim() ?? '';
             if (value.length >= 2) {
-              router.push(`/search?q=${encodeURIComponent(value)}`);
+              const searchPath = `/search?q=${encodeURIComponent(value)}`;
+              if (!requireAuth({ next: searchPath })) return;
+              router.push(searchPath);
               form.reset();
             }
           }}
@@ -173,14 +192,26 @@ export function SiteHeaderDesktop({
         >
           <Home className="h-6 w-6" strokeWidth={pathname === '/' ? 2.25 : 2} aria-hidden />
         </NavTab>
-        <NavTab href="/reels" label="Reels" isActive={pathname.startsWith('/reel')}>
+        <NavTab
+          href="/reels"
+          label="Reels"
+          isActive={pathname.startsWith('/reel')}
+          requiresAuth={!me}
+          onAuthRequired={handleProtectedNav}
+        >
           <Clapperboard
             className="h-6 w-6"
             strokeWidth={pathname.startsWith('/reel') ? 2.25 : 2}
             aria-hidden
           />
         </NavTab>
-        <NavTab href="/friends" label="Bạn bè" isActive={pathname.startsWith('/friends')}>
+        <NavTab
+          href="/friends"
+          label="Bạn bè"
+          isActive={pathname.startsWith('/friends')}
+          requiresAuth={!me}
+          onAuthRequired={handleProtectedNav}
+        >
           <UsersRound
             className="h-6 w-6"
             strokeWidth={pathname.startsWith('/friends') ? 2.25 : 2}

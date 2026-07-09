@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 
 import { ProfileSkeleton } from '@/components/profile/profile-skeleton';
 import { ProfileView } from '@/components/profile/profile-view';
-import { ClientOnly } from '@/components/shared/client-only';
-import { getServerSession } from '@/lib/auth-session.server';
+import { ClientOnly } from '@/components/shared/ui';
+import { getServerSession } from '@/lib/server/auth-session.server';
 
 type Props = {
   params: Promise<{ username: string }>;

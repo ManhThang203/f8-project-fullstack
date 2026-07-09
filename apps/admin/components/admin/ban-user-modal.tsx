@@ -223,7 +223,7 @@ export function BanUserModal({ isOpen, onClose, user }: Props) {
                     value={customDate}
                     onChange={(e) => setCustomDate(e.target.value)}
                     required
-                    className="border-border bg-background text-foreground focus:ring-ring flex h-10 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1"
+                    className="datetime-input border-border bg-background text-foreground focus:ring-ring flex h-10 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1"
                   />
                 </div>
               )}

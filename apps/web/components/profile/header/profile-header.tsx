@@ -3,7 +3,7 @@
 import type { ProfileDto } from '@costy/shared';
 
 import { formatJoinedDate } from '@/components/profile/profile-utils';
-import { Avatar } from '@/components/shared/avatar';
+import { Avatar } from '@/components/shared/ui';
 import { cn } from '@/lib/utils';
 
 type Props = {

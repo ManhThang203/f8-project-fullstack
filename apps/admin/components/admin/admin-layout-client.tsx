@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { AdminShell } from '@/components/admin/admin-shell';
 import { LoadingState } from '@/components/shared/loading-state';
 import { apiQuery } from '@/lib/api-query';
+import { getRequiredPermissionForPath, hasAdminPermission } from '@/lib/has-admin-permission';
 import { queryKeys } from '@/lib/query-keys';
 
 type MeResponse = {
@@ -48,6 +49,16 @@ export function AdminLayoutClient({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isError) router.replace('/login');
   }, [isError, router]);
+
+  /** Chuyển về tổng quan nếu vào route không có quyền (vd. MODERATOR mở /users). */
+  useEffect(() => {
+    if (!data?.data?.permissions) return;
+    const required = getRequiredPermissionForPath(pathname);
+    if (!required) return;
+    if (!hasAdminPermission(data.data.permissions, required)) {
+      router.replace('/');
+    }
+  }, [data?.data?.permissions, pathname, router]);
 
   // Update browser tab title on every route or language change
   useEffect(() => {

@@ -12,8 +12,8 @@ import type { z } from 'zod';
 
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 import { PasswordInput } from '@/components/auth/password-input';
-import { authClient } from '@/lib/auth-client';
-import { sanitizeReturnTo } from '@/lib/auth-guard';
+import { authClient } from '@/lib/auth';
+import { sanitizeReturnTo } from '@/lib/server/auth-guard';
 import { cn } from '@/lib/utils';
 
 const inputClass = cn(

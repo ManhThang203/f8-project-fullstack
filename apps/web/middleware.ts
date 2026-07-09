@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-import { hasBetterAuthSessionCookie, isPathPublic } from './lib/auth-guard';
+import { hasBetterAuthSessionCookie, isPathPublic } from './lib/server/auth-guard';
 
 function withPathname(request: NextRequest, response: NextResponse) {
   response.headers.set('x-pathname', request.nextUrl.pathname);

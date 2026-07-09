@@ -3,15 +3,26 @@
 import type { AdminUserListItemDto } from '@costy/shared';
 import { useTranslation } from 'react-i18next';
 
+import { isRoleChangeDisabled } from './users.utils';
+
 import { StatusBadge } from '@/components/admin/status-badge';
 import { Button } from '@/components/shared/button';
 
 type Props = {
   users: AdminUserListItemDto[];
+  canManageRole?: boolean;
+  currentUserId?: string;
   onManageStatus: (user: AdminUserListItemDto) => void;
+  onManageRole?: (user: AdminUserListItemDto) => void;
 };
 
-export function UsersCardList({ users, onManageStatus }: Props) {
+export function UsersCardList({
+  users,
+  canManageRole = false,
+  currentUserId,
+  onManageStatus,
+  onManageRole,
+}: Props) {
   const { t } = useTranslation();
 
   return (
@@ -37,13 +48,25 @@ export function UsersCardList({ users, onManageStatus }: Props) {
 
           <p className="text-muted-foreground truncate text-xs">{user.email ?? '—'}</p>
 
-          <Button
-            variant="secondary"
-            className="h-9 w-full text-xs"
-            onClick={() => onManageStatus(user)}
-          >
-            {t('users.manageStatus')}
-          </Button>
+          <div className="flex flex-col gap-2">
+            {canManageRole && onManageRole ? (
+              <Button
+                variant="secondary"
+                className="h-9 w-full text-xs"
+                disabled={isRoleChangeDisabled(user, currentUserId)}
+                onClick={() => onManageRole(user)}
+              >
+                {t('users.manageRole')}
+              </Button>
+            ) : null}
+            <Button
+              variant="secondary"
+              className="h-9 w-full text-xs"
+              onClick={() => onManageStatus(user)}
+            >
+              {t('users.manageStatus')}
+            </Button>
+          </div>
         </div>
       ))}
     </div>

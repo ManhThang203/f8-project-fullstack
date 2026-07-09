@@ -8,6 +8,8 @@ import type {
 } from '@costy/shared';
 
 import { AppError } from '../../lib/errors.js';
+import { assertUsersNotBlocked } from '../../lib/blocks/block-utils.js';
+import { decodeCursor, paginate } from '../../lib/pagination/cursor.js';
 import { createNotification } from '../notifications/notifications.service.js';
 
 type FriendUserRow = {
@@ -18,27 +20,6 @@ type FriendUserRow = {
 };
 
 const userSelect = { id: true, username: true, name: true, image: true } as const;
-
-/** Mã hoá cursor (createdAt + id) thành base64url an toàn cho URL. */
-function encodeCursor(createdAt: Date, id: string): string {
-  return Buffer.from(JSON.stringify({ t: createdAt.toISOString(), id }), 'utf8').toString(
-    'base64url',
-  );
-}
-
-/** Giải mã cursor; ném 400 nếu chuỗi không hợp lệ. */
-function decodeCursor(cursor: string): { createdAt: Date; id: string } {
-  try {
-    const raw = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as {
-      t?: string;
-      id?: string;
-    };
-    if (!raw.t || !raw.id) throw new Error('invalid cursor shape');
-    return { createdAt: new Date(raw.t), id: raw.id };
-  } catch {
-    throw AppError.badRequest('Invalid cursor');
-  }
-}
 
 /** Tìm quan hệ bạn bè giữa 2 user theo cả hai chiều (nếu có). */
 async function findFriendshipBetween(a: string, b: string) {
@@ -115,6 +96,8 @@ export async function sendFriendRequest(
     throw AppError.notFound('Không tìm thấy người dùng này');
   }
 
+  await assertUsersNotBlocked(requesterId, addresseeId);
+
   const existing = await findFriendshipBetween(requesterId, addresseeId);
 
   if (existing) {
@@ -177,6 +160,8 @@ export async function acceptFriendRequest(
     where: { requesterId: otherId, addresseeId: meId, status: DbFriendStatus.PENDING },
   });
   if (!row) throw AppError.notFound('Không tìm thấy lời mời kết bạn');
+
+  await assertUsersNotBlocked(meId, otherId);
 
   await prisma.friendship.update({
     where: { id: row.id },
@@ -280,10 +265,10 @@ export async function listFriends(
     include: { requester: { select: userSelect }, addressee: { select: userSelect } },
   });
 
-  const hasMore = rows.length > query.limit;
-  const page = hasMore ? rows.slice(0, query.limit) : rows;
-  const tail = page[page.length - 1];
-  const nextCursor = hasMore && tail ? encodeCursor(tail.createdAt, tail.id) : null;
+  const { page, nextCursor } = paginate(rows, query.limit, (r) => ({
+    createdAt: r.createdAt,
+    id: r.id,
+  }));
 
   const items = page.map((r) => {
     const other = r.requesterId === meId ? r.addressee : r.requester;
@@ -324,10 +309,10 @@ export async function listFriendRequests(
     include: { requester: { select: userSelect }, addressee: { select: userSelect } },
   });
 
-  const hasMore = rows.length > query.limit;
-  const page = hasMore ? rows.slice(0, query.limit) : rows;
-  const tail = page[page.length - 1];
-  const nextCursor = hasMore && tail ? encodeCursor(tail.createdAt, tail.id) : null;
+  const { page, nextCursor } = paginate(rows, query.limit, (r) => ({
+    createdAt: r.createdAt,
+    id: r.id,
+  }));
 
   const status: FriendStatus = isIncoming ? 'request_received' : 'request_sent';
   const items = page.map((r) =>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { signInWithGoogle } from '@/lib/sign-in-google';
+import { signInWithGoogle } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
 function GoogleLogo({ className }: { className?: string }) {

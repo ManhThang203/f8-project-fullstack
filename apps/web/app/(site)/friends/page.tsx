@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 import { FriendsView } from '@/components/friends/friends-view';
-import { ClientOnly } from '@/components/shared/client-only';
+import { ClientOnly } from '@/components/shared/ui';
 
 export const metadata: Metadata = {
   title: 'Bạn bè',

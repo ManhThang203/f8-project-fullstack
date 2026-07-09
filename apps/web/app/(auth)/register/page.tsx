@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { RegisterForm } from './register-form';
 
 import { RegisterFormSsrFallback } from '@/components/auth/auth-form-ssr-fallback';
-import { ClientOnly } from '@/components/shared/client-only';
+import { ClientOnly } from '@/components/shared/ui';
 
 export const metadata: Metadata = {
   title: 'Đăng ký',

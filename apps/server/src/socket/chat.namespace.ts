@@ -9,28 +9,13 @@
 import { prisma } from '@costy/db';
 import type { Namespace, Socket } from 'socket.io';
 
+import { getBlockedRelatedUserIds } from '../lib/blocks/block-utils.js';
 import { logger } from '../lib/logger.js';
+import { assertDirectRoomNotBlocked } from '../modules/chat/chat.service.js';
 import { setOnline, setOffline, refreshHeartbeat } from '../modules/chat/presence.service.js';
-import { createNotification } from '../modules/notifications/notifications.service.js';
 
 import { authenticateSocket } from './socket-auth.js';
 
-/** Tạo notification "tin nhắn mới" cho các thành viên khác trong phòng (fire-and-forget). */
-async function notifyRoomMessage(roomId: string, senderId: string): Promise<void> {
-  const members = await prisma.chatRoomMember.findMany({
-    where: { roomId, userId: { not: senderId } },
-    select: { userId: true },
-  });
-  for (const m of members) {
-    await createNotification({
-      recipientId: m.userId,
-      actorId: senderId,
-      type: 'MESSAGE_RECEIVED',
-      entityType: 'room',
-      entityId: roomId,
-    });
-  }
-}
 function registerChatAuth(chatNs: Namespace) {
   chatNs.use(authenticateSocket);
 }
@@ -39,9 +24,24 @@ function registerChatAuth(chatNs: Namespace) {
 async function joinChatRooms(socket: Socket, userId: string) {
   const memberships = await prisma.chatRoomMember.findMany({
     where: { userId },
-    select: { roomId: true },
+    select: {
+      roomId: true,
+      room: {
+        select: {
+          type: true,
+          members: { select: { userId: true } },
+        },
+      },
+    },
   });
+
+  const blockedSet = new Set(await getBlockedRelatedUserIds(userId));
+
   for (const m of memberships) {
+    if (m.room.type === 'DIRECT') {
+      const peerId = m.room.members.find((mem) => mem.userId !== userId)?.userId ?? null;
+      if (peerId && blockedSet.has(peerId)) continue;
+    }
     socket.join(`room:${m.roomId}`);
   }
 }
@@ -72,6 +72,7 @@ export function registerChatNamespace(chatNs: Namespace) {
           where: { roomId_userId: { roomId, userId } },
         });
         if (!mem) return ack?.({ ok: false, error: 'Not a member' });
+        await assertDirectRoomNotBlocked(userId, roomId);
 
         socket.join(`room:${roomId}`);
         ack?.({ ok: true });
@@ -109,6 +110,7 @@ export function registerChatNamespace(chatNs: Namespace) {
           ack?.({ ok: false, error: 'Không thuộc phòng chat này' });
           return;
         }
+        await assertDirectRoomNotBlocked(userId, roomId);
 
         const saved = await prisma.chatMessage.create({
           data: {
@@ -147,10 +149,6 @@ export function registerChatNamespace(chatNs: Namespace) {
         socket.to(`room:${roomId}`).emit('chat:message', messageDto);
 
         ack?.({ ok: true, message: messageDto });
-
-        void notifyRoomMessage(roomId, userId).catch((err: unknown) =>
-          logger.warn({ err, roomId }, 'notifyRoomMessage failed'),
-        );
       } catch (err) {
         logger.warn({ err, userId }, 'chat:send failed');
         ack?.({ ok: false, error: err instanceof Error ? err.message : 'send failed' });
