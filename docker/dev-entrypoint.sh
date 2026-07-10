@@ -2,8 +2,9 @@
 # =============================================================================
 # Dev container entrypoint (docker-compose.dev.yml → service `app`).
 # 1) pnpm install nếu volume node_modules trống
-# 2) prisma generate + migrate (fallback db push)
-# 3) exec CMD (mặc định: tini + pnpm dev)
+# 2) prisma generate + migrate deploy (no db push — drops search_vector)
+# 3) verify hybrid search schema
+# 4) exec CMD (mặc định: tini + pnpm dev)
 # =============================================================================
 set -e
 cd /app
@@ -19,8 +20,13 @@ pnpm db:generate
 
 echo "dev-entrypoint: prisma migrate deploy..."
 if ! pnpm --filter @costy/db exec prisma migrate deploy; then
-  echo "dev-entrypoint: migrate deploy failed (e.g. DB chưa baseline) — chạy db push để đồng bộ schema..."
-  pnpm --filter @costy/db exec prisma db push
+  echo "dev-entrypoint: migrate deploy failed."
+  echo "  Do NOT use prisma db push — it drops search_vector / GIN / HNSW."
+  echo "  Fix: baseline migrations or run: pnpm --filter @costy/db migrate:deploy"
+  exit 1
 fi
+
+echo "dev-entrypoint: verify hybrid search schema..."
+pnpm --filter @costy/db run verify:hybrid-search
 
 exec /sbin/tini -- "$@"

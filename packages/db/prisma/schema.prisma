@@ -432,8 +432,10 @@ model Friendship {
 
 // ───────────────────────────── Posts ─────────────────────────────
 
-/// DB-only (migration 20260526120000): search_vector tsvector GENERATED ALWAYS
-/// AS (to_tsvector('simple', content)) STORED + GIN index. Query FTS chỉ qua raw SQL.
+/// search_vector: Prisma chỉ khai báo metadata (Unsupported + GIN map) để tránh drift DROP.
+/// GENERATED ALWAYS AS (to_tsvector('simple', content)) STORED sống trong SQL migration
+/// (20260526120000 / restore). Query FTS chỉ qua raw SQL — không dùng Prisma Client filters.
+/// Lưu ý: `migrate diff` có thể đề xuất `ALTER ... DROP DEFAULT` giả — KHÔNG apply; checker chặn.
 enum PostVisibility {
   PUBLIC
   FRIENDS
@@ -454,6 +456,9 @@ model Post {
   rootPostId String?
 
   visibility PostVisibility @default(PUBLIC)
+
+  /// Metadata only — generated expression owned by SQL migrations.
+  searchVector Unsupported("tsvector")? @map("search_vector")
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -478,6 +483,7 @@ model Post {
   @@index([deletedAt])
   @@index([createdAt])
   @@index([hiddenAt])
+  @@index([searchVector], type: Gin, map: "posts_search_vector_idx")
   @@map("posts")
 }
 
@@ -524,7 +530,7 @@ model PostShare {
 }
 
 // pgvector-backed embeddings for semantic search. 1536 = OpenAI ada / 3-small dim.
-// Adjust dimension in Phase 8 (search) when the actual model is picked.
+// HNSW index (vector_cosine_ops) is SQL-owned; @@index map prevents Prisma from dropping it.
 
 model PostEmbedding {
   postId    String                      @id
@@ -533,6 +539,7 @@ model PostEmbedding {
 
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
+  @@index([embedding], map: "post_embeddings_embedding_hnsw_idx")
   @@map("post_embeddings")
 }
 
