@@ -3,7 +3,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { apiQueryData } from '@/lib/api';
-import { patchReelItemInCache, queryKeys } from '@/lib/query';
+import {
+  patchFeedItemInCache,
+  patchPostItemInRelatedCaches,
+  patchReelItemInCache,
+  queryKeys,
+} from '@/lib/query';
 
 type SavePostVars = {
   postId: string;
@@ -18,7 +23,7 @@ type SharePostResult = {
   shareCount: number;
 };
 
-/** Toggle trạng thái lưu bài viết và refresh các cache chứa post. */
+/** Toggle trạng thái lưu bài viết và patch cache liên quan (không refetch feed). */
 export function useToggleSavePost() {
   const queryClient = useQueryClient();
 
@@ -28,9 +33,11 @@ export function useToggleSavePost() {
         method: save ? 'POST' : 'DELETE',
       }),
     onSuccess: (data, { postId }) => {
-      patchReelItemInCache(queryClient, postId, { savedByMe: data.savedByMe });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.posts.feed });
-      void queryClient.invalidateQueries({ queryKey: ['me', 'saved'] });
+      const patch = { savedByMe: data.savedByMe };
+      patchFeedItemInCache(queryClient, postId, patch);
+      patchPostItemInRelatedCaches(queryClient, postId, patch);
+      patchReelItemInCache(queryClient, postId, patch);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.me.saved });
     },
   });
 }
@@ -45,8 +52,10 @@ export function useSharePost() {
         method: 'POST',
       }),
     onSuccess: (data, postId) => {
-      patchReelItemInCache(queryClient, postId, { shareCount: data.shareCount });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.posts.feed });
+      const patch = { shareCount: data.shareCount };
+      patchFeedItemInCache(queryClient, postId, patch);
+      patchPostItemInRelatedCaches(queryClient, postId, patch);
+      patchReelItemInCache(queryClient, postId, patch);
     },
   });
 }
