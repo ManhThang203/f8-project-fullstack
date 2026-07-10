@@ -73,15 +73,25 @@ function UserResultRow({ user }: { user: UserSearchResultDto }) {
   );
 }
 
-function HashtagResultRow({ tag }: { tag: HashtagSearchResultDto }) {
+function HashtagResultRow({
+  tag,
+  onSelect,
+}: {
+  tag: HashtagSearchResultDto;
+  onSelect: (tag: HashtagSearchResultDto) => void;
+}) {
   return (
-    <Link
-      href={`/search?q=${encodeURIComponent('#' + tag.tag)}`}
-      className="hover:bg-muted flex min-h-11 items-center justify-between gap-3 rounded-xl px-3 py-2 transition-colors"
+    <button
+      type="button"
+      onClick={() => onSelect(tag)}
+      className={cn(
+        'hover:bg-muted flex min-h-11 w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left transition-colors',
+        'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
+      )}
     >
       <span className="text-sm font-semibold">#{tag.tag}</span>
       <span className="text-muted-foreground text-xs">{tag.postCount} bài</span>
-    </Link>
+    </button>
   );
 }
 
@@ -111,6 +121,14 @@ export function SearchView() {
     if (next.length < 2) return;
     setInput('');
     router.push(`/search?q=${encodeURIComponent(next)}`);
+  }
+
+  /** Chọn hashtag: chuyển tab Bài viết; chỉ replace URL khi q khác hiện tại (tránh RSC storm). */
+  function selectHashtag(tag: HashtagSearchResultDto) {
+    const target = `#${tag.tag}`;
+    setTab('posts');
+    if (trimmed === target) return;
+    router.replace(`/search?q=${encodeURIComponent(target)}`, { scroll: false });
   }
 
   const isLoading =
@@ -193,7 +211,7 @@ export function SearchView() {
       ) : hashtagsQuery.data && hashtagsQuery.data.length > 0 ? (
         <div className="flex flex-col gap-1">
           {hashtagsQuery.data.map((tag) => (
-            <HashtagResultRow key={tag.id} tag={tag} />
+            <HashtagResultRow key={tag.id} tag={tag} onSelect={selectHashtag} />
           ))}
         </div>
       ) : (

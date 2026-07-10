@@ -6,15 +6,15 @@ Toàn bộ URL public dùng hostname `127.0.0.1`. Chọn một hostname và dùn
 
 ## Cấu trúc thư mục
 
-| File | Vai trò |
-| --- | --- |
-| `docker-compose.yml` | Stack production-local: `postgres`, `redis`, `api`, `web`, `admin` |
-| `docker-compose.dev.yml` | Stack dev hot-reload (một container `app` + Mailhog) |
-| `Dockerfile` | Multi-stage build, một image `costy:local` dùng chung cho web/api/admin |
-| `Dockerfile.dev` | Image dev (chỉ cài deps, source bind-mount) |
-| `api-entrypoint.sh` | `prisma migrate deploy` rồi start API |
-| `dev-entrypoint.sh` | install + generate + migrate rồi `pnpm dev` |
-| `.env.docker.example` | Mẫu biến môi trường — copy thành `.env.docker` |
+| File                     | Vai trò                                                                       |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| `docker-compose.yml`     | Stack production-local: `postgres`, `redis`, `api`, `web`, `admin`            |
+| `docker-compose.dev.yml` | Stack dev hot-reload (một container `app` + Mailhog)                          |
+| `Dockerfile`             | Multi-stage build, một image `costy:local` dùng chung cho web/api/admin       |
+| `Dockerfile.dev`         | Image dev (chỉ cài deps, source bind-mount)                                   |
+| `api-entrypoint.sh`      | `prisma migrate deploy` + verify hybrid search rồi start API                  |
+| `dev-entrypoint.sh`      | install + generate + migrate deploy + verify (không `db push`) rồi `pnpm dev` |
+| `.env.docker.example`    | Mẫu biến môi trường — copy thành `.env.docker`                                |
 
 ## 1. Chuẩn bị biến môi trường
 
@@ -43,7 +43,7 @@ NEXT_PUBLIC_SOCKET_URL=http://127.0.0.1:4000
 Các hostname nội bộ Docker giữ nguyên (đừng đổi sang `127.0.0.1`):
 
 ```env
-DATABASE_URL=postgresql://costy:costy12345@postgres:5432/costy?schema=public
+DATABASE_URL=
 REDIS_URL=redis://redis:6379
 UPSTREAM_API_URL=http://api:4000
 ```
@@ -95,14 +95,14 @@ Không dùng `pnpm docker:build` riêng để chạy stack: script đó gọi `d
 
 ## 5. Lệnh thường dùng
 
-| Lệnh | Tác dụng |
-| --- | --- |
-| `pnpm docker:up` | Build + chạy stack (detached) |
-| `pnpm docker:down` | Dừng và gỡ container |
-| `pnpm docker:rebuild` | Build lại `--no-cache` rồi up (dùng sau khi đổi `NEXT_PUBLIC_*`) |
-| `pnpm docker:migrate` | Chạy `prisma migrate deploy` trong container `api` |
-| `pnpm docker:seed` | Seed dữ liệu demo |
-| `pnpm docker:infra:up` | Chỉ chạy Postgres + Redis |
+| Lệnh                   | Tác dụng                                                         |
+| ---------------------- | ---------------------------------------------------------------- |
+| `pnpm docker:up`       | Build + chạy stack (detached)                                    |
+| `pnpm docker:down`     | Dừng và gỡ container                                             |
+| `pnpm docker:rebuild`  | Build lại `--no-cache` rồi up (dùng sau khi đổi `NEXT_PUBLIC_*`) |
+| `pnpm docker:migrate`  | Chạy `prisma migrate deploy` trong container `api`               |
+| `pnpm docker:seed`     | Seed dữ liệu demo                                                |
+| `pnpm docker:infra:up` | Chỉ chạy Postgres + Redis                                        |
 
 ## Xử lý sự cố
 
