@@ -13,6 +13,7 @@ export const queryKeys = {
   },
   chat: {
     conversations: ['chat', 'conversations'] as const,
+    rooms: ['chat', 'rooms'] as const,
     roomMessages: (roomId: string) => ['chat', 'rooms', roomId, 'messages'] as const,
     threadMessages: (threadKey: string) => ['chat', 'thread', threadKey] as const,
   },

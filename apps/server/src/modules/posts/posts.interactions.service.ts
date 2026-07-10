@@ -14,8 +14,12 @@ export async function setPostReaction(postId: string, userId: string, reactionTy
   // Check if post exists
   const post = await prisma.post.findUnique({
     where: { id: postId, deletedAt: null },
+    select: { id: true, authorId: true, visibility: true },
   });
   if (!post) throw AppError.notFound('Bài viết không tồn tại');
+  if (!(await canViewPost(userId, post))) {
+    throw AppError.notFound('Bài viết không tồn tại hoặc đã bị xóa');
+  }
 
   if (reactionType) {
     await prisma.postLike.upsert({

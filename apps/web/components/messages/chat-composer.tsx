@@ -7,6 +7,8 @@ import { EmojiStickerPicker } from './emoji-sticker-picker';
 
 import type { ChatMessageDto } from '@/types/chat';
 
+const TYPING_THROTTLE_MS = 2000;
+
 export function ChatComposer({
   sending,
   replyingTo,
@@ -15,6 +17,7 @@ export function ChatComposer({
   onSendText,
   onSendSticker,
   onSendFile,
+  onTyping,
 }: {
   sending: boolean;
   replyingTo: ChatMessageDto | null;
@@ -23,11 +26,22 @@ export function ChatComposer({
   onSendText: (text: string) => Promise<void>;
   onSendSticker: (stickerId: string) => Promise<void>;
   onSendFile: (file: File) => Promise<void>;
+  onTyping?: () => void;
 }) {
   const [draft, setDraft] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const lastTypingRef = useRef(0);
+
+  // Báo "đang gõ" tối đa mỗi TYPING_THROTTLE_MS để tránh spam socket.
+  function notifyTyping() {
+    if (!onTyping) return;
+    const now = Date.now();
+    if (now - lastTypingRef.current < TYPING_THROTTLE_MS) return;
+    lastTypingRef.current = now;
+    onTyping();
+  }
 
   // Gửi text rồi reset ô nhập nếu thành công
   async function handleSubmit() {
@@ -143,7 +157,10 @@ export function ChatComposer({
 
         <input
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            if (e.target.value.trim()) notifyTyping();
+          }}
           placeholder="Nhập tin nhắn…"
           className="border-border bg-muted/50 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring min-h-11 min-w-0 flex-1 rounded-full border px-4 text-sm focus-visible:outline-none focus-visible:ring-2"
           maxLength={8000}

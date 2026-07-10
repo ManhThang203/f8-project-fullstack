@@ -61,7 +61,7 @@ export function MessagesView() {
   const [pulsingId, setPulsingId] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingMessageAction | null>(null);
 
-  const chatSocket = useChatRoomSocket(meId, roomId);
+  const { chatSocket, typingUserIds } = useChatRoomSocket(meId, roomId);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const createRoomMutation = useCreateChatRoomMutation();
 
@@ -82,6 +82,17 @@ export function MessagesView() {
     if (!activeConv || activeConv.isGroup) return null;
     return formatActivityStatus(activeConv.peers[0]);
   }, [activeConv]);
+
+  const typingLabel = useMemo(() => {
+    if (typingUserIds.length === 0 || !activeConv) return null;
+    if (!activeConv.isGroup) return 'Đang gõ…';
+    const names = typingUserIds
+      .map((id) => activeConv.peers.find((p) => p.id === id))
+      .filter((p): p is ChatPeerDto => Boolean(p))
+      .map((p) => p.name || p.username);
+    if (names.length === 0) return 'Đang gõ…';
+    return `${names.join(', ')} đang gõ…`;
+  }, [typingUserIds, activeConv]);
 
   // Cuộn xuống tin nhắn mới nhất sau khi gửi
   function scrollToBottom() {
@@ -269,6 +280,12 @@ export function MessagesView() {
       : activeConv?.peers.find((p) => p.id === replyingTo.senderId)?.name || 'người dùng'
     : null;
 
+  /** Emit sự kiện đang gõ tới phòng hiện tại (throttle đã xử lý ở composer). */
+  function handleTyping() {
+    if (!roomId || !chatSocket) return;
+    chatSocket.emit('chat:typing', { roomId });
+  }
+
   return (
     <>
       <div className="lg:border-border mx-auto flex h-full w-full max-w-7xl flex-col gap-0 overflow-hidden lg:flex-row lg:border-x">
@@ -376,15 +393,26 @@ export function MessagesView() {
             )}
 
             {roomId ? (
-              <ChatComposer
-                sending={sending}
-                replyingTo={replyingTo}
-                replyAuthorName={replyAuthorName}
-                onCancelReply={() => setReplyingTo(null)}
-                onSendText={handleSendText}
-                onSendSticker={handleSendSticker}
-                onSendFile={handleSendFile}
-              />
+              <>
+                {typingLabel ? (
+                  <p
+                    className="text-muted-foreground px-4 py-1 text-xs"
+                    aria-live="polite"
+                  >
+                    {typingLabel}
+                  </p>
+                ) : null}
+                <ChatComposer
+                  sending={sending}
+                  replyingTo={replyingTo}
+                  replyAuthorName={replyAuthorName}
+                  onCancelReply={() => setReplyingTo(null)}
+                  onSendText={handleSendText}
+                  onSendSticker={handleSendSticker}
+                  onSendFile={handleSendFile}
+                  onTyping={handleTyping}
+                />
+              </>
             ) : null}
           </div>
         </section>

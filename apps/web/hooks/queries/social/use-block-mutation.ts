@@ -21,6 +21,8 @@ export function useBlockMutation() {
       void queryClient.invalidateQueries({ queryKey: queryKeys.posts.feed });
       void queryClient.invalidateQueries({ queryKey: ['friends'] });
       void queryClient.invalidateQueries({ queryKey: queryKeys.chat.conversations });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.chat.rooms });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all() });
     },
   });
 }

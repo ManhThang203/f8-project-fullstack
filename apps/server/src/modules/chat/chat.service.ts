@@ -1,11 +1,11 @@
 import { type ChatMessage, Prisma, prisma } from '@costy/db';
 
-import { AppError } from '../../lib/errors.js';
 import {
   areUsersBlocked,
   assertUsersNotBlocked,
   getBlockedRelatedUserIds,
 } from '../../lib/blocks/block-utils.js';
+import { AppError } from '../../lib/errors.js';
 
 import { getPresence } from './presence.service.js';
 
@@ -69,10 +69,13 @@ export async function listRoomMessages(userId: string, roomId: string, opts: Lis
     throw AppError.forbidden('Bạn không thuộc phòng này.');
   }
   await assertDirectRoomNotBlocked(userId, roomId);
+  const blockedIds = await getBlockedRelatedUserIds(userId);
+  const blockedSet = new Set(blockedIds);
 
   const rows = await prisma.chatMessage.findMany({
     where: {
       roomId,
+      ...(blockedIds.length > 0 ? { senderId: { notIn: blockedIds } } : {}),
       NOT: {
         deletedFor: { has: userId },
       },
@@ -89,7 +92,8 @@ export async function listRoomMessages(userId: string, roomId: string, opts: Lis
 
   const mapped = rows.map((r) => ({
     ...r,
-    replyToMessage: r.replyTo,
+    reactions: r.reactions.filter((reaction) => !blockedSet.has(reaction.userId)),
+    replyToMessage: r.replyTo && !blockedSet.has(r.replyTo.senderId) ? r.replyTo : null,
     replyTo: undefined, // Clean up Prisma output
   }));
 
@@ -195,16 +199,25 @@ export async function createChatRoom(input: {
   });
 }
 
-/** Lấy tin nhắn cuối của mỗi phòng trong 1 lần query (DISTINCT ON + findMany theo id). */
-async function getLastMessagesByRoom(roomIds: string[]) {
+/** Lấy tin nhắn cuối có thể xem của mỗi phòng, bỏ qua sender đang block với viewer. */
+async function getLastMessagesByRoom(roomIds: string[], blockedIds: string[]) {
   if (roomIds.length === 0) return new Map<string, ChatMessage>();
 
-  const latest = await prisma.$queryRaw<{ id: string }[]>`
-    SELECT DISTINCT ON ("roomId") "id"
-    FROM chat_messages
-    WHERE "roomId" IN (${Prisma.join(roomIds)})
-    ORDER BY "roomId", "createdAt" DESC
-  `;
+  const latest =
+    blockedIds.length > 0
+      ? await prisma.$queryRaw<{ id: string }[]>`
+          SELECT DISTINCT ON ("roomId") "id"
+          FROM chat_messages
+          WHERE "roomId" IN (${Prisma.join(roomIds)})
+            AND "senderId" NOT IN (${Prisma.join(blockedIds)})
+          ORDER BY "roomId", "createdAt" DESC
+        `
+      : await prisma.$queryRaw<{ id: string }[]>`
+          SELECT DISTINCT ON ("roomId") "id"
+          FROM chat_messages
+          WHERE "roomId" IN (${Prisma.join(roomIds)})
+          ORDER BY "roomId", "createdAt" DESC
+        `;
   const ids = latest.map((r) => r.id);
   if (ids.length === 0) return new Map<string, ChatMessage>();
 
@@ -212,19 +225,31 @@ async function getLastMessagesByRoom(roomIds: string[]) {
   return new Map(messages.map((msg) => [msg.roomId, msg]));
 }
 
-/** Đếm số tin chưa đọc cho mỗi phòng trong 1 lần query (GROUP BY, tôn trọng lastReadAt riêng từng phòng). */
-async function getUnreadCountByRoom(userId: string, roomIds: string[]) {
+/** Đếm tin chưa đọc có thể xem, không tính tin từ sender đang block với viewer. */
+async function getUnreadCountByRoom(userId: string, roomIds: string[], blockedIds: string[]) {
   if (roomIds.length === 0) return new Map<string, number>();
 
-  const rows = await prisma.$queryRaw<{ roomId: string; unread: number }[]>`
-    SELECT m."roomId" AS "roomId", COUNT(*)::int AS "unread"
-    FROM chat_messages msg
-    JOIN chat_room_members m ON m."roomId" = msg."roomId" AND m."userId" = ${userId}
-    WHERE msg."roomId" IN (${Prisma.join(roomIds)})
-      AND msg."senderId" <> ${userId}
-      AND (m."lastReadAt" IS NULL OR msg."createdAt" > m."lastReadAt")
-    GROUP BY m."roomId"
-  `;
+  const rows =
+    blockedIds.length > 0
+      ? await prisma.$queryRaw<{ roomId: string; unread: number }[]>`
+          SELECT m."roomId" AS "roomId", COUNT(*)::int AS "unread"
+          FROM chat_messages msg
+          JOIN chat_room_members m ON m."roomId" = msg."roomId" AND m."userId" = ${userId}
+          WHERE msg."roomId" IN (${Prisma.join(roomIds)})
+            AND msg."senderId" <> ${userId}
+            AND msg."senderId" NOT IN (${Prisma.join(blockedIds)})
+            AND (m."lastReadAt" IS NULL OR msg."createdAt" > m."lastReadAt")
+          GROUP BY m."roomId"
+        `
+      : await prisma.$queryRaw<{ roomId: string; unread: number }[]>`
+          SELECT m."roomId" AS "roomId", COUNT(*)::int AS "unread"
+          FROM chat_messages msg
+          JOIN chat_room_members m ON m."roomId" = msg."roomId" AND m."userId" = ${userId}
+          WHERE msg."roomId" IN (${Prisma.join(roomIds)})
+            AND msg."senderId" <> ${userId}
+            AND (m."lastReadAt" IS NULL OR msg."createdAt" > m."lastReadAt")
+          GROUP BY m."roomId"
+        `;
   return new Map(rows.map((r) => [r.roomId, r.unread]));
 }
 
@@ -257,8 +282,8 @@ export async function listConversationsForUser(userId: string) {
 
   const roomIds = visibleMemberships.map((m) => m.room.id);
   const [lastMsgByRoom, unreadByRoom] = await Promise.all([
-    getLastMessagesByRoom(roomIds),
-    getUnreadCountByRoom(userId, roomIds),
+    getLastMessagesByRoom(roomIds, [...blockedSet]),
+    getUnreadCountByRoom(userId, roomIds, [...blockedSet]),
   ]);
 
   const items = visibleMemberships.map((m) => {
