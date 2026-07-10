@@ -117,7 +117,7 @@ export function SiteHeaderCompact({
             aria-label="Cotsy — Trang chủ"
             className="text-foreground hover:text-foreground/90 focus-visible:ring-ring focus-visible:ring-offset-background flex min-h-11 items-center gap-2 rounded-lg px-1 text-base font-semibold tracking-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
           >
-            <CotsyLogo className="h-8 w-8" priority />
+            <CotsyLogo className="h-10 w-10" priority />
             <span className="hidden md:inline">Cotsy</span>
           </Link>
         </div>
