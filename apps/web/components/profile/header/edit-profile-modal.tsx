@@ -3,7 +3,7 @@
 import type { ProfileDto } from '@costy/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Avatar, Modal } from '@/components/shared/ui';
@@ -11,7 +11,7 @@ import { useUpdateMyProfile } from '@/hooks/queries/profile';
 import { uploadProfileImage, getUserFacingErrorMessage } from '@/lib/api';
 import { authClient } from '@/lib/auth';
 import { emitAvatarUpdated } from '@/lib/events';
-import { queryKeys } from '@/lib/query';
+import { patchMyUserAppearanceInCaches, queryKeys } from '@/lib/query';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -29,42 +29,157 @@ export function EditProfileModal({ open, onClose, profile }: Props) {
   const [bio, setBio] = useState(profile.bio ?? '');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const updateProfile = useUpdateMyProfile(profile.username);
 
-  const avatarPreview = avatarFile ? URL.createObjectURL(avatarFile) : profile.image;
-  const coverPreview = coverFile ? URL.createObjectURL(coverFile) : profile.coverImage;
+  useEffect(() => {
+    if (!avatarFile) {
+      setAvatarPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(avatarFile);
+    setAvatarPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [avatarFile]);
 
-  /** Lưu thay đổi: upload ảnh (nếu có) rồi cập nhật tên/tiểu sử. */
+  useEffect(() => {
+    if (!coverFile) {
+      setCoverPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(coverFile);
+    setCoverPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [coverFile]);
+
+  const avatarPreview = avatarPreviewUrl ?? profile.image;
+  const coverPreview = coverPreviewUrl ?? profile.coverImage;
+
+  /** Đồng bộ session + cache sau khi có thay đổi appearance thành công. */
+  async function syncAppearance(opts: {
+    newAvatarUrl?: string;
+    newCoverUrl?: string;
+    nameChanged: boolean;
+    trimmedName: string;
+  }) {
+    const { newAvatarUrl, newCoverUrl, nameChanged, trimmedName } = opts;
+    const authorPatch = {
+      ...(newAvatarUrl !== undefined ? { image: newAvatarUrl } : {}),
+      ...(nameChanged ? { name: trimmedName || null } : {}),
+    };
+
+    if ('image' in authorPatch || authorPatch.name !== undefined) {
+      patchMyUserAppearanceInCaches(queryClient, profile.id, authorPatch);
+    }
+
+    if (newAvatarUrl !== undefined || newCoverUrl !== undefined) {
+      queryClient.setQueryData(
+        queryKeys.users.profile(profile.username),
+        (old: { data: ProfileDto } | undefined) => {
+          if (!old?.data) return old;
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              ...(newAvatarUrl !== undefined ? { image: newAvatarUrl } : {}),
+              ...(newCoverUrl !== undefined ? { coverImage: newCoverUrl } : {}),
+              ...(nameChanged ? { name: trimmedName || null } : {}),
+            },
+          };
+        },
+      );
+    }
+
+    await refetchSession({ query: { disableCookieCache: true } });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.users.profile(profile.username) });
+    router.refresh();
+  }
+
+  /** Lưu thay đổi: upload ảnh / PATCH profile; sync phần đã thành công nếu lỗi từng bước. */
   async function handleSave() {
     if (saving) return;
+
+    const trimmedName = name.trim();
+    const trimmedBio = bio.trim();
+    const nameChanged = trimmedName !== (profile.name ?? '');
+    const bioChanged = trimmedBio !== (profile.bio ?? '');
+    const hadIntent = Boolean(avatarFile || coverFile || nameChanged || bioChanged);
+
+    if (!hadIntent) {
+      onClose();
+      return;
+    }
+
     setSaving(true);
+
+    let newAvatarUrl: string | undefined;
+    let newCoverUrl: string | undefined;
+    let profileSaved = false;
+    let lastError: unknown;
+
     try {
       if (avatarFile) {
-        const url = await uploadProfileImage('avatar', avatarFile);
-        emitAvatarUpdated(url);
+        try {
+          newAvatarUrl = await uploadProfileImage('avatar', avatarFile);
+          emitAvatarUpdated(newAvatarUrl);
+        } catch (err) {
+          lastError = err;
+        }
       }
-      if (coverFile) await uploadProfileImage('cover', coverFile);
 
-      const trimmedName = name.trim();
-      const trimmedBio = bio.trim();
-      const profileChanged =
-        trimmedName !== (profile.name ?? '') || trimmedBio !== (profile.bio ?? '');
-      if (profileChanged) {
-        await updateProfile.mutateAsync({
-          name: trimmedName || undefined,
-          bio: trimmedBio,
+      if (coverFile) {
+        try {
+          newCoverUrl = await uploadProfileImage('cover', coverFile);
+        } catch (err) {
+          lastError = err;
+        }
+      }
+
+      if (nameChanged || bioChanged) {
+        try {
+          await updateProfile.mutateAsync({
+            name: trimmedName || undefined,
+            bio: trimmedBio,
+          });
+          profileSaved = true;
+        } catch (err) {
+          lastError = err;
+        }
+      }
+
+      const anySuccess =
+        newAvatarUrl !== undefined || newCoverUrl !== undefined || profileSaved;
+
+      if (!anySuccess) {
+        toast.error(getUserFacingErrorMessage(lastError, 'Cập nhật thất bại'));
+        return;
+      }
+
+      try {
+        await syncAppearance({
+          newAvatarUrl,
+          newCoverUrl,
+          nameChanged: nameChanged && profileSaved,
+          trimmedName,
         });
+      } catch (err) {
+        lastError = err;
       }
 
-      await queryClient.invalidateQueries({ queryKey: queryKeys.users.profile(profile.username) });
-      await refetchSession();
-      router.refresh();
-      toast.success('Đã cập nhật trang cá nhân');
+      if (lastError) {
+        toast.error(
+          getUserFacingErrorMessage(
+            lastError,
+            'Đã lưu một phần thay đổi; một số bước vẫn thất bại',
+          ),
+        );
+      } else {
+        toast.success('Đã cập nhật trang cá nhân');
+      }
       onClose();
-    } catch (err) {
-      toast.error(getUserFacingErrorMessage(err, 'Cập nhật thất bại'));
     } finally {
       setSaving(false);
     }

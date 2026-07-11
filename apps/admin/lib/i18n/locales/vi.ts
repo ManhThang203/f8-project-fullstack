@@ -42,6 +42,8 @@ export const vi = {
     resolutionNoteRequired: '*',
     resolutionPlaceholder: 'Lý do {{action}}…',
     banDurationLabel: 'Thời hạn ban (để trống = vĩnh viễn)',
+    banTargetRestricted:
+      'Không thể ban Super Admin, hoặc Admin khi bạn không phải Super Admin.',
     deleteConfirmWarning:
       '⚠ Hành động này không thể hoàn tác. Bài viết sẽ bị xóa vĩnh viễn. Nhấn nút bên dưới để xác nhận.',
     processing: 'Đang xử lý…',
@@ -165,6 +167,7 @@ export const vi = {
     roleChangeSuccess: 'Cập nhật vai trò thành công',
     roleChangeError: 'Lỗi cập nhật vai trò',
     cannotChangeSuperAdmin: 'Không thể thay đổi vai trò của super admin.',
+    cannotChangeAdmin: 'Chỉ Super Admin mới được thay đổi vai trò của Admin.',
     modalTitle: 'Quản lý trạng thái người dùng',
     statusLabel: 'Trạng thái mới',
     reasonLabel: 'Lý do thay đổi',
@@ -323,6 +326,8 @@ export const vi = {
     customRevoked: 'Thu hồi',
     superAdminWarning:
       'Không thể chỉnh sửa quyền hạn của tài khoản Super Admin. Tài khoản Super Admin mặc định sở hữu toàn bộ đặc quyền trên hệ thống.',
+    adminWarning:
+      'Tài khoản Admin luôn có toàn quyền. Chỉ có thể chỉnh quyền chi tiết cho Kiểm duyệt viên (Moderator).',
   },
   audit: {
     title: 'Nhật ký kiểm duyệt',

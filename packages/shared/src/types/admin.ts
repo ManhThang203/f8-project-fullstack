@@ -65,6 +65,7 @@ export type AdminReportDetailDto = AdminReportDto & {
     name: string | null;
     image: string | null;
     status: string;
+    role: Role;
   } | null;
   targetMedia: { id: string; kind: string; publicUrl: string | null }[] | null;
   relatedReports: AdminReportDto[];

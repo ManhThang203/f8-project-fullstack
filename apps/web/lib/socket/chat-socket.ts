@@ -2,12 +2,18 @@
 
 import { io, type Socket } from 'socket.io-client';
 
+import { forceLogoutIfAccountBlocked, isAccountBlockedError } from '@/lib/auth';
 import { apiFetch } from '@/lib/api';
 
 const baseUrl = process.env.NEXT_PUBLIC_SOCKET_URL ?? 'http://localhost:4000';
 
 let socket: Socket | null = null;
 let connectPromise: Promise<Socket> | null = null;
+
+/** Từ chối kết nối chat socket mà không tạo Error instance (tránh Next.js Console Error overlay). */
+function denyChatSocketConnect(code: string, message: string): Promise<never> {
+  return Promise.reject({ name: 'SocketConnectDenied', code, message });
+}
 
 /**
  * Socket `/chat` với token handshake (cookie Better Auth thường không tới được port API khi dev).
@@ -23,7 +29,10 @@ export function getChatSocket(): Promise<Socket> {
     });
     if (!res.success) {
       connectPromise = null;
-      throw new Error(res.error.message);
+      if (isAccountBlockedError(res.error)) {
+        void forceLogoutIfAccountBlocked();
+      }
+      return denyChatSocketConnect(res.error.code, res.error.message);
     }
     // nhận token từ server
     const token = res.data.token;

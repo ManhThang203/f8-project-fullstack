@@ -42,6 +42,8 @@ export const en = {
     resolutionNoteRequired: '*',
     resolutionPlaceholder: 'Reason for {{action}}…',
     banDurationLabel: 'Ban duration (leave empty = permanent)',
+    banTargetRestricted:
+      'Cannot ban a Super Admin, or an Admin unless you are a Super Admin.',
     deleteConfirmWarning:
       '⚠ This action cannot be undone. The post will be permanently deleted. Click the button below to confirm.',
     processing: 'Processing…',
@@ -165,6 +167,7 @@ export const en = {
     roleChangeSuccess: 'Role updated successfully',
     roleChangeError: 'Failed to update role',
     cannotChangeSuperAdmin: 'Cannot change the role of a super admin.',
+    cannotChangeAdmin: 'Only a Super Admin can change an Admin role.',
     modalTitle: 'Manage User Status',
     statusLabel: 'New Status',
     reasonLabel: 'Reason for Change',
@@ -323,6 +326,8 @@ export const en = {
     customRevoked: 'Revoked',
     superAdminWarning:
       'Cannot edit permissions for a Super Admin account. Super Admin accounts have all system privileges by default.',
+    adminWarning:
+      'Admin accounts always have full access. Detailed permissions can only be edited for Moderators.',
   },
   audit: {
     title: 'Moderation audit log',

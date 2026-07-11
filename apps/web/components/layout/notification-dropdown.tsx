@@ -217,7 +217,7 @@ export function NotificationDropdown() {
   useEffect(() => {
     let activeSocket: Socket | null = null;
 
-    getAuthedSocket('/notifications')
+    void getAuthedSocket('/notifications')
       .then((s) => {
         activeSocket = s;
         const onNew = () => {
@@ -226,7 +226,7 @@ export function NotificationDropdown() {
         };
         s.on('notification:new', onNew);
       })
-      .catch((err) => console.error('Failed to connect socket for notifications', err));
+      .catch(() => undefined);
 
     return () => {
       if (activeSocket) {

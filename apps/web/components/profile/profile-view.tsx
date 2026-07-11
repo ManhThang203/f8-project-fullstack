@@ -18,10 +18,11 @@ import { ProfileStats } from '@/components/profile/header/profile-stats';
 import { ProfileSkeleton } from '@/components/profile/profile-skeleton';
 import { parseProfileTab } from '@/components/profile/profile-utils';
 import { ProfileTabs } from '@/components/profile/tabs/profile-tabs';
+import { useCurrentUser } from '@/components/shared/providers/current-user-context';
 import { Button } from '@/components/shared/ui';
 import { useProfile } from '@/hooks/queries/profile';
 import { isApiQueryError } from '@/lib/api';
-import { authClient, type ServerAuthUser } from '@/lib/auth';
+import type { ServerAuthUser } from '@/lib/auth';
 import { queryKeys } from '@/lib/query';
 
 type Props = {
@@ -33,7 +34,7 @@ function ProfileViewInner({ username, initialUser }: Props) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
-  const { data: session } = authClient.useSession();
+  const { user: currentUser } = useCurrentUser();
 
   const {
     data: profile,
@@ -59,18 +60,20 @@ function ProfileViewInner({ username, initialUser }: Props) {
   }, [captureBeforeTabChange]);
 
   const me = useMemo(() => {
-    const fromClient = session?.user
-      ? {
-          username: (session.user as { username?: string }).username ?? '',
-          name: session.user.name ?? null,
-          image: (session.user as { image?: string | null }).image ?? null,
-        }
-      : null;
-    const fromServer = initialUser
-      ? { username: initialUser.username ?? '', name: initialUser.name, image: null }
-      : null;
-    return fromClient ?? fromServer;
-  }, [session?.user, initialUser]);
+    if (currentUser) {
+      return {
+        username: currentUser.username ?? '',
+        name: currentUser.name,
+        image: currentUser.image,
+      };
+    }
+    if (!initialUser) return null;
+    return {
+      username: initialUser.username ?? '',
+      name: initialUser.name,
+      image: initialUser.image,
+    };
+  }, [currentUser, initialUser]);
 
   useEffect(() => {
     if (profile && tabParam === 'liked' && !profile.isOwner) {

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
+import { useAvatarOverride } from '@/hooks/ui';
 import { authClient, type ServerAuthUser } from '@/lib/auth';
 
 type CurrentUserContextValue = {
@@ -40,6 +41,7 @@ function normalizeAuthUser(
 /**
  * Gọi `useSession` một lần ở layout, merge SSR + client để các component con
  * không tự subscribe session (tránh burst `get-session` khi list/virtualize).
+ * Avatar vừa upload được merge qua event cho đến khi cookieCache bắt kịp.
  */
 export function CurrentUserProvider({
   initialUser,
@@ -49,12 +51,16 @@ export function CurrentUserProvider({
   children: ReactNode;
 }) {
   const { data: session } = authClient.useSession();
+  const sessionImage = (session?.user as { image?: string | null } | undefined)?.image;
+  const avatarOverride = useAvatarOverride(sessionImage);
+
   const value = useMemo<CurrentUserContextValue>(() => {
     const fromClient = normalizeAuthUser(session?.user);
     const fromServer = normalizeAuthUser(initialUser);
-    const user = fromClient ?? fromServer ?? null;
+    const base = fromClient ?? fromServer ?? null;
+    const user = base ? { ...base, image: avatarOverride ?? base.image } : null;
     return { user, isAuthed: Boolean(user) };
-  }, [session?.user, initialUser]);
+  }, [session?.user, initialUser, avatarOverride]);
 
   return <CurrentUserContext.Provider value={value}>{children}</CurrentUserContext.Provider>;
 }

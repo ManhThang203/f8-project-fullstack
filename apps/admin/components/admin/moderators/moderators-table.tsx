@@ -31,6 +31,11 @@ function PermissionLabel({ count }: { count: number }) {
   );
 }
 
+/** Chỉ MODERATOR mới được chỉnh quyền chi tiết. */
+function canEditPermissions(role: AdminModeratorDto['role']): boolean {
+  return role === 'MODERATOR';
+}
+
 export function ModeratorsTable({ moderators, onEditPermissions }: Props) {
   const { t } = useTranslation();
 
@@ -70,7 +75,7 @@ export function ModeratorsTable({ moderators, onEditPermissions }: Props) {
                 <div className={colActions.cell}>
                   <Button
                     variant="secondary"
-                    disabled={mod.role === 'SUPER_ADMIN'}
+                    disabled={!canEditPermissions(mod.role)}
                     onClick={() => onEditPermissions(mod)}
                     className={cn(adminTable.actionBtn, 'gap-1.5 leading-none')}
                   >

@@ -7,9 +7,9 @@ import { toast } from 'sonner';
 import { SiteHeaderCompact } from './site-header-compact';
 import { SiteHeaderDesktop } from './site-header-desktop';
 
+import { useCurrentUser } from '@/components/shared/providers/current-user-context';
 import { useChatUnreadSync, useChatUnreadTotal } from '@/hooks/queries/chat';
 import { authClient, getAuthClientErrorMessage, type ServerAuthUser } from '@/lib/auth';
-import { subscribeAvatarUpdated } from '@/lib/events';
 import { resetChatSocket } from '@/lib/socket';
 import { cn } from '@/lib/utils';
 
@@ -18,33 +18,14 @@ type Props = {
   initialUser: ServerAuthUser | null;
 };
 
-function normalizeUser(
-  u: { id: string; username?: string | null; name?: string | null; image?: string | null } | null | undefined,
-) {
-  if (!u) return null;
-  return {
-    id: u.id,
-    username: (u as { username?: string | null }).username ?? '',
-    name: u.name ?? null,
-    image: (u as { image?: string | null }).image ?? null,
-  };
-}
-
 export function SiteHeader({ initialUser }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const { data: session, refetch } = authClient.useSession();
+  const { user: currentUser } = useCurrentUser();
   const [loggingOut, setLoggingOut] = useState(false);
-  const [avatarOverride, setAvatarOverride] = useState<string | null>(null);
   /** Ngay sau signOut: hiện nav khách, không chờ RSC / nano store bắt kịp. */
   const [forceGuestNav, setForceGuestNav] = useState(false);
-
-  useEffect(() => subscribeAvatarUpdated(setAvatarOverride), []);
-
-  useEffect(() => {
-    const sessionImage = (session?.user as { image?: string | null } | undefined)?.image;
-    if (sessionImage) setAvatarOverride(null);
-  }, [session?.user]);
 
   useEffect(() => {
     if (!forceGuestNav) return;
@@ -54,16 +35,16 @@ export function SiteHeader({ initialUser }: Props) {
   }, [forceGuestNav, session?.user, initialUser]);
 
   const me = useMemo(() => {
-    if (forceGuestNav) return null;
-    const fromClient = normalizeUser(session?.user);
-    const fromServer = normalizeUser(initialUser);
-    return fromClient ?? fromServer ?? null;
-  }, [forceGuestNav, session?.user, initialUser]);
+    if (forceGuestNav || !currentUser) return null;
+    return {
+      id: currentUser.id,
+      username: currentUser.username ?? '',
+      name: currentUser.name,
+      image: currentUser.image,
+    };
+  }, [forceGuestNav, currentUser]);
 
-  const accountUser = useMemo(() => {
-    if (!me) return null;
-    return { ...me, image: avatarOverride ?? me.image };
-  }, [me, avatarOverride]);
+  const accountUser = me;
 
   useChatUnreadSync(Boolean(me));
   const chatUnreadTotal = useChatUnreadTotal(Boolean(me));

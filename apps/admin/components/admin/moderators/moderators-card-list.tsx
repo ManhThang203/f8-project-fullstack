@@ -27,6 +27,11 @@ function PermissionChip({ count }: { count: number }) {
   );
 }
 
+/** Chỉ MODERATOR mới được chỉnh quyền chi tiết. */
+function canEditPermissions(role: AdminModeratorDto['role']): boolean {
+  return role === 'MODERATOR';
+}
+
 export function ModeratorsCardList({ moderators, onEditPermissions }: Props) {
   const { t } = useTranslation();
 
@@ -48,7 +53,7 @@ export function ModeratorsCardList({ moderators, onEditPermissions }: Props) {
 
           <Button
             variant="secondary"
-            disabled={mod.role === 'SUPER_ADMIN'}
+            disabled={!canEditPermissions(mod.role)}
             onClick={() => onEditPermissions(mod)}
             className="h-9 w-full gap-1.5 text-xs"
           >

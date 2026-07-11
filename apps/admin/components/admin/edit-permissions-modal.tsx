@@ -74,10 +74,10 @@ export function EditPermissionsModal({ isOpen, onClose, user }: Props) {
 
   if (!isOpen || !user) return null;
 
-  const isSuperAdmin = user.role === 'SUPER_ADMIN';
+  const isReadOnlyRole = user.role === 'SUPER_ADMIN' || user.role === 'ADMIN';
 
   const handleToggle = (key: string) => {
-    if (isSuperAdmin) return;
+    if (isReadOnlyRole) return;
     setCheckedKeys((prev) => ({
       ...prev,
       [key]: !prev[key],
@@ -86,7 +86,7 @@ export function EditPermissionsModal({ isOpen, onClose, user }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSuperAdmin) {
+    if (isReadOnlyRole) {
       toast.error(t('moderators.saveError'));
       return;
     }
@@ -164,10 +164,14 @@ export function EditPermissionsModal({ isOpen, onClose, user }: Props) {
 
         {/* Content body */}
         <div className="flex-1 space-y-6 overflow-y-auto py-4 pr-1">
-          {isSuperAdmin && (
+          {isReadOnlyRole && (
             <div className="border-warning/30 bg-warning/10 text-warning-foreground flex items-start gap-2.5 rounded-xl border p-3.5 text-sm">
               <ShieldAlert className="text-warning size-5 shrink-0" />
-              <p>{t('moderators.superAdminWarning')}</p>
+              <p>
+                {user.role === 'SUPER_ADMIN'
+                  ? t('moderators.superAdminWarning')
+                  : t('moderators.adminWarning')}
+              </p>
             </div>
           )}
 
@@ -218,13 +222,13 @@ export function EditPermissionsModal({ isOpen, onClose, user }: Props) {
                               isChecked
                                 ? 'bg-primary/5 border-primary/20 hover:bg-primary/10'
                                 : 'bg-background border-border hover:bg-muted/50'
-                            } ${isSuperAdmin ? 'cursor-not-allowed opacity-70' : ''}`}
+                            } ${isReadOnlyRole ? 'cursor-not-allowed opacity-70' : ''}`}
                           >
                             <input
                               type="checkbox"
                               checked={isChecked}
                               readOnly
-                              disabled={isSuperAdmin}
+                              disabled={isReadOnlyRole}
                               className="border-border text-primary focus:ring-primary mt-1 h-4 w-4 cursor-pointer rounded disabled:cursor-not-allowed"
                             />
                             <div className="flex-1 space-y-0.5">
@@ -265,7 +269,7 @@ export function EditPermissionsModal({ isOpen, onClose, user }: Props) {
           <Button
             type="submit"
             form="edit-permissions-form"
-            disabled={isLoading || isSuperAdmin || updatePermissions.isPending}
+            disabled={isLoading || isReadOnlyRole || updatePermissions.isPending}
             className="min-w-24"
           >
             {updatePermissions.isPending ? (

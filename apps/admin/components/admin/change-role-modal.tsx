@@ -71,11 +71,12 @@ export function ChangeRoleModal({ isOpen, onClose, user, currentUserIsSuperAdmin
 
   if (!isOpen || !user) return null;
 
-  const isSuperAdmin = user.role === 'SUPER_ADMIN';
+  const roleLocked =
+    user.role === 'SUPER_ADMIN' || (user.role === 'ADMIN' && !currentUserIsSuperAdmin);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSuperAdmin) {
+    if (roleLocked) {
       toast.error(t('users.roleChangeError'));
       return;
     }
@@ -134,9 +135,11 @@ export function ChangeRoleModal({ isOpen, onClose, user, currentUserIsSuperAdmin
           </p>
         </div>
 
-        {isSuperAdmin ? (
+        {roleLocked ? (
           <p className="border-warning/30 bg-warning/10 text-warning-foreground mt-4 rounded-xl border p-3 text-sm">
-            {t('users.cannotChangeSuperAdmin')}
+            {user.role === 'SUPER_ADMIN'
+              ? t('users.cannotChangeSuperAdmin')
+              : t('users.cannotChangeAdmin')}
           </p>
         ) : (
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">

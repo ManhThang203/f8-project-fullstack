@@ -1,7 +1,7 @@
 'use client';
 
-import type { AdminReportDetailDto } from '@costy/shared';
-import { useState } from 'react';
+import type { AdminReportDetailDto, Role } from '@costy/shared';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { StatusBadge } from './report-status-badge';
@@ -13,8 +13,9 @@ import {
   type ReportActionType,
 } from './report-detail.utils';
 
+import { isBanTargetDisabled } from '@/components/admin/users/users.utils';
 import { Button } from '@/components/shared/button';
-import { useReportAction, useReviewReport } from '@/hooks/queries/use-admin-queries';
+import { useAdminMe, useReportAction, useReviewReport } from '@/hooks/queries/use-admin-queries';
 
 /** Panel hành động kiểm duyệt: mark review, chọn action, ghi chú, ban date, submit. */
 export function ReportModerationPanel({
@@ -27,20 +28,36 @@ export function ReportModerationPanel({
   onResolved: () => void;
 }) {
   const { t } = useTranslation();
+  const { data: meData } = useAdminMe();
+  const currentUserRole = meData?.data?.role as Role | undefined;
   const reviewMutation = useReviewReport();
   const actionMutation = useReportAction();
+
+  const banDisabled = isBanTargetDisabled(report.targetAuthor?.role, currentUserRole);
+
+  const availableActions = useMemo(() => {
+    const base = report.targetType === 'POST' ? REPORT_POST_ACTIONS : REPORT_USER_ACTIONS;
+    if (!banDisabled) return base;
+    return base.filter((action) => action !== 'BAN_ACCOUNT');
+  }, [report.targetType, banDisabled]);
 
   const [selectedAction, setSelectedAction] = useState<ReportActionType>('DISMISS');
   const [resolutionNote, setResolutionNote] = useState('');
   const [bannedUntil, setBannedUntil] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  // Khi BAN_ACCOUNT bị ẩn (target Admin/Super-admin), chuyển về action còn lại.
+  useEffect(() => {
+    if (!availableActions.includes(selectedAction)) {
+      setSelectedAction(availableActions[0] ?? 'DISMISS');
+    }
+  }, [availableActions, selectedAction]);
+
   const actionLabel = (action: ReportActionType) => t(`reportDetail.actions.${action}`);
-  const availableActions =
-    report.targetType === 'POST' ? REPORT_POST_ACTIONS : REPORT_USER_ACTIONS;
   const isResolved = report.status === 'RESOLVED' || report.status === 'DISMISSED';
 
   const handleAction = () => {
+    if (selectedAction === 'BAN_ACCOUNT' && banDisabled) return;
     if (selectedAction === 'DELETE_POST' && !confirmDelete) {
       setConfirmDelete(true);
       return;
@@ -92,6 +109,7 @@ export function ReportModerationPanel({
               {availableActions.map((action) => (
                 <button
                   key={action}
+                  type="button"
                   onClick={() => {
                     setSelectedAction(action);
                     setConfirmDelete(false);
@@ -106,6 +124,9 @@ export function ReportModerationPanel({
                 </button>
               ))}
             </div>
+            {banDisabled ? (
+              <p className="text-muted-foreground text-xs">{t('reportDetail.banTargetRestricted')}</p>
+            ) : null}
           </div>
 
           <div className="space-y-1.5">
@@ -145,6 +166,7 @@ export function ReportModerationPanel({
           )}
 
           <button
+            type="button"
             disabled={actionMutation.isPending || !resolutionNote.trim()}
             onClick={handleAction}
             className={`w-full rounded-lg px-4 py-2.5 text-xs font-semibold transition-colors disabled:opacity-50 ${REPORT_ACTION_COLORS[selectedAction]}`}

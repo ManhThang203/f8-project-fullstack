@@ -8,7 +8,11 @@ import {
   encodeCreatedCursor,
 } from '../../lib/admin/cursor.js';
 import { AppError } from '../../lib/errors.js';
-import { ROLE_DEFAULT_PERMISSIONS } from '../../lib/rbac/permission-catalog.js';
+import {
+  ASSIGNABLE_PERMISSION_KEYS,
+  isAssignablePermissionKey,
+  ROLE_DEFAULT_PERMISSIONS,
+} from '../../lib/rbac/permission-catalog.js';
 import {
   invalidateUserPermissionCache,
   resolveEffectivePermissions,
@@ -105,7 +109,10 @@ export async function getUserPermissions(userId: string): Promise<AdminPermissio
   const user = await prisma.user.findFirst({ where: { id: userId, deletedAt: null } });
   if (!user) throw AppError.notFound('Không tìm thấy user');
 
-  const all = await prisma.permission.findMany({ orderBy: [{ domain: 'asc' }, { key: 'asc' }] });
+  const all = await prisma.permission.findMany({
+    where: { key: { in: [...ASSIGNABLE_PERMISSION_KEYS] } },
+    orderBy: [{ domain: 'asc' }, { key: 'asc' }],
+  });
   const defaults = new Set(ROLE_DEFAULT_PERMISSIONS[user.role as Role] ?? []);
   const overrides = await prisma.userPermission.findMany({
     where: { userId },
@@ -132,9 +139,16 @@ export async function setUserPermissions(
 ): Promise<AdminPermissionDto[]> {
   const user = await prisma.user.findFirst({ where: { id: userId, deletedAt: null } });
   if (!user) throw AppError.notFound('Không tìm thấy user');
-  if (user.role === 'SUPER_ADMIN') throw AppError.forbidden('Không thể sửa quyền super admin');
+  // Chỉ MODERATOR được chỉnh grant/revoke — USER có thể bị pre-plant trước khi promote.
+  if (user.role !== 'MODERATOR') {
+    throw AppError.forbidden('Chỉ có thể chỉnh quyền chi tiết cho moderator');
+  }
 
   const allKeys = [...new Set([...grants, ...revokes])];
+  const invalidKeys = allKeys.filter((key) => !isAssignablePermissionKey(key));
+  if (invalidKeys.length > 0) {
+    throw AppError.badRequest('Quyền không được phép gán: ' + invalidKeys.join(', '));
+  }
   const perms = await prisma.permission.findMany({ where: { key: { in: allKeys } } });
   const permMap = new Map(perms.map((p) => [p.key, p.id]));
 

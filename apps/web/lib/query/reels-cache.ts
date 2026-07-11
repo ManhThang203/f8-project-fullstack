@@ -1,4 +1,4 @@
-  import type { ReelsFeedItemDto, ReelsFeedMeta } from '@costy/shared';
+import type { ReelsFeedItemDto, ReelsFeedMeta } from '@costy/shared';
 import type { InfiniteData, QueryClient } from '@tanstack/react-query';
 
 type ReelsPage = {
@@ -51,6 +51,32 @@ export function patchReelFollowStateByAuthorInCache(
           if (item.author.id !== authorId || item.isFollowing === isFollowing) return item;
           changed = true;
           return { ...item, isFollowing };
+        }),
+      }));
+      return changed ? { ...old, pages } : old;
+    },
+  );
+}
+
+/** Cập nhật avatar/tên author trên mọi reel trong cache (sau khi đổi profile). */
+export function patchReelAuthorProfileInCache(
+  queryClient: QueryClient,
+  authorId: string,
+  patch: Partial<Pick<ReelsFeedItemDto['author'], 'image' | 'name' | 'username'>>,
+): void {
+  if (!('image' in patch) && patch.name === undefined && patch.username === undefined) return;
+
+  queryClient.setQueriesData<ReelsInfiniteCache>(
+    { queryKey: [...REELS_QUERY_KEY_PREFIX] },
+    (old) => {
+      if (!old) return old;
+      let changed = false;
+      const pages = old.pages.map((page) => ({
+        ...page,
+        data: page.data.map((item) => {
+          if (item.author.id !== authorId) return item;
+          changed = true;
+          return { ...item, author: { ...item.author, ...patch } };
         }),
       }));
       return changed ? { ...old, pages } : old;

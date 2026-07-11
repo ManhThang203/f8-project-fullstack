@@ -2,6 +2,7 @@
 
 import { io, type Socket } from 'socket.io-client';
 
+import { forceLogoutIfAccountBlocked, isAccountBlockedError } from '@/lib/auth';
 import { apiFetch } from '@/lib/api';
 
 const URL = process.env.NEXT_PUBLIC_SOCKET_URL ?? 'http://localhost:4000';
@@ -10,6 +11,11 @@ type AuthedNamespace = '/notifications' | '/feed';
 
 const sockets: Partial<Record<AuthedNamespace, Socket>> = {};
 const connectPromises: Partial<Record<AuthedNamespace, Promise<Socket>>> = {};
+
+/** Từ chối kết nối socket mà không tạo Error instance (tránh Next.js Console Error overlay). */
+function denySocketConnect(code: string, message: string): Promise<never> {
+  return Promise.reject({ name: 'SocketConnectDenied', code, message });
+}
 
 /**
  * Lấy socket đã xác thực cho `/notifications` hoặc `/feed`.
@@ -29,7 +35,10 @@ export function getAuthedSocket(namespace: AuthedNamespace): Promise<Socket> {
     });
     if (!res.success) {
       delete connectPromises[namespace];
-      throw new Error(res.error.message);
+      if (isAccountBlockedError(res.error)) {
+        void forceLogoutIfAccountBlocked();
+      }
+      return denySocketConnect(res.error.code, res.error.message);
     }
 
     const token = res.data.token;

@@ -5,6 +5,7 @@ import type {
   AdminReportListQuery,
   AdminReportReview,
   CreateReportBody,
+  Role,
 } from '@costy/shared';
 
 import { writeAuditLog } from '../../lib/admin/audit.service.js';
@@ -177,19 +178,39 @@ export async function getAdminReport(reportId: string): Promise<AdminReportDetai
       where: { id: r.targetId },
       select: {
         content: true,
-        author: { select: { id: true, username: true, name: true, image: true, status: true } },
+        author: {
+          select: { id: true, username: true, name: true, image: true, status: true, role: true },
+        },
         media: { select: { id: true, kind: true, publicUrl: true } },
       },
     });
     targetContent = post?.content ?? null;
-    targetAuthor = post?.author ? { ...post.author, status: post.author.status as string } : null;
+    targetAuthor = post?.author
+      ? {
+          id: post.author.id,
+          username: post.author.username,
+          name: post.author.name,
+          image: post.author.image,
+          status: post.author.status as string,
+          role: post.author.role as Role,
+        }
+      : null;
     targetMedia = post?.media ?? null;
   } else if (r.targetType === 'USER') {
     const user = await prisma.user.findUnique({
       where: { id: r.targetId },
-      select: { id: true, username: true, name: true, image: true, status: true },
+      select: { id: true, username: true, name: true, image: true, status: true, role: true },
     });
-    targetAuthor = user ? { ...user, status: user.status as string } : null;
+    targetAuthor = user
+      ? {
+          id: user.id,
+          username: user.username,
+          name: user.name,
+          image: user.image,
+          status: user.status as string,
+          role: user.role as Role,
+        }
+      : null;
   }
 
   // Related reports trên cùng target

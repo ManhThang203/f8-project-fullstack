@@ -13,6 +13,7 @@ import { CreatePostTrigger } from '../compose/create-post-trigger';
 import { FeedSkeletonList } from './feed-skeleton-list';
 
 import { PostCard } from '@/components/home/post/card';
+import { useCurrentUser } from '@/components/shared/providers/current-user-context';
 import { Button } from '@/components/shared/ui';
 import {
   flattenPostsFeedPages,
@@ -22,7 +23,7 @@ import {
 } from '@/hooks/queries/posts';
 import { useRequireAuth } from '@/hooks/use-require-auth';
 import { getUserFacingErrorMessage } from '@/lib/api';
-import { authClient, type ServerAuthUser } from '@/lib/auth';
+import type { ServerAuthUser } from '@/lib/auth';
 import { onHomeFeedRefresh } from '@/lib/events';
 import { queryKeys } from '@/lib/query';
 import { getAuthedSocket } from '@/lib/socket';
@@ -42,6 +43,7 @@ function userFromServer(u: ServerAuthUser): FeedUser {
     email: u.email,
     username: u.username ?? '',
     name: u.name,
+    image: u.image,
   };
 }
 
@@ -76,7 +78,7 @@ function FeedToggleButton({
 
 export function HomeFeed({ initialUser }: Props) {
   const queryClient = useQueryClient();
-  const { data: session } = authClient.useSession();
+  const { user: currentUser } = useCurrentUser();
   const { requireAuth } = useRequireAuth();
 
   const [sort, setSort] = useState<FeedSort>('recent');
@@ -87,18 +89,17 @@ export function HomeFeed({ initialUser }: Props) {
     usePostsFeed({ sort, scope });
 
   const me = useMemo<FeedUser | null>(() => {
-    const fromClient = session?.user
-      ? {
-          id: session.user.id,
-          email: session.user.email ?? null,
-          username: (session.user as { username?: string | null }).username ?? '',
-          name: session.user.name ?? null,
-          image: (session.user as { image?: string | null }).image ?? null,
-        }
-      : null;
-    const fromServer = initialUser ? userFromServer(initialUser) : null;
-    return fromClient ?? fromServer ?? null;
-  }, [session?.user, initialUser]);
+    if (currentUser) {
+      return {
+        id: currentUser.id,
+        email: currentUser.email,
+        username: currentUser.username ?? '',
+        name: currentUser.name,
+        image: currentUser.image,
+      };
+    }
+    return initialUser ? userFromServer(initialUser) : null;
+  }, [currentUser, initialUser]);
 
   const posts = useMemo(() => flattenPostsFeedPages(data?.pages), [data?.pages]);
 

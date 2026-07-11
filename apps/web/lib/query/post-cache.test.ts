@@ -2,17 +2,17 @@ import type { PostFeedItemDto } from '@costy/shared';
 import { QueryClient } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { patchFeedItemInCache, patchPostItemInRelatedCaches } from './post-cache';
+import { patchAuthorProfileInCaches, patchFeedItemInCache, patchPostItemInRelatedCaches } from './post-cache';
 import { queryKeys } from './query-keys';
 
-function makePost(id: string): PostFeedItemDto {
+function makePost(id: string, authorId = 'a1'): PostFeedItemDto {
   return {
     id,
     parentId: null,
     content: `post ${id}`,
     createdAt: new Date().toISOString(),
     visibility: 'PUBLIC',
-    author: { id: 'a1', username: 'user-a1', name: null, image: null },
+    author: { id: authorId, username: `user-${authorId}`, name: null, image: null },
     replyCount: 0,
     commentCount: 0,
     likeCount: 0,
@@ -93,6 +93,44 @@ describe('post-cache', () => {
       id: 'p2',
       savedByMe: true,
       shareCount: 9,
+    });
+  });
+
+  it('patchAuthorProfileInCaches cập nhật avatar author trên feed, comment và detail', () => {
+    const commentsKey = ['posts', 'comments', 'p1'] as const;
+    const detailKey = ['posts', 'p2'] as const;
+
+    seedFeedCache(queryClient, [[makePost('p1', 'a1'), makePost('p2', 'a2')]]);
+    queryClient.setQueryData(commentsKey, {
+      pages: [{ items: [makePost('c1', 'a1'), makePost('c2', 'a2')], nextCursor: null }],
+      pageParams: [undefined],
+    });
+    queryClient.setQueryData(detailKey, makePost('p2', 'a1'));
+
+    patchAuthorProfileInCaches(queryClient, 'a1', {
+      image: 'https://cdn.example/new-avatar.jpg',
+      name: 'Alice',
+    });
+
+    const feed = queryClient.getQueryData<FeedCache>(FEED_KEY);
+    expect(feed?.pages[0]?.data[0]?.author).toMatchObject({
+      id: 'a1',
+      image: 'https://cdn.example/new-avatar.jpg',
+      name: 'Alice',
+    });
+    expect(feed?.pages[0]?.data[1]?.author).toMatchObject({ id: 'a2', image: null, name: null });
+
+    const comments = queryClient.getQueryData<{ pages: { items: PostFeedItemDto[] }[] }>(commentsKey);
+    expect(comments?.pages[0]?.items[0]?.author).toMatchObject({
+      image: 'https://cdn.example/new-avatar.jpg',
+      name: 'Alice',
+    });
+    expect(comments?.pages[0]?.items[1]?.author).toMatchObject({ id: 'a2', image: null });
+
+    expect(queryClient.getQueryData<PostFeedItemDto>(detailKey)?.author).toMatchObject({
+      id: 'a1',
+      image: 'https://cdn.example/new-avatar.jpg',
+      name: 'Alice',
     });
   });
 });

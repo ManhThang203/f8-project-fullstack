@@ -3,6 +3,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  patchReelAuthorProfileInCache,
   patchReelFollowStateByAuthorInCache,
   patchReelItemInCache,
   removeReelItemsByAuthorInCache,
@@ -114,5 +115,30 @@ describe('reels-cache', () => {
     const cache = queryClient.getQueryData<ReelsCache>(REELS_KEY);
     expect(cache?.pages[0]?.data[0]).toMatchObject({ id: 'r1', isFollowing: false });
     expect(cache?.pages[0]?.data[1]).toMatchObject({ id: 'r2', isFollowing: false });
+  });
+
+  it('patchReelAuthorProfileInCache cập nhật avatar/tên mọi reel của author', () => {
+    seedReelsCache(queryClient, [
+      [makeReel('r1', 'a1'), makeReel('r2', 'a2')],
+      [makeReel('r3', 'a1')],
+    ]);
+
+    patchReelAuthorProfileInCache(queryClient, 'a1', {
+      image: 'https://cdn.example/a1.jpg',
+      name: 'Alice',
+    });
+
+    const cache = queryClient.getQueryData<ReelsCache>(REELS_KEY);
+    expect(cache?.pages[0]?.data[0]?.author).toMatchObject({
+      id: 'a1',
+      image: 'https://cdn.example/a1.jpg',
+      name: 'Alice',
+    });
+    expect(cache?.pages[1]?.data[0]?.author).toMatchObject({
+      id: 'a1',
+      image: 'https://cdn.example/a1.jpg',
+      name: 'Alice',
+    });
+    expect(cache?.pages[0]?.data[1]?.author).toMatchObject({ id: 'a2', image: null, name: null });
   });
 });

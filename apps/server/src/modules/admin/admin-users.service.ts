@@ -125,6 +125,18 @@ export async function patchAdminUserStatus(
   if (user.role === 'SUPER_ADMIN') {
     throw AppError.forbidden('Không thể thay đổi trạng thái super admin');
   }
+  if (actorId === userId) {
+    throw AppError.forbidden('Không thể tự thay đổi trạng thái của chính mình');
+  }
+  if (user.role === 'ADMIN') {
+    const actor = await prisma.user.findUnique({
+      where: { id: actorId },
+      select: { role: true },
+    });
+    if (actor?.role !== 'SUPER_ADMIN') {
+      throw AppError.forbidden('Chỉ super admin mới được thay đổi trạng thái ADMIN');
+    }
+  }
 
   let status = user.status;
   let bannedUntil: Date | null = user.bannedUntil;

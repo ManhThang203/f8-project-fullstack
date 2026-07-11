@@ -1,10 +1,10 @@
 'use client';
 
-import type { AdminUserListItemDto } from '@costy/shared';
+import type { AdminUserListItemDto, Role } from '@costy/shared';
 import { ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { isRoleChangeDisabled } from './users.utils';
+import { isRoleChangeDisabled, isStatusChangeDisabled } from './users.utils';
 
 import { StatusBadge } from '@/components/admin/status-badge';
 import { Button } from '@/components/shared/button';
@@ -16,7 +16,9 @@ type Props = {
   users: AdminUserListItemDto[];
   isFetching: boolean;
   canManageRole?: boolean;
+  canManageStatus?: boolean;
   currentUserId?: string;
+  currentUserRole?: Role;
   onManageStatus: (user: AdminUserListItemDto) => void;
   onManageRole?: (user: AdminUserListItemDto) => void;
 };
@@ -32,7 +34,9 @@ export function UsersTable({
   users,
   isFetching,
   canManageRole = false,
+  canManageStatus = false,
   currentUserId,
+  currentUserRole,
   onManageStatus,
   onManageRole,
 }: Props) {
@@ -88,7 +92,7 @@ export function UsersTable({
                   {canManageRole && onManageRole ? (
                     <Button
                       variant="secondary"
-                      disabled={isRoleChangeDisabled(user, currentUserId)}
+                      disabled={isRoleChangeDisabled(user, currentUserId, currentUserRole)}
                       className={cn(adminTable.actionBtn, 'gap-1.5 leading-none')}
                       onClick={() => onManageRole(user)}
                     >
@@ -96,13 +100,16 @@ export function UsersTable({
                       {t('users.manageRole')}
                     </Button>
                   ) : null}
-                  <Button
-                    variant="secondary"
-                    className={adminTable.actionBtn}
-                    onClick={() => onManageStatus(user)}
-                  >
-                    {t('users.manageStatus')}
-                  </Button>
+                  {canManageStatus &&
+                  !isStatusChangeDisabled(user, currentUserId, currentUserRole) ? (
+                    <Button
+                      variant="secondary"
+                      className={adminTable.actionBtn}
+                      onClick={() => onManageStatus(user)}
+                    >
+                      {t('users.manageStatus')}
+                    </Button>
+                  ) : null}
                 </div>
               </td>
             </tr>

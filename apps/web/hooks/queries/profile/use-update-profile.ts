@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiQueryData } from '@/lib/api';
 import { queryKeys } from '@/lib/query';
 
-/** Cập nhật tên/tiểu sử của chính mình và refresh cache profile tương ứng. */
+/** Cập nhật tên/tiểu sử của chính mình và refresh cache profile (envelope apiQuery). */
 export function useUpdateMyProfile(username: string) {
   const queryClient = useQueryClient();
 
@@ -17,9 +17,10 @@ export function useUpdateMyProfile(username: string) {
         body: JSON.stringify(body),
       }),
     onSuccess: (profile) => {
-      queryClient.setQueryData(queryKeys.users.profile(username), profile);
+      const envelope = { data: profile };
+      queryClient.setQueryData(queryKeys.users.profile(username), envelope);
       if (profile.username !== username) {
-        queryClient.setQueryData(queryKeys.users.profile(profile.username), profile);
+        queryClient.setQueryData(queryKeys.users.profile(profile.username), envelope);
       }
       void queryClient.invalidateQueries({ queryKey: ['users'] });
     },

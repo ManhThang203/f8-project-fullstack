@@ -65,6 +65,27 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, string[]> = {
 
 export const ADMIN_PANEL_ROLES: Role[] = ['MODERATOR', 'ADMIN', 'SUPER_ADMIN'];
 
+/** Quyền admin có thể grant/revoke cho MODERATOR — khớp requirePermission trên admin routes. */
+export const ASSIGNABLE_PERMISSION_KEYS = [
+  'stats:view',
+  'user:read',
+  'user:lock',
+  'moderator:manage',
+  'report:read',
+  'report:review',
+  'hashtag:read',
+  'hashtag:manage',
+  'permission:grant',
+  'audit:read',
+] as const;
+
+const ASSIGNABLE_KEY_SET = new Set<string>(ASSIGNABLE_PERMISSION_KEYS);
+
+/** Kiểm tra key có được phép gán cho moderator qua UI/API không. */
+export function isAssignablePermissionKey(key: string): boolean {
+  return ASSIGNABLE_KEY_SET.has(key);
+}
+
 /** Kiểm tra role có wildcard toàn quyền không. */
 export function hasWildcardRole(role: Role): boolean {
   return role === 'ADMIN' || role === 'SUPER_ADMIN';

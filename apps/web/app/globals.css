@@ -80,6 +80,12 @@
     border: 2px solid transparent;
     background-clip: padding-box;
   }
+
+  /* Edge/IE: ẩn nút hiện mật khẩu mặc định — tránh chồng với nút Eye tùy chỉnh */
+  input[type='password']::-ms-reveal,
+  input[type='password']::-ms-clear {
+    display: none;
+  }
 }
 
 /* Reels: lock document scroll without leaving a visible gutter strip on the right. */

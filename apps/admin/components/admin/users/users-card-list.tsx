@@ -1,9 +1,9 @@
 'use client';
 
-import type { AdminUserListItemDto } from '@costy/shared';
+import type { AdminUserListItemDto, Role } from '@costy/shared';
 import { useTranslation } from 'react-i18next';
 
-import { isRoleChangeDisabled } from './users.utils';
+import { isRoleChangeDisabled, isStatusChangeDisabled } from './users.utils';
 
 import { StatusBadge } from '@/components/admin/status-badge';
 import { Button } from '@/components/shared/button';
@@ -11,7 +11,9 @@ import { Button } from '@/components/shared/button';
 type Props = {
   users: AdminUserListItemDto[];
   canManageRole?: boolean;
+  canManageStatus?: boolean;
   currentUserId?: string;
+  currentUserRole?: Role;
   onManageStatus: (user: AdminUserListItemDto) => void;
   onManageRole?: (user: AdminUserListItemDto) => void;
 };
@@ -19,7 +21,9 @@ type Props = {
 export function UsersCardList({
   users,
   canManageRole = false,
+  canManageStatus = false,
   currentUserId,
+  currentUserRole,
   onManageStatus,
   onManageRole,
 }: Props) {
@@ -53,19 +57,22 @@ export function UsersCardList({
               <Button
                 variant="secondary"
                 className="h-9 w-full text-xs"
-                disabled={isRoleChangeDisabled(user, currentUserId)}
+                disabled={isRoleChangeDisabled(user, currentUserId, currentUserRole)}
                 onClick={() => onManageRole(user)}
               >
                 {t('users.manageRole')}
               </Button>
             ) : null}
-            <Button
-              variant="secondary"
-              className="h-9 w-full text-xs"
-              onClick={() => onManageStatus(user)}
-            >
-              {t('users.manageStatus')}
-            </Button>
+            {canManageStatus &&
+            !isStatusChangeDisabled(user, currentUserId, currentUserRole) ? (
+              <Button
+                variant="secondary"
+                className="h-9 w-full text-xs"
+                onClick={() => onManageStatus(user)}
+              >
+                {t('users.manageStatus')}
+              </Button>
+            ) : null}
           </div>
         </div>
       ))}

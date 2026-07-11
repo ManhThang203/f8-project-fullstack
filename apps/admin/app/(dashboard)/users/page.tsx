@@ -10,13 +10,14 @@ import { UsersCardList } from '@/components/admin/users/users-card-list';
 import { UsersCardSkeleton } from '@/components/admin/users/users-card-skeleton';
 import { UsersTable } from '@/components/admin/users/users-table';
 import { UsersTableSkeleton } from '@/components/admin/users/users-table-skeleton';
+import { isRoleChangeDisabled } from '@/components/admin/users/users.utils';
 import { CursorPagination } from '@/components/shared/cursor-pagination';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useAdminMe, useAdminUsers } from '@/hooks/queries/use-admin-queries';
 import { useCursorPagination } from '@/hooks/use-cursor-pagination';
 import { hasAdminPermission } from '@/lib/has-admin-permission';
 import { cn } from '@/lib/utils';
-import type { AdminUserListItemDto } from '@costy/shared';
+import type { AdminUserListItemDto, Role } from '@costy/shared';
 
 /** Input tìm kiếm tách riêng để không re-render khi fetch danh sách. */
 const UsersSearchInput = memo(function UsersSearchInput({
@@ -69,7 +70,9 @@ export default function UsersPage() {
   const permissions = meData?.data?.permissions ?? [];
   const canReadUsers = hasAdminPermission(permissions, 'user:read');
   const canManageRole = hasAdminPermission(permissions, 'moderator:manage');
+  const canManageStatus = hasAdminPermission(permissions, 'user:lock');
   const currentUserIsSuperAdmin = meData?.data?.role === 'SUPER_ADMIN';
+  const currentUserRole = meData?.data?.role as Role | undefined;
 
   const { limit, setLimit, cursor, pageIndex, handleNext, handlePrev, reset } =
     useCursorPagination(10);
@@ -97,14 +100,14 @@ export default function UsersPage() {
     setIsModalOpen(true);
   }, []);
 
-  /** Mở modal đổi vai trò cho user được chọn (không cho tự đổi role của mình). */
+  /** Mở modal đổi vai trò cho user được chọn (không cho tự đổi / đụng Admin nếu không phải Super-admin). */
   const handleManageRole = useCallback(
     (user: AdminUserListItemDto) => {
-      if (currentUserId && user.id === currentUserId) return;
+      if (isRoleChangeDisabled(user, currentUserId, currentUserRole)) return;
       setRoleUser(user);
       setIsRoleModalOpen(true);
     },
-    [currentUserId],
+    [currentUserId, currentUserRole],
   );
 
   return (
@@ -124,14 +127,18 @@ export default function UsersPage() {
             users={users}
             isFetching={isFetching && !isLoading}
             canManageRole={canManageRole}
+            canManageStatus={canManageStatus}
             currentUserId={currentUserId}
+            currentUserRole={currentUserRole}
             onManageStatus={handleManageStatus}
             onManageRole={handleManageRole}
           />
           <UsersCardList
             users={users}
             canManageRole={canManageRole}
+            canManageStatus={canManageStatus}
             currentUserId={currentUserId}
+            currentUserRole={currentUserRole}
             onManageStatus={handleManageStatus}
             onManageRole={handleManageRole}
           />

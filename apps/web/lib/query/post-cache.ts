@@ -1,4 +1,4 @@
-import type { PostFeedItemDto } from '@costy/shared';
+import type { PostAuthorDto, PostFeedItemDto } from '@costy/shared';
 import type { QueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from './query-keys';
@@ -7,6 +7,8 @@ type FeedCache = {
   pages: { data: PostFeedItemDto[]; meta?: unknown }[];
   pageParams: unknown[];
 };
+
+type AuthorProfilePatch = Partial<Pick<PostAuthorDto, 'image' | 'name' | 'username'>>;
 
 /** Cập nhật một phần dữ liệu bài viết trong mọi cache infinite query feed (không refetch). */
 export function patchFeedItemInCache(
@@ -40,6 +42,46 @@ export function patchPostItemInRelatedCaches(
   }
 }
 
+/** Cập nhật avatar/tên author trong mọi cache bài viết/comment (sau khi đổi profile). */
+export function patchAuthorProfileInCaches(
+  queryClient: QueryClient,
+  authorId: string,
+  patch: AuthorProfilePatch,
+): void {
+  if (!('image' in patch) && patch.name === undefined && patch.username === undefined) return;
+
+  const listPrefixes = [
+    queryKeys.posts.feed,
+    ['users', 'feed'],
+    queryKeys.me.saved,
+    ['search', 'posts'],
+    ['posts', 'comments'],
+  ] as const;
+
+  for (const queryKey of listPrefixes) {
+    queryClient.setQueriesData({ queryKey }, (old) =>
+      patchAuthorInUnknownCache(old, authorId, patch),
+    );
+  }
+
+  queryClient.setQueriesData<PostFeedItemDto>(
+    {
+      predicate: (query) => {
+        const key = query.queryKey;
+        if (!Array.isArray(key) || key[0] !== 'posts' || key.length !== 2) return false;
+        const second = key[1];
+        return second !== 'feed' && second !== 'comments' && second !== 'reels';
+      },
+    },
+    (old) => {
+      if (!old || typeof old !== 'object' || !('author' in old)) return old;
+      if (!old.author || old.author.id !== authorId) return old;
+      if ('pages' in old) return old;
+      return { ...old, author: { ...old.author, ...patch } };
+    },
+  );
+}
+
 /** Map pages.data của infinite feed cache; giữ reference cũ nếu không có item khớp. */
 function patchInfiniteDataPages(
   old: FeedCache,
@@ -56,6 +98,82 @@ function patchInfiniteDataPages(
     }),
   }));
   return changed ? { ...old, pages } : old;
+}
+
+/** Patch author theo authorId trong item bài viết/comment. */
+function patchPostAuthor(
+  item: PostFeedItemDto,
+  authorId: string,
+  patch: AuthorProfilePatch,
+): PostFeedItemDto {
+  if (item.author.id !== authorId) return item;
+  return { ...item, author: { ...item.author, ...patch } };
+}
+
+/** Patch author trong cache dạng infinite pages.data / pages.items, flat array, hoặc { data: [] }. */
+function patchAuthorInUnknownCache(
+  old: unknown,
+  authorId: string,
+  patch: AuthorProfilePatch,
+): unknown {
+  if (!old || typeof old !== 'object') return old;
+
+  if ('pages' in old && Array.isArray((old as FeedCache).pages)) {
+    const pages = (old as { pages: unknown[] }).pages;
+    let changed = false;
+    const nextPages = pages.map((page) => {
+      if (!page || typeof page !== 'object') return page;
+
+      if ('data' in page && Array.isArray((page as { data: unknown }).data)) {
+        const data = (page as { data: PostFeedItemDto[] }).data;
+        const next = data.map((item) => {
+          const patched = patchPostAuthor(item, authorId, patch);
+          if (patched !== item) changed = true;
+          return patched;
+        });
+        return changed ? { ...page, data: next } : page;
+      }
+
+      if ('items' in page && Array.isArray((page as { items: unknown }).items)) {
+        const items = (page as { items: PostFeedItemDto[] }).items;
+        let pageChanged = false;
+        const next = items.map((item) => {
+          const patched = patchPostAuthor(item, authorId, patch);
+          if (patched !== item) pageChanged = true;
+          return patched;
+        });
+        if (pageChanged) changed = true;
+        return pageChanged ? { ...page, items: next } : page;
+      }
+
+      return page;
+    });
+    return changed ? { ...old, pages: nextPages } : old;
+  }
+
+  if (Array.isArray(old)) {
+    let changed = false;
+    const next = old.map((item) => {
+      if (!item || typeof item !== 'object' || !('author' in item)) return item;
+      const patched = patchPostAuthor(item as PostFeedItemDto, authorId, patch);
+      if (patched !== item) changed = true;
+      return patched;
+    });
+    return changed ? next : old;
+  }
+
+  if ('data' in old && Array.isArray((old as { data: unknown }).data)) {
+    const data = (old as { data: PostFeedItemDto[] }).data;
+    let changed = false;
+    const next = data.map((item) => {
+      const patched = patchPostAuthor(item, authorId, patch);
+      if (patched !== item) changed = true;
+      return patched;
+    });
+    return changed ? { ...old, data: next } : old;
+  }
+
+  return old;
 }
 
 /** Patch post theo id trong cache dạng infinite pages.data, flat array, hoặc { data: [] }. */

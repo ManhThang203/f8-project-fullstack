@@ -76,6 +76,7 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextParam = searchParams.get('next');
+  const blockedReason = searchParams.get('reason') === 'blocked';
   const registerHref =
     nextParam != null && nextParam !== ''
       ? `/register?next=${encodeURIComponent(nextParam)}`
@@ -88,6 +89,12 @@ export function LoginForm() {
   const showGoogle = Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
 
   const { data: session, isPending: sessionPending } = authClient.useSession();
+
+  useEffect(() => {
+    if (!blockedReason) return;
+    toast.error('Tài khoản đã bị khóa hoặc cấm');
+    router.replace('/login', { scroll: false });
+  }, [blockedReason, router]);
 
   useEffect(() => {
     if (sessionPending || !session?.user) return;
