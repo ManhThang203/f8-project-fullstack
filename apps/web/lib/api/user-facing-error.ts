@@ -22,30 +22,51 @@ function isTechnicalMessage(message: string): boolean {
   return TECHNICAL_MESSAGE.test(message);
 }
 
+/** Message toàn ASCII Latin — thường là tiếng Anh từ thư viện / Better Auth / Express. */
+function looksLikeEnglish(message: string): boolean {
+  return /^[\x20-\x7E]+$/.test(message) && /[A-Za-z]{3,}/.test(message);
+}
+
+/** Chọn câu tiếng Việt từ message + mã lỗi; ẩn câu kỹ thuật / tiếng Anh. */
+function localizeMessage(message: string, code: string | undefined, fallback: string): string {
+  const trimmed = message.trim();
+  if (trimmed && !isTechnicalMessage(trimmed) && !looksLikeEnglish(trimmed)) {
+    return trimmed;
+  }
+  if (code && MESSAGE_BY_CODE[code]) return MESSAGE_BY_CODE[code]!;
+  return fallback;
+}
+
 /** Chuyển lỗi API hoặc network sang câu dễ hiểu cho người dùng. */
 export function getUserFacingErrorMessage(
   error: unknown,
   fallback: string = DEFAULT_MESSAGE,
 ): string {
-  if (isApiQueryError(error)) {
-    const mapped = MESSAGE_BY_CODE[error.code];
-    if (mapped && (error.code === ErrorCode.INTERNAL_ERROR || isTechnicalMessage(error.message))) {
-      return mapped;
-    }
-    if (error.message && !isTechnicalMessage(error.message)) {
-      return error.message;
-    }
-    return mapped ?? fallback;
+  if (typeof error === 'string') {
+    return localizeMessage(error, undefined, fallback);
   }
 
-  if (error instanceof Error && error.message) {
-    if (/network|fetch|failed to fetch/i.test(error.message)) {
+  if (isApiQueryError(error)) {
+    return localizeMessage(error.message ?? '', error.code, fallback);
+  }
+
+  if (
+    error &&
+    typeof error === 'object' &&
+    'message' in error &&
+    typeof (error as { message: unknown }).message === 'string'
+  ) {
+    const code =
+      'code' in error && typeof (error as { code: unknown }).code === 'string'
+        ? (error as { code: string }).code
+        : undefined;
+    const message = (error as { message: string }).message;
+
+    if (/network|fetch|failed to fetch/i.test(message)) {
       return 'Không thể kết nối. Kiểm tra internet và thử lại.';
     }
-    if (isTechnicalMessage(error.message)) {
-      return fallback;
-    }
-    return error.message;
+
+    return localizeMessage(message, code, fallback);
   }
 
   return fallback;

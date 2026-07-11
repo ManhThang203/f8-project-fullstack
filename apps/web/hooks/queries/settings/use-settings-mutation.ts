@@ -4,6 +4,8 @@ import type { UpdateUserSettingsBody } from '@costy/shared';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 
+import { getUserFacingErrorMessage } from '@/lib/api';
+
 import { useUpdateMySettings } from './use-update-settings';
 
 type CommitOptions = {
@@ -26,7 +28,7 @@ export function useSettingsMutation() {
         onSuccess: () => toast.success(successMessage),
         onError: (err) => {
           rollback();
-          toast.error(err.message);
+          toast.error(getUserFacingErrorMessage(err, 'Không thể lưu cài đặt'));
         },
       });
     },

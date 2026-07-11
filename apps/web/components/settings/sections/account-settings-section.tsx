@@ -22,7 +22,7 @@ import {
 import { SettingsSection } from '@/components/settings/settings-section';
 import { Button } from '@/components/shared/ui';
 import { useProfile } from '@/hooks/queries/profile';
-import { authClient } from '@/lib/auth';
+import { authClient, getAuthClientErrorMessage } from '@/lib/auth';
 
 type Props = {
   username: string;
@@ -53,7 +53,7 @@ export function AccountSettingsSection({ username, email }: Props) {
 
     const res = await authClient.updateUser({ username: data.username });
     if (res.error) {
-      toast.error(res.error.message ?? 'Không thể đổi username');
+      toast.error(getAuthClientErrorMessage(res.error, 'Không thể đổi username'));
       return;
     }
 
@@ -72,7 +72,7 @@ export function AccountSettingsSection({ username, email }: Props) {
       callbackURL: `${window.location.origin}/settings/account`,
     });
     if (res.error) {
-      toast.error(res.error.message ?? 'Không thể đổi email');
+      toast.error(getAuthClientErrorMessage(res.error, 'Không thể đổi email'));
       return;
     }
 

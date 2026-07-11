@@ -16,7 +16,7 @@ import { ComposeEmojiPicker } from '@/components/shared/compose-emoji-picker';
 import { Avatar } from '@/components/shared/ui';
 import { useCommentRealtime } from '@/hooks/post';
 import { usePostAncestry, usePostComments } from '@/hooks/queries/posts';
-import { createPostWithMedia } from '@/lib/api';
+import { createPostWithMedia, getUserFacingErrorMessage } from '@/lib/api';
 import { authClient } from '@/lib/auth';
 import { applyEmojiInsert, handleCommentEnterKey } from '@/lib/emoji';
 import { isImageMime, isVideoMime, validateFiles } from '@/lib/post';
@@ -207,7 +207,7 @@ export function PostDetailView({ post, highlightCommentId }: Props) {
     setBusy(false);
     if (!result.ok) {
       setDrafts((prev) => prev.map((d) => ({ ...d, status: 'done' as const, progress: 100 })));
-      toast.error(result.message);
+      toast.error(getUserFacingErrorMessage(result.message, 'Không gửi được bình luận'));
       return;
     }
 

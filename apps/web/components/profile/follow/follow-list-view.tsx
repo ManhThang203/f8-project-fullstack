@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Avatar, Button } from '@/components/shared/ui';
 import { flattenFollowListPages, useFollowList, useFollowMutation } from '@/hooks/queries/social';
 import { useDebounced } from '@/hooks/ui';
+import { getUserFacingErrorMessage } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -30,7 +31,7 @@ export function FollowListView({ username, title, mode, onClose, asModal }: Prop
     useFollowList(username, mode, debouncedQ);
 
   const followMutation = useFollowMutation({
-    onError: (err) => toast.error(err.message),
+    onError: (err) => toast.error(getUserFacingErrorMessage(err)),
   });
 
   const baseItems = flattenFollowListPages(data?.pages);
@@ -39,7 +40,7 @@ export function FollowListView({ username, title, mode, onClose, asModal }: Prop
   );
 
   useEffect(() => {
-    if (isError) toast.error(error.message);
+    if (isError) toast.error(getUserFacingErrorMessage(error));
   }, [isError, error]);
 
   useEffect(() => {

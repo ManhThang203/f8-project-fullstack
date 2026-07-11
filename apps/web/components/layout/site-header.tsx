@@ -8,7 +8,7 @@ import { SiteHeaderCompact } from './site-header-compact';
 import { SiteHeaderDesktop } from './site-header-desktop';
 
 import { useChatUnreadSync, useChatUnreadTotal } from '@/hooks/queries/chat';
-import { authClient, type ServerAuthUser } from '@/lib/auth';
+import { authClient, getAuthClientErrorMessage, type ServerAuthUser } from '@/lib/auth';
 import { subscribeAvatarUpdated } from '@/lib/events';
 import { resetChatSocket } from '@/lib/socket';
 import { cn } from '@/lib/utils';
@@ -78,11 +78,7 @@ export function SiteHeader({ initialUser }: Props) {
       const err = result && typeof result === 'object' && 'error' in result ? result.error : null;
       if (err) {
         setForceGuestNav(false);
-        toast.error(
-          typeof err === 'object' && err !== null && typeof err.message === 'string'
-            ? err.message
-            : 'Đăng xuất thất bại, vui lòng thử lại.',
-        );
+        toast.error(getAuthClientErrorMessage(err, 'Đăng xuất thất bại, vui lòng thử lại.'));
         return;
       }
       resetChatSocket();

@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import { PasswordInput } from '@/components/auth/password-input';
 import {
   settingsErrorClass,
   settingsFieldClass,
@@ -13,7 +14,7 @@ import {
 } from '@/components/settings/settings-input-class';
 import { SettingsSection } from '@/components/settings/settings-section';
 import { Button } from '@/components/shared/ui';
-import { authClient } from '@/lib/auth';
+import { authClient, getAuthClientErrorMessage } from '@/lib/auth';
 
 /** Form đổi mật khẩu khi đang đăng nhập. */
 export function SecuritySettingsSection() {
@@ -34,7 +35,7 @@ export function SecuritySettingsSection() {
     });
 
     if (res.error) {
-      toast.error(res.error.message ?? 'Không thể đổi mật khẩu');
+      toast.error(getAuthClientErrorMessage(res.error, 'Không thể đổi mật khẩu'));
       return;
     }
 
@@ -52,9 +53,8 @@ export function SecuritySettingsSection() {
           <label className={settingsLabelClass} htmlFor="current-password">
             Mật khẩu hiện tại
           </label>
-          <input
+          <PasswordInput
             id="current-password"
-            type="password"
             autoComplete="current-password"
             className={settingsInputClass}
             aria-invalid={errors.currentPassword ? true : undefined}
@@ -69,9 +69,8 @@ export function SecuritySettingsSection() {
           <label className={settingsLabelClass} htmlFor="new-password">
             Mật khẩu mới
           </label>
-          <input
+          <PasswordInput
             id="new-password"
-            type="password"
             autoComplete="new-password"
             className={settingsInputClass}
             aria-invalid={errors.newPassword ? true : undefined}
@@ -86,9 +85,8 @@ export function SecuritySettingsSection() {
           <label className={settingsLabelClass} htmlFor="confirm-password">
             Nhập lại mật khẩu mới
           </label>
-          <input
+          <PasswordInput
             id="confirm-password"
-            type="password"
             autoComplete="new-password"
             className={settingsInputClass}
             aria-invalid={errors.confirmPassword ? true : undefined}

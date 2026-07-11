@@ -17,9 +17,9 @@ export const errorMiddleware: ErrorRequestHandler = (error, _req, res, _next) =>
   if (error instanceof ZodError) {
     return res
       .status(400)
-      .json(err('VALIDATION_ERROR', 'Invalid request payload', error.flatten()));
+      .json(err('VALIDATION_ERROR', 'Dữ liệu gửi lên không hợp lệ', error.flatten()));
   }
 
   logger.error({ err: error }, 'unhandled error');
-  return res.status(500).json(err('INTERNAL_ERROR', 'Internal server error'));
+  return res.status(500).json(err('INTERNAL_ERROR', 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.'));
 };

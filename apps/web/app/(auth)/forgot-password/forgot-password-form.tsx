@@ -10,7 +10,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { z } from 'zod';
 
-import { authClient } from '@/lib/auth';
+import { authClient, getAuthClientErrorMessage } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
 const inputClass = cn(
@@ -101,7 +101,7 @@ export function ForgotPasswordForm() {
     });
 
     if (res.error) {
-      toast.error(res.error.message ?? 'Không gửi được email. Thử lại sau.');
+      toast.error(getAuthClientErrorMessage(res.error, 'Không gửi được email. Thử lại sau.'));
       return;
     }
 

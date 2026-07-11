@@ -14,6 +14,7 @@ import {
   useFriendsList,
   type FriendAction,
 } from '@/hooks/queries/social';
+import { getUserFacingErrorMessage } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 type FriendTab = 'friends' | 'incoming' | 'outgoing';
@@ -132,7 +133,7 @@ export function FriendsView() {
   const incomingQuery = useFriendRequests('incoming', { enabled: tab === 'incoming' });
   const outgoingQuery = useFriendRequests('outgoing', { enabled: tab === 'outgoing' });
   const friendMutation = useFriendMutation({
-    onError: (error) => toast.error(error.message),
+    onError: (error) => toast.error(getUserFacingErrorMessage(error)),
   });
 
   const items = useMemo(() => {

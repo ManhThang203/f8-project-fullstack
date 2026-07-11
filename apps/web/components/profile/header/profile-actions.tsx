@@ -17,6 +17,7 @@ import {
   type FriendAction,
 } from '@/hooks/queries/social';
 import { useRequireAuth } from '@/hooks/use-require-auth';
+import { getUserFacingErrorMessage } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -40,11 +41,11 @@ export function ProfileActions({ profile, onFollowChange }: Props) {
   }, [profile.friendStatus]);
 
   const friendMutation = useFriendMutation({
-    onError: (err) => toast.error(err.message),
+    onError: (err) => toast.error(getUserFacingErrorMessage(err)),
   });
 
   const followMutation = useFollowMutation({
-    onError: (err) => toast.error(err.message),
+    onError: (err) => toast.error(getUserFacingErrorMessage(err)),
   });
 
   const blockMutation = useBlockMutation();
@@ -158,7 +159,7 @@ export function ProfileActions({ profile, onFollowChange }: Props) {
           toast.success(`Đã chặn @${profile.username}`);
           router.push('/');
         },
-        onError: (err) => toast.error(err.message),
+        onError: (err) => toast.error(getUserFacingErrorMessage(err)),
       },
     );
   }

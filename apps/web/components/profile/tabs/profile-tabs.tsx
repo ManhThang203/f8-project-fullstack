@@ -2,7 +2,7 @@
 
 import { Heart, LayoutList, Play } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useId } from 'react';
+import { useCallback, useId, type RefObject } from 'react';
 
 import type { ProfileTab } from '@/components/profile/profile-utils';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,8 @@ type Props = {
   username: string;
   isOwner: boolean;
   activeTab: ProfileTab;
+  tabsRef?: RefObject<HTMLDivElement | null>;
+  onBeforeNavigate?: () => void;
 };
 
 const TABS: { id: ProfileTab; label: string; icon: typeof LayoutList }[] = [
@@ -19,7 +21,13 @@ const TABS: { id: ProfileTab; label: string; icon: typeof LayoutList }[] = [
   { id: 'liked', label: 'Đã thích', icon: Heart },
 ];
 
-export function ProfileTabs({ username, isOwner, activeTab }: Props) {
+export function ProfileTabs({
+  username,
+  isOwner,
+  activeTab,
+  tabsRef,
+  onBeforeNavigate,
+}: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tablistId = useId();
@@ -28,6 +36,8 @@ export function ProfileTabs({ username, isOwner, activeTab }: Props) {
 
   const navigate = useCallback(
     (tab: ProfileTab) => {
+      if (tab === activeTab) return;
+      onBeforeNavigate?.();
       const params = new URLSearchParams(searchParams.toString());
       if (tab === 'posts') {
         params.delete('tab');
@@ -37,7 +47,7 @@ export function ProfileTabs({ username, isOwner, activeTab }: Props) {
       const qs = params.toString();
       router.push(`/${encodeURIComponent(username)}${qs ? `?${qs}` : ''}`, { scroll: false });
     },
-    [router, searchParams, username],
+    [router, searchParams, username, activeTab, onBeforeNavigate],
   );
 
   function onKeyDown(e: React.KeyboardEvent, index: number) {
@@ -54,6 +64,7 @@ export function ProfileTabs({ username, isOwner, activeTab }: Props) {
 
   return (
     <div
+      ref={tabsRef}
       role="tablist"
       id={tablistId}
       aria-label="Nội dung trang cá nhân"

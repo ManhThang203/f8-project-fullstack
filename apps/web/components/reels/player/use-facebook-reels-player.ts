@@ -18,6 +18,7 @@ import { useReactPost } from '@/hooks/post';
 import { useSharePost, useToggleSavePost } from '@/hooks/queries/posts';
 import { useFollowMutation } from '@/hooks/queries/social';
 import { useReelsControlsBehavior, useReelsVideoStage } from '@/hooks/reels';
+import { getUserFacingErrorMessage } from '@/lib/api';
 import { consumeUnmuteOnEntry, feedVideoController } from '@/lib/post';
 
 const TIMEUPDATE_THROTTLE_MS = 250;
@@ -92,7 +93,7 @@ export function useFacebookReelsPlayer(
   const me = currentUser ?? undefined;
 
   const followMutation = useFollowMutation({
-    onError: (err) => toast.error(err.message),
+    onError: (err) => toast.error(getUserFacingErrorMessage(err)),
   });
   const reactMutation = useReactPost();
   const saveMutation = useToggleSavePost();

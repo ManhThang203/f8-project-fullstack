@@ -10,6 +10,7 @@ import { ReportModal } from '@/components/shared/report-modal';
 import { ConfirmDialog } from '@/components/shared/ui';
 import { useBlockMutation } from '@/hooks/queries/social';
 import { useRequireAuth } from '@/hooks/use-require-auth';
+import { getUserFacingErrorMessage } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -117,7 +118,7 @@ export function PostOptionsMenu({
           onHidePost?.();
           toast.success(`Đã chặn @${post.author.username}`);
         },
-        onError: (err) => toast.error(err.message),
+        onError: (err) => toast.error(getUserFacingErrorMessage(err)),
       },
     );
   }

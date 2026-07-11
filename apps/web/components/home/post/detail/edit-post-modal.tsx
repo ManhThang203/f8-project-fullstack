@@ -8,6 +8,7 @@ import { VisibilitySelect } from '@/components/home/compose/visibility-select';
 import { ComposeEmojiPicker } from '@/components/shared/compose-emoji-picker';
 import { Button, Modal } from '@/components/shared/ui';
 import { useUpdatePost } from '@/hooks/queries/posts';
+import { getUserFacingErrorMessage } from '@/lib/api';
 import { applyEmojiInsert } from '@/lib/emoji';
 import { cn } from '@/lib/utils';
 
@@ -58,7 +59,7 @@ export function EditPostModal({ open, onClose, post }: Props) {
           onClose();
         },
         onError: (error) => {
-          toast.error(error.message || 'Không thể cập nhật bài viết');
+          toast.error(getUserFacingErrorMessage(error, 'Không thể cập nhật bài viết'));
         },
       },
     );

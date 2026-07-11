@@ -3,7 +3,9 @@
 import { ErrorCode, type ProfileDto, type ProfileGridItemDto } from '@costy/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { useProfileTabScrollAnchor } from '@/components/profile/hooks/use-profile-tab-scroll-anchor';
 
 import { CreatePostModal } from '@/components/home/compose/create-post-modal';
 import { ProfileFeed } from '@/components/profile/feed/profile-feed';
@@ -48,6 +50,13 @@ function ProfileViewInner({ username, initialUser }: Props) {
 
   const tabParam = searchParams.get('tab');
   const activeTab = parseProfileTab(tabParam, profile?.isOwner ?? false);
+
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const { panelRef, captureBeforeTabChange } = useProfileTabScrollAnchor(activeTab);
+
+  const handleBeforeTabNavigate = useCallback(() => {
+    if (tabsRef.current) captureBeforeTabChange(tabsRef.current);
+  }, [captureBeforeTabChange]);
 
   const me = useMemo(() => {
     const fromClient = session?.user
@@ -151,8 +160,11 @@ function ProfileViewInner({ username, initialUser }: Props) {
             username={profile.username}
             isOwner={profile.isOwner}
             activeTab={activeTab}
+            tabsRef={tabsRef}
+            onBeforeNavigate={handleBeforeTabNavigate}
           />
           <div
+            ref={panelRef}
             role="tabpanel"
             id="profile-content-panel"
             aria-labelledby={`profile-tab-${activeTab}`}

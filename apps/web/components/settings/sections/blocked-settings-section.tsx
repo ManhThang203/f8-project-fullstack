@@ -10,6 +10,7 @@ import {
 import { SettingsSection } from '@/components/settings/settings-section';
 import { Avatar, Button } from '@/components/shared/ui';
 import { useBlockMutation, useBlockedUsers } from '@/hooks/queries/social';
+import { getUserFacingErrorMessage } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 /** Danh sách user đã chặn và nút bỏ chặn. */
@@ -24,7 +25,7 @@ export function BlockedSettingsSection() {
       { userId, block: false },
       {
         onSuccess: () => toast.success('Đã bỏ chặn'),
-        onError: (err) => toast.error(err.message),
+        onError: (err) => toast.error(getUserFacingErrorMessage(err, 'Không thể bỏ chặn')),
       },
     );
   }

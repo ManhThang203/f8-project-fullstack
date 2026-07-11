@@ -24,7 +24,7 @@ export function decodeCursor(cursor: string): CursorParts {
     if (!raw.t || !raw.id) throw new Error('invalid cursor shape');
     return { createdAt: new Date(raw.t), id: raw.id };
   } catch {
-    throw AppError.badRequest('Invalid cursor');
+    throw AppError.badRequest('Cursor phân trang không hợp lệ');
   }
 }
 

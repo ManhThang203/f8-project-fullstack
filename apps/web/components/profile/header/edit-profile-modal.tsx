@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 
 import { Avatar, Modal } from '@/components/shared/ui';
 import { useUpdateMyProfile } from '@/hooks/queries/profile';
-import { uploadProfileImage } from '@/lib/api';
+import { uploadProfileImage, getUserFacingErrorMessage } from '@/lib/api';
 import { authClient } from '@/lib/auth';
 import { emitAvatarUpdated } from '@/lib/events';
 import { queryKeys } from '@/lib/query';
@@ -64,7 +64,7 @@ export function EditProfileModal({ open, onClose, profile }: Props) {
       toast.success('Đã cập nhật trang cá nhân');
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Cập nhật thất bại');
+      toast.error(getUserFacingErrorMessage(err, 'Cập nhật thất bại'));
     } finally {
       setSaving(false);
     }

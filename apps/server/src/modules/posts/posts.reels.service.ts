@@ -72,7 +72,7 @@ export async function listReelsFeed(
     });
 
     if (!pinnedRow || !mapPostToReelsFeedItemDto(pinnedRow, false)) {
-      throw AppError.notFound('Reel not found');
+      throw AppError.notFound('Không tìm thấy reel');
     }
 
     page = page.filter((p) => p.id !== startPostId);

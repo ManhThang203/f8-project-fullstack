@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button, Modal } from '@/components/shared/ui';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, getUserFacingErrorMessage } from '@/lib/api';
 
 type ReportReason =
   | 'SPAM'
@@ -109,7 +109,7 @@ export function ReportModal({ open, onClose, targetType, targetId }: Props) {
         setDescription('');
         onClose();
       } else {
-        toast.error(res.error.message);
+        toast.error(getUserFacingErrorMessage(res.error, 'Không thể gửi báo cáo'));
       }
     } catch {
       toast.error('Đã xảy ra lỗi kết nối. Vui lòng thử lại sau.');

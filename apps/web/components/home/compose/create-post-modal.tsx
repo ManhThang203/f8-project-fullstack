@@ -12,7 +12,7 @@ import { VisibilitySelect } from './visibility-select';
 
 import { ComposeEmojiPicker } from '@/components/shared/compose-emoji-picker';
 import { Avatar, Modal } from '@/components/shared/ui';
-import { createPostWithMedia } from '@/lib/api';
+import { createPostWithMedia, getUserFacingErrorMessage } from '@/lib/api';
 import { applyEmojiInsert } from '@/lib/emoji';
 import { ACCEPT_MEDIA, isImageMime, isVideoMime, validateFiles } from '@/lib/post';
 import { cn } from '@/lib/utils';
@@ -146,7 +146,7 @@ export function CreatePostModal({
       setPhase('idle');
       setUploadLabel(null);
       setDrafts((prev) => prev.map((d) => ({ ...d, status: 'done' as const, progress: 100 })));
-      toast.error(result.message);
+      toast.error(getUserFacingErrorMessage(result.message, 'Đăng bài thất bại'));
       return;
     }
 

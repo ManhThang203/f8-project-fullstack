@@ -15,6 +15,7 @@ import { useCurrentUser } from '@/components/shared/providers/current-user-conte
 import { Avatar, ConfirmDialog, RelativeTime } from '@/components/shared/ui';
 import { useReactionPickerHover, useReactPost } from '@/hooks/post';
 import { buildDeleteCommentInput, useDeletePost, usePostComments } from '@/hooks/queries/posts';
+import { getUserFacingErrorMessage } from '@/lib/api';
 import { displayTopReactions, patchTopReactionsOptimistic } from '@/lib/post';
 import { cn } from '@/lib/utils';
 
@@ -209,7 +210,7 @@ export function CommentItem({
         toast.success('Đã xóa bình luận');
       },
       onError: (err) => {
-        toast.error(err.message);
+        toast.error(getUserFacingErrorMessage(err));
       },
     });
   }
