@@ -1,6 +1,7 @@
 import { prisma } from '@costy/db';
 import type { CursorPageQuery, PostFeedItemDto } from '@costy/shared';
 
+import { blockedUsersWhere, getBlockedRelatedUserIds } from '../../lib/blocks/block-utils.js';
 import { AppError } from '../../lib/errors.js';
 
 import { getCommentCountMap } from './posts-count.js';
@@ -115,12 +116,15 @@ export async function listComments(
   const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
   const isDesc = query.order !== 'asc'; // default desc
   const op = isDesc ? 'lt' : 'gt';
+  const blockedIds = viewerId ? await getBlockedRelatedUserIds(viewerId) : [];
+  const blockedAuthorFilter = blockedUsersWhere(blockedIds, 'authorId');
 
   const where = cursorData
     ? {
         deletedAt: null,
         hiddenAt: null,
         parentId: postId,
+        ...blockedAuthorFilter,
         OR: [
           { createdAt: { [op]: cursorData.createdAt } },
           {
@@ -132,6 +136,7 @@ export async function listComments(
         deletedAt: null,
         hiddenAt: null,
         parentId: postId,
+        ...blockedAuthorFilter,
       };
 
   const rows = await prisma.post.findMany({

@@ -1,8 +1,9 @@
 import { prisma } from '@costy/db';
 import type { BlockedUserDto } from '@costy/shared';
 
-import { AppError } from '../../lib/errors.js';
 import { createdCursorOrderBy, createdCursorWhere, encodeCreatedCursor } from '../../lib/admin/cursor.js';
+import { AppError } from '../../lib/errors.js';
+import { refreshBlocksForUsers } from '../../socket/chat.namespace.js';
 
 /** Danh sách user mà mình đã chặn, phân trang cursor ghép (createdAt, id) để không lệch trang khi trùng thời điểm. */
 export async function listBlockedUsers(
@@ -74,6 +75,7 @@ export async function blockUser(blockerId: string, blockedId: string): Promise<{
     }),
   ]);
 
+  refreshBlocksForUsers([blockerId, blockedId]);
   return { ok: true };
 }
 
@@ -82,5 +84,6 @@ export async function unblockUser(blockerId: string, blockedId: string): Promise
   await prisma.userBlock.deleteMany({
     where: { blockerId, blockedId },
   });
+  refreshBlocksForUsers([blockerId, blockedId]);
   return { ok: true };
 }

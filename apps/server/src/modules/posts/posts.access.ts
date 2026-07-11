@@ -1,5 +1,6 @@
 import { type Prisma, prisma } from '@costy/db';
 
+import { areUsersBlocked } from '../../lib/blocks/block-utils.js';
 import { areFriends, getFriendIds } from '../friends/friends.service.js';
 
 /**
@@ -31,14 +32,15 @@ export async function getViewerFriendIds(viewerId: string | null): Promise<strin
   return getFriendIds(viewerId);
 }
 
-/** Kiểm tra viewer có quyền xem 1 bài viết cụ thể không. */
+/** Kiểm tra viewer có quyền xem 1 bài viết cụ thể không (visibility + block hai chiều). */
 export async function canViewPost(
   viewerId: string | null,
   post: { authorId: string; visibility: 'PUBLIC' | 'FRIENDS' | 'PRIVATE' },
 ): Promise<boolean> {
-  if (post.visibility === 'PUBLIC') return true;
-  if (!viewerId) return false;
+  if (!viewerId) return post.visibility === 'PUBLIC';
   if (post.authorId === viewerId) return true;
+  if (await areUsersBlocked(viewerId, post.authorId)) return false;
+  if (post.visibility === 'PUBLIC') return true;
   if (post.visibility === 'PRIVATE') return false;
   return areFriends(viewerId, post.authorId);
 }

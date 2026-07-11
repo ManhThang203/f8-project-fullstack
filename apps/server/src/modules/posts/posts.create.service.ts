@@ -9,12 +9,14 @@ import {
   uploadBuffer,
   type CloudinaryUploadResult,
 } from '../../lib/cloudinary.js';
+import { assertUsersNotBlocked } from '../../lib/blocks/block-utils.js';
 import { AppError } from '../../lib/errors.js';
 import { syncPostHashtags } from '../../lib/hashtag/hashtag.service.js';
 import { logger } from '../../lib/logger.js';
 import { contentModerationQueue, embeddingQueue } from '../../queues/index.js';
 import { createNotification } from '../notifications/notifications.service.js';
 
+import { canViewPost } from './posts.access.js';
 import { mapPostToFeedItemDto, postFeedInclude } from './posts.mapper.js';
 import {
   emitCommentCountChanged,
@@ -114,10 +116,31 @@ export async function createPost(opts: {
   if (opts.body.parentId) {
     const parentForRoot = await prisma.post.findUnique({
       where: { id: opts.body.parentId },
-      select: { id: true, parentId: true, rootPostId: true },
+      select: {
+        id: true,
+        parentId: true,
+        rootPostId: true,
+        authorId: true,
+        visibility: true,
+        deletedAt: true,
+      },
     });
-    if (parentForRoot) {
-      rootPostIdForCreate = parentForRoot.rootPostId ?? parentForRoot.id;
+    if (!parentForRoot || parentForRoot.deletedAt) {
+      throw AppError.notFound('Bài viết không tồn tại hoặc đã bị xóa');
+    }
+    if (!(await canViewPost(opts.authorId, parentForRoot))) {
+      throw AppError.forbidden('Không thể tương tác với người dùng này');
+    }
+
+    rootPostIdForCreate = parentForRoot.rootPostId ?? parentForRoot.id;
+    if (parentForRoot.parentId !== null) {
+      const rootPost = await prisma.post.findUnique({
+        where: { id: rootPostIdForCreate },
+        select: { authorId: true },
+      });
+      if (rootPost && rootPost.authorId !== parentForRoot.authorId) {
+        await assertUsersNotBlocked(opts.authorId, rootPost.authorId);
+      }
     }
   }
 

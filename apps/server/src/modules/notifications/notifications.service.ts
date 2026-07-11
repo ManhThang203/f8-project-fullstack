@@ -1,6 +1,7 @@
 import { prisma } from '@costy/db';
 import type { NotificationType } from '@costy/db';
 import type { NotificationPreferences } from '@costy/shared';
+import { areUsersBlocked, getBlockedRelatedUserIds } from '../../lib/blocks/block-utils.js';
 import { getRealtimeIo } from '../../lib/realtime.js';
 import {
   getUserNotificationPreferences,
@@ -15,9 +16,21 @@ const actorSelect = {
   image: true,
 } as const;
 
+/** Điều kiện Prisma loại notification từ actor đang block / bị block với viewer. */
+function excludeBlockedActorsWhere(blockedIds: string[]) {
+  if (blockedIds.length === 0) return {};
+  return {
+    OR: [{ actorId: null }, { actorId: { notIn: blockedIds } }],
+  };
+}
+
 export async function listNotifications(userId: string, limit = 20, cursor?: string) {
+  const blockedIds = await getBlockedRelatedUserIds(userId);
   const notifications = await prisma.notification.findMany({
-    where: { recipientId: userId },
+    where: {
+      recipientId: userId,
+      ...excludeBlockedActorsWhere(blockedIds),
+    },
     take: limit,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     orderBy: { createdAt: 'desc' },
@@ -32,10 +45,12 @@ export async function listNotifications(userId: string, limit = 20, cursor?: str
 }
 
 export async function getUnreadCount(userId: string) {
+  const blockedIds = await getBlockedRelatedUserIds(userId);
   const count = await prisma.notification.count({
     where: {
       recipientId: userId,
       readAt: null,
+      ...excludeBlockedActorsWhere(blockedIds),
     },
   });
   return { count };
@@ -102,10 +117,14 @@ function emitNotificationNew(
 }
 
 export async function createNotification(input: CreateNotificationInput) {
+  const actorId = input.actorId ?? null;
+  if (actorId && (await areUsersBlocked(actorId, input.recipientId))) {
+    return null;
+  }
+
   const allowed = await shouldDeliverNotification(input.recipientId, input.type);
   if (!allowed) return null;
 
-  const actorId = input.actorId ?? null;
   // Prevent duplicate notifications for same actor, recipient, type, and entity
   if (input.entityId) {
     const existing = await prisma.notification.findFirst({
@@ -175,18 +194,26 @@ export async function createFanoutNotifications(input: FanoutNotificationInput):
 
   const actorId = input.actorId ?? null;
 
+  // 0. Loại recipient đang block / bị block với actor
+  let candidates = recipientIds;
+  if (actorId) {
+    const blockedIds = new Set(await getBlockedRelatedUserIds(actorId));
+    candidates = recipientIds.filter((id) => id !== actorId && !blockedIds.has(id));
+    if (candidates.length === 0) return;
+  }
+
   // 1. Lọc recipient theo preference trong 1 query
   const prefKey = notificationPreferenceKeyMap[input.type];
-  let allowedIds = recipientIds;
+  let allowedIds = candidates;
   if (prefKey) {
     const users = await prisma.user.findMany({
-      where: { id: { in: recipientIds }, deletedAt: null },
+      where: { id: { in: candidates }, deletedAt: null },
       select: { id: true, notificationPreferences: true },
     });
     const prefMap = new Map(
       users.map((u) => [u.id, normalizeNotificationPreferences(u.notificationPreferences)]),
     );
-    allowedIds = recipientIds.filter((id) => {
+    allowedIds = candidates.filter((id) => {
       const prefs = prefMap.get(id);
       if (!prefs) return false;
       return isNotificationTypeEnabled(prefs, prefKey);
