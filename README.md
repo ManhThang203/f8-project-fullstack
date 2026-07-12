@@ -1,34 +1,69 @@
 # Costy
 
-A production-ready, full-stack Costy-like social media app built with a module-based architecture.
+Mạng xã hội full-stack (monorepo Turborepo + pnpm): feed & reels, chat realtime, tìm kiếm hybrid, kiểm duyệt AI, và panel quản trị RBAC.
 
-## 🛠 Tech Stack
+Kiến trúc chính: Next.js BFF → Express module API, hai cụm BetterAuth (web / admin), Postgres + pgvector, Redis + BullMQ, Socket.io.
 
-- **Monorepo**: Turborepo + pnpm workspaces
-- **Frontend (web)**: Next.js 16 (App Router) + React 19 + Tailwind + Radix UI + `@costy/ui` + TanStack Query + Zustand + react-hook-form/Zod + i18next + socket.io-client
-- **Admin**: Next.js 16 (port 3001) + Recharts + Radix UI
-- **Backend**: Express 4 (Node 22) + Prisma + Pino + Zod + BullMQ + Socket.io + Helmet + Multer
-- **Database**: PostgreSQL 16 + pgvector
-- **Cache/Queue**: Redis (ioredis) + BullMQ
-- **Auth**: BetterAuth (Google OAuth + email/username + password)
-- **Realtime**: Socket.io
-- **Media**: Cloudinary (ảnh/video bài viết, avatar, cover) + upload local đĩa VPS cho chat
-- **AI**: Vercel AI Gateway + OpenAI (embedding cho hybrid search, gpt-4o-mini cho content moderation)
-- **Mail**: Nodemailer
-- **i18n**: i18next (vi mặc định, en fallback)
+## Demo
 
-## 📁 Layout
+Bản demo đã deploy — đăng nhập bằng tài khoản seed bên dưới:
+
+| Ứng dụng | URL | Mục đích |
+|---|---|---|
+| **Web** | [https://costy.io.vn/](https://costy.io.vn/) | App người dùng — dùng `demo1` / `demo2` |
+| **Admin** | [https://admin.costy.io.vn/](https://admin.costy.io.vn/) | Thống kê, quản lý user, kiểm duyệt — dùng `hr1` / `hr2` / `hr3` |
+| Swagger API | [https://api.costy.io.vn/docs/](https://api.costy.io.vn/docs/) | Tài liệu REST |
+
+## Môi trường production
+
+| Thành phần | URL |
+|---|---|
+| Web | [https://costy.io.vn/](https://costy.io.vn/) |
+| Admin | [https://admin.costy.io.vn/](https://admin.costy.io.vn/) |
+| API | [http://api.costy.io.vn/](http://api.costy.io.vn/) |
+| Swagger | [https://api.costy.io.vn/docs/](https://api.costy.io.vn/docs/) |
+
+## Tài khoản demo (seed)
+
+Tạo bởi `pnpm db:seed` hoặc `pnpm db:seed:accounts` (nguồn: `packages/db/prisma/seed-demo-accounts.ts`).
+
+| Ứng dụng | URL đăng nhập | Email / username | Role | Quyền tóm tắt | Password mặc định |
+|---|---|---|---|---|---|
+| Admin | [https://admin.costy.io.vn/](https://admin.costy.io.vn/) | `hr1@costy.io.vn` / `hr1` | `SUPER_ADMIN` | Toàn quyền admin (`*`) | `HrDemo@2026` |
+| Admin | [https://admin.costy.io.vn/](https://admin.costy.io.vn/) | `hr2@costy.io.vn` / `hr2` | `ADMIN` | Toàn quyền admin (`*`) | `HrDemo@2026` |
+| Admin | [https://admin.costy.io.vn/](https://admin.costy.io.vn/) | `hr3@costy.io.vn` / `hr3` | `MODERATOR` | Stats, đọc/duyệt report, ẩn bài | `HrDemo@2026` |
+| Web | [https://costy.io.vn/](https://costy.io.vn/) | `demo1@costy.io.vn` / `demo1` | `USER` | Quyền app thường (post, chat, follow…) | `DemoUser@2026` |
+| Web | [https://costy.io.vn/](https://costy.io.vn/) | `demo2@costy.io.vn` / `demo2` | `USER` | Quyền app thường | `DemoUser@2026` |
+
+Mật khẩu có thể ghi đè bằng biến môi trường `SEED_HR_PASSWORD` và `SEED_DEMO_PASSWORD`.
+
+## Tech stack
+
+| Lớp | Công nghệ |
+|---|---|
+| Monorepo | Turborepo + pnpm workspaces |
+| Web / Admin | Next.js 16 (App Router) — BFF proxy API + BetterAuth |
+| Backend | Express 4 (Node 22), Prisma, Zod, Pino, Helmet |
+| Database | PostgreSQL 16 + pgvector |
+| Cache / Queue | Redis (ioredis) + BullMQ |
+| Auth | BetterAuth (credential + Google OAuth), cookie tách web/admin |
+| Realtime | Socket.io (`/chat`, `/feed`, `/notifications`) |
+| Media | Cloudinary (post/avatar/cover) + đĩa VPS (chat) |
+| AI | Embedding hybrid search + gpt-4o-mini moderation |
+| UI | Tailwind, Radix, `@costy/ui`, TanStack Query, Zustand, i18next |
+
+## Cấu trúc monorepo
 
 ```
 .
 ├── apps/
-│   ├── web/        Next.js frontend (BFF cho Express API)
-│   ├── admin/      Next.js admin dashboard (BFF riêng, port 3001)
+│   ├── web/        Next.js — app người dùng (BFF)
+│   ├── admin/      Next.js — panel quản trị (BFF riêng)
 │   └── server/     Express API + Socket.io + BullMQ workers
 ├── packages/
-│   ├── shared/     Shared TS types + Zod schemas + API envelope
-│   ├── db/         Prisma schema, client singleton, migrations
-│   ├── ui/         Shared UI utilities (cn, tokens)
+│   ├── shared/     Types, Zod schemas, API envelope
+│   ├── db/         Prisma schema, migrations, seed
+│   ├── ui/         Shared UI utilities
 │   ├── eslint-config/
 │   └── typescript-config/
 └── docker/
@@ -36,7 +71,7 @@ A production-ready, full-stack Costy-like social media app built with a module-b
     └── docker-compose.yml
 ```
 
-## 🚀 Quick Start
+## Chạy local (dev)
 
 ### Prerequisites
 
@@ -44,41 +79,22 @@ A production-ready, full-stack Costy-like social media app built with a module-b
 - pnpm 9 (`corepack enable && corepack prepare pnpm@9.12.3 --activate`)
 - Docker Desktop
 
-### Install
+### Cài đặt & hạ tầng
 
 ```bash
 pnpm install
-cp .env.example .env          # for local `pnpm dev` outside Docker (optional if you only use containers)
-cp docker/.env.docker.example docker/.env.docker   # Docker stack: edit secrets in docker/.env.docker
-```
-
-### Run infrastructure (Postgres + Redis)
-
-The Compose stack reads **`docker/.env.docker`**. Root **`pnpm docker:*`** scripts already pass `--env-file docker/.env.docker`, so you do **not** need a repo-root `.env` for Docker. See [`docker/README.md`](docker/README.md).
-
-```bash
-pnpm docker:up
-```
-
-### Generate Prisma client & run migrations
-
-```bash
+cp .env.example .env
+cp docker/.env.docker.example docker/.env.docker
+pnpm docker:infra:up
 pnpm db:generate
 pnpm db:migrate
-```
-
-### Dev servers
-
-```bash
+pnpm db:seed
 pnpm dev
 ```
 
-- Web: <http://localhost:3000>
-- Admin: <http://localhost:3001>
-- API: <http://localhost:4000>
-- API Docs (Swagger): <http://localhost:4000/docs>
+Chi tiết Docker: [`docker/README.md`](docker/README.md).
 
-## 🧪 Tests, Lint, Type-check
+## Kiểm thử & chất lượng
 
 ```bash
 pnpm type-check
@@ -86,28 +102,15 @@ pnpm lint
 pnpm test
 ```
 
-## 📦 Build & Deploy
+## Team
 
-Single multi-stage Docker image bundles `web`, `server`, and workers:
-
-```bash
-pnpm docker:build
-```
-
-## 👥 Team & Roles
-
-Vai trò được tổng hợp từ lịch sử commit và có thể tinh chỉnh theo thời gian.
+Vai trò tổng hợp từ lịch sử commit; có thể tinh chỉnh theo thời gian.
 
 | Thành viên | Vai trò chính |
 |---|---|
-| **Thắng** (`ManhThang203`) | Full-stack / lead — frontend web (`apps/web`), admin dashboard (`apps/admin`), và phần lớn backend (posts, admin/moderation, chat, search, media, socket realtime, auth, mail, notifications) |
-| **Khánh** (`midnight`) | Backend & hạ tầng — server modules (posts, chat, users), `packages`, cấu hình `config/env`, BullMQ queues, Docker, tài liệu |
+| **Thắng** (`ManhThang203`) | Full-stack / lead — `apps/web`, `apps/admin`, phần lớn backend (posts, admin/moderation, chat, search, media, socket, auth, mail, notifications) |
+| **Khánh** (`midnight`) | Backend & hạ tầng — server modules, `packages`, `config/env`, BullMQ, Docker, tài liệu |
 
-## 🏗 Architecture Notes
+## Đọc tiếp
 
-- **API surface**: FE calls `/api/v1/*` on Next.js, which proxies to Express via a catch-all route handler (BFF pattern). BetterAuth handler lives in Next route handlers.
-- **Module pattern (backend)**: every feature has `<feature>.controller.ts`, `<feature>.service.ts`, `<feature>.routes.ts`, `<feature>.schema.ts`, `<feature>.types.ts`.
-- **Module pattern (frontend)**: every feature owns `components/`, `hooks/`, `queries/`, `stores/`, `schemas/`.
-- **Error envelope** (uniform): `{ success: true, data, meta }` or `{ success: false, error: { code, message } }`.
-
-Chi tiết kiến trúc, sơ đồ ERD, luồng BFF và danh sách API endpoints: [`docs/architecture.md`](docs/architecture.md).
+Kiến trúc hệ thống, BFF, RBAC, domain dữ liệu, realtime & workers: [`docs/architecture.md`](docs/architecture.md).
