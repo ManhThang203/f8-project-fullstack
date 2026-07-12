@@ -2,8 +2,6 @@
 
 Tài liệu mô tả quyết định kiến trúc, luồng BFF, auth/RBAC, domain dữ liệu và các thành phần nền (realtime, workers, media). Chi tiết endpoint: [Swagger production](https://api.costy.io.vn/docs/).
 
-**Demo production / tài khoản:** [Web](https://costy.io.vn/) · [Admin](https://admin.costy.io.vn/) — bảng đăng nhập theo role nằm trong [`README.md`](../README.md).
-
 ## Tổng quan
 
 Costy là ứng dụng mạng xã hội full-stack trên monorepo Turborepo + pnpm. Trình duyệt gọi Next.js cùng origin (**BFF**); Next proxy sang Express. Realtime qua Socket.io; việc nặng (embedding, moderation, cleanup) chạy BullMQ workers.

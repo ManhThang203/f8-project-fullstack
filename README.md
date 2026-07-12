@@ -4,16 +4,6 @@ Mạng xã hội full-stack (monorepo Turborepo + pnpm): feed & reels, chat real
 
 Kiến trúc chính: Next.js BFF → Express module API, hai cụm BetterAuth (web / admin), Postgres + pgvector, Redis + BullMQ, Socket.io.
 
-## Demo
-
-Bản demo đã deploy — đăng nhập bằng tài khoản seed bên dưới:
-
-| Ứng dụng | URL | Mục đích |
-|---|---|---|
-| **Web** | [https://costy.io.vn/](https://costy.io.vn/) | App người dùng — dùng `demo1` / `demo2` |
-| **Admin** | [https://admin.costy.io.vn/](https://admin.costy.io.vn/) | Thống kê, quản lý user, kiểm duyệt — dùng `hr1` / `hr2` / `hr3` |
-| Swagger API | [https://api.costy.io.vn/docs/](https://api.costy.io.vn/docs/) | Tài liệu REST |
-
 ## Môi trường production
 
 | Thành phần | URL |
