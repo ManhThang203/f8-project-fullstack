@@ -15,21 +15,20 @@ const router = Router();
  *   get:
  *     summary: Hybrid post search (FTS + semantic RRF)
  *     tags: [Search]
+ *     security:
+ *       - {}
+ *       - cookieAuth: []
  *     parameters:
  *       - in: query
  *         name: q
  *         required: true
- *         schema:
- *           type: string
- *           minLength: 2
+ *         schema: { type: string, minLength: 2, maxLength: 200 }
  *       - in: query
  *         name: limit
- *         schema:
- *           type: integer
- *           default: 20
+ *         schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
  *     responses:
  *       200:
- *         description: Search results
+ *         description: Search results with meta total, query, searchMode
  */
 router.get('/', validate(searchQuerySchema, 'query'), async (req, res, next) => {
   try {
@@ -53,6 +52,20 @@ router.get('/', validate(searchQuerySchema, 'query'), async (req, res, next) => 
  *   get:
  *     summary: Tìm người dùng theo tên / username
  *     tags: [Search]
+ *     security:
+ *       - {}
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema: { type: string, minLength: 2, maxLength: 200 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+ *     responses:
+ *       200:
+ *         description: Danh sách user với meta total, query
  */
 router.get('/users', validate(searchQuerySchema, 'query'), async (req, res, next) => {
   try {
@@ -71,6 +84,20 @@ router.get('/users', validate(searchQuerySchema, 'query'), async (req, res, next
  *   get:
  *     summary: Tìm hashtag theo chuỗi
  *     tags: [Search]
+ *     security:
+ *       - {}
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema: { type: string, minLength: 2, maxLength: 200 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+ *     responses:
+ *       200:
+ *         description: Danh sách hashtag với meta total, query
  */
 router.get('/hashtags', validate(searchQuerySchema, 'query'), async (req, res, next) => {
   try {

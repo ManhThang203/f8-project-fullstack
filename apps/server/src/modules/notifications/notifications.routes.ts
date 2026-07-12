@@ -16,6 +16,23 @@ const markReadBodySchema = z.object({
   notificationId: z.string().optional(), // if missing, mark all as read
 });
 
+/**
+ * @openapi
+ * /notifications:
+ *   get:
+ *     summary: Danh sách thông báo
+ *     tags: [Notifications]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/CursorQuery'
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, minimum: 1, maximum: 100 }
+ *     responses:
+ *       200:
+ *         description: Danh sách notification
+ */
 router.get('/', requireAuth, validate(listQuerySchema, 'query'), async (req, res, next) => {
   try {
     const q = req.query as z.infer<typeof listQuerySchema>;
@@ -26,6 +43,18 @@ router.get('/', requireAuth, validate(listQuerySchema, 'query'), async (req, res
   }
 });
 
+/**
+ * @openapi
+ * /notifications/unread-count:
+ *   get:
+ *     summary: Số thông báo chưa đọc
+ *     tags: [Notifications]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: '{ count }'
+ */
 router.get('/unread-count', requireAuth, async (req, res, next) => {
   try {
     const data = await notificationsService.getUnreadCount(req.auth!.userId);
@@ -35,6 +64,27 @@ router.get('/unread-count', requireAuth, async (req, res, next) => {
   }
 });
 
+/**
+ * @openapi
+ * /notifications/read:
+ *   post:
+ *     summary: Đánh dấu đã đọc (1 hoặc tất cả)
+ *     tags: [Notifications]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               notificationId:
+ *                 type: string
+ *                 description: Nếu bỏ trống → đánh dấu tất cả đã đọc
+ *     responses:
+ *       200:
+ *         description: '{ success true }'
+ */
 router.post('/read', requireAuth, validate(markReadBodySchema), async (req, res, next) => {
   try {
     const body = req.body as z.infer<typeof markReadBodySchema>;

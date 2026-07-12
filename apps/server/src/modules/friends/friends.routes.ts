@@ -18,7 +18,24 @@ const router = Router();
 
 router.use(requireAuth);
 
-/** GET /friends — danh sách bạn bè của mình. */
+/**
+ * @openapi
+ * /friends:
+ *   get:
+ *     summary: Danh sách bạn bè của mình
+ *     tags: [Friends]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/CursorQuery'
+ *       - $ref: '#/components/parameters/LimitQuery'
+ *       - in: query
+ *         name: q
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: items + nextCursor
+ */
 router.get('/', validate(friendListQuerySchema, 'query'), async (req, res, next) => {
   try {
     const { items, nextCursor } = await friendsService.listFriends(
@@ -31,7 +48,25 @@ router.get('/', validate(friendListQuerySchema, 'query'), async (req, res, next)
   }
 });
 
-/** GET /friends/requests?type=incoming|outgoing — lời mời đến / đã gửi. */
+/**
+ * @openapi
+ * /friends/requests:
+ *   get:
+ *     summary: Lời mời kết bạn đến / đã gửi
+ *     tags: [Friends]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/CursorQuery'
+ *       - $ref: '#/components/parameters/LimitQuery'
+ *       - in: query
+ *         name: type
+ *         required: true
+ *         schema: { type: string, enum: [incoming, outgoing] }
+ *     responses:
+ *       200:
+ *         description: items + nextCursor
+ */
 router.get('/requests', validate(friendRequestsQuerySchema, 'query'), async (req, res, next) => {
   try {
     const { items, nextCursor } = await friendsService.listFriendRequests(
@@ -44,7 +79,23 @@ router.get('/requests', validate(friendRequestsQuerySchema, 'query'), async (req
   }
 });
 
-/** POST /friends/:userId/request — gửi lời mời kết bạn. */
+/**
+ * @openapi
+ * /friends/{userId}/request:
+ *   post:
+ *     summary: Gửi lời mời kết bạn
+ *     tags: [Friends]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       201:
+ *         description: Created
+ */
 router.post(
   '/:userId/request',
   validate(friendUserIdParamSchema, 'params'),
@@ -59,7 +110,23 @@ router.post(
   },
 );
 
-/** DELETE /friends/:userId/request — hủy lời mời mình đã gửi. */
+/**
+ * @openapi
+ * /friends/{userId}/request:
+ *   delete:
+ *     summary: Hủy lời mời mình đã gửi
+ *     tags: [Friends]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: OK
+ */
 router.delete(
   '/:userId/request',
   validate(friendUserIdParamSchema, 'params'),
@@ -74,7 +141,23 @@ router.delete(
   },
 );
 
-/** POST /friends/:userId/accept — chấp nhận lời mời. */
+/**
+ * @openapi
+ * /friends/{userId}/accept:
+ *   post:
+ *     summary: Chấp nhận lời mời kết bạn
+ *     tags: [Friends]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: OK
+ */
 router.post(
   '/:userId/accept',
   validate(friendUserIdParamSchema, 'params'),
@@ -89,7 +172,23 @@ router.post(
   },
 );
 
-/** POST /friends/:userId/reject — từ chối lời mời. */
+/**
+ * @openapi
+ * /friends/{userId}/reject:
+ *   post:
+ *     summary: Từ chối lời mời kết bạn
+ *     tags: [Friends]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: OK
+ */
 router.post(
   '/:userId/reject',
   validate(friendUserIdParamSchema, 'params'),
@@ -104,7 +203,23 @@ router.post(
   },
 );
 
-/** DELETE /friends/:userId — hủy kết bạn. */
+/**
+ * @openapi
+ * /friends/{userId}:
+ *   delete:
+ *     summary: Hủy kết bạn
+ *     tags: [Friends]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: OK
+ */
 router.delete('/:userId', validate(friendUserIdParamSchema, 'params'), async (req, res, next) => {
   try {
     const { userId } = req.params as z.infer<typeof friendUserIdParamSchema>;

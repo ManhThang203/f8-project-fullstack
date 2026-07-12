@@ -44,7 +44,24 @@ function paramId(value: string | string[] | undefined): string {
 
 meRouter.use(requireAuth, requireActiveAccount);
 
-/** PATCH /me/profile — cập nhật tên / tiểu sử của chính mình. */
+/**
+ * @openapi
+ * /me/profile:
+ *   patch:
+ *     summary: Cập nhật tên / tiểu sử của chính mình
+ *     tags: [Me]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateMyProfileBody'
+ *     responses:
+ *       200:
+ *         description: Profile đã cập nhật
+ */
 meRouter.patch('/profile', validate(updateMyProfileSchema, 'body'), async (req, res, next) => {
   try {
     const profile = await updateMyProfile(req.auth!.userId, req.body);
@@ -54,7 +71,18 @@ meRouter.patch('/profile', validate(updateMyProfileSchema, 'body'), async (req, 
   }
 });
 
-/** GET /me/settings — lấy cài đặt quyền riêng tư và thông báo. */
+/**
+ * @openapi
+ * /me/settings:
+ *   get:
+ *     summary: Lấy cài đặt quyền riêng tư và thông báo
+ *     tags: [Me]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Settings
+ */
 meRouter.get('/settings', async (req, res, next) => {
   try {
     const data = await getMySettings(req.auth!.userId);
@@ -64,7 +92,24 @@ meRouter.get('/settings', async (req, res, next) => {
   }
 });
 
-/** PATCH /me/settings — cập nhật cài đặt quyền riêng tư và thông báo. */
+/**
+ * @openapi
+ * /me/settings:
+ *   patch:
+ *     summary: Cập nhật cài đặt quyền riêng tư và thông báo
+ *     tags: [Me]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateUserSettingsBody'
+ *     responses:
+ *       200:
+ *         description: Settings đã cập nhật
+ */
 meRouter.patch('/settings', validate(updateUserSettingsSchema, 'body'), async (req, res, next) => {
   try {
     const data = await updateMySettings(req.auth!.userId, req.body);
@@ -74,7 +119,27 @@ meRouter.patch('/settings', validate(updateUserSettingsSchema, 'body'), async (r
   }
 });
 
-/** POST /me/avatar — cập nhật ảnh đại diện (multipart 'file'). */
+/**
+ * @openapi
+ * /me/avatar:
+ *   post:
+ *     summary: Cập nhật ảnh đại diện
+ *     tags: [Me]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [file]
+ *             properties:
+ *               file: { type: string, format: binary }
+ *     responses:
+ *       200:
+ *         description: '{ url }'
+ */
 meRouter.post('/avatar', uploadSingleImage, async (req, res, next) => {
   try {
     const data = await handleImageUpload(req.auth!.userId, 'image', req.file);
@@ -84,7 +149,27 @@ meRouter.post('/avatar', uploadSingleImage, async (req, res, next) => {
   }
 });
 
-/** POST /me/cover — cập nhật ảnh bìa (multipart 'file'). */
+/**
+ * @openapi
+ * /me/cover:
+ *   post:
+ *     summary: Cập nhật ảnh bìa
+ *     tags: [Me]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [file]
+ *             properties:
+ *               file: { type: string, format: binary }
+ *     responses:
+ *       200:
+ *         description: '{ url }'
+ */
 meRouter.post('/cover', uploadSingleImage, async (req, res, next) => {
   try {
     const data = await handleImageUpload(req.auth!.userId, 'coverImage', req.file);
@@ -94,7 +179,21 @@ meRouter.post('/cover', uploadSingleImage, async (req, res, next) => {
   }
 });
 
-/** GET /me/saved — danh sách bài viết mình đã lưu. */
+/**
+ * @openapi
+ * /me/saved:
+ *   get:
+ *     summary: Danh sách bài viết mình đã lưu
+ *     tags: [Me]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/CursorQuery'
+ *       - $ref: '#/components/parameters/LimitQuery'
+ *     responses:
+ *       200:
+ *         description: items + nextCursor
+ */
 meRouter.get('/saved', validate(cursorPageQuerySchema, 'query'), async (req, res, next) => {
   try {
     const { items, nextCursor } = await listSavedPosts(
@@ -107,7 +206,20 @@ meRouter.get('/saved', validate(cursorPageQuerySchema, 'query'), async (req, res
   }
 });
 
-/** GET /me/moderation/cases/:id — User xem chi tiết case kiểm duyệt của mình. */
+/**
+ * @openapi
+ * /me/moderation/cases/{id}:
+ *   get:
+ *     summary: Xem chi tiết case kiểm duyệt của mình
+ *     tags: [Me]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/UserIdPath'
+ *     responses:
+ *       200:
+ *         description: Moderation case
+ */
 meRouter.get('/moderation/cases/:id', async (req, res, next) => {
   try {
     const data = await getMyModerationCase(req.auth!.userId, paramId(req.params.id));
@@ -117,7 +229,26 @@ meRouter.get('/moderation/cases/:id', async (req, res, next) => {
   }
 });
 
-/** POST /me/moderation/cases/:id/appeal — User gửi kháng nghị. */
+/**
+ * @openapi
+ * /me/moderation/cases/{id}/appeal:
+ *   post:
+ *     summary: Gửi kháng nghị case kiểm duyệt
+ *     tags: [Me]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/UserIdPath'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AppealSubmitBody'
+ *     responses:
+ *       201:
+ *         description: Appeal đã tạo
+ */
 meRouter.post(
   '/moderation/cases/:id/appeal',
   validate(appealSubmitSchema, 'body'),

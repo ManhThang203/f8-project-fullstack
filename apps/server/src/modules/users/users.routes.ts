@@ -23,7 +23,22 @@ const listQuerySchema = z.object({
   q: z.string().optional(),
 });
 
-// GET /users — gợi ý danh sách user cho composer/share (yêu cầu auth).
+/**
+ * @openapi
+ * /users:
+ *   get:
+ *     summary: Gợi ý danh sách user (composer/share)
+ *     tags: [Users]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Danh sách user
+ */
 router.get('/', requireAuth, validate(listQuerySchema, 'query'), async (req, res, next) => {
   try {
     const { q } = req.query as z.infer<typeof listQuerySchema>;
@@ -34,7 +49,23 @@ router.get('/', requireAuth, validate(listQuerySchema, 'query'), async (req, res
   }
 });
 
-// GET /users/:username/feed — feed đầy đủ bài viết trên trang cá nhân.
+/**
+ * @openapi
+ * /users/{username}/feed:
+ *   get:
+ *     summary: Feed đầy đủ bài viết trên trang cá nhân
+ *     tags: [Users]
+ *     security:
+ *       - {}
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/UsernamePath'
+ *       - $ref: '#/components/parameters/CursorQuery'
+ *       - $ref: '#/components/parameters/LimitQuery'
+ *     responses:
+ *       200:
+ *         description: items + nextCursor
+ */
 router.get(
   '/:username/feed',
   validate(usernameParamSchema, 'params'),
@@ -55,7 +86,28 @@ router.get(
   },
 );
 
-// GET /users/:username/posts — danh sách bài viết grid (ảnh/video) của user.
+/**
+ * @openapi
+ * /users/{username}/posts:
+ *   get:
+ *     summary: Grid bài viết (ảnh/video) của user
+ *     tags: [Users]
+ *     security:
+ *       - {}
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/UsernamePath'
+ *       - $ref: '#/components/parameters/CursorQuery'
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, minimum: 1, maximum: 50, default: 12 }
+ *       - in: query
+ *         name: kind
+ *         schema: { type: string, enum: [image, video], default: image }
+ *     responses:
+ *       200:
+ *         description: items + nextCursor
+ */
 router.get(
   '/:username/posts',
   validate(usernameParamSchema, 'params'),
@@ -76,7 +128,28 @@ router.get(
   },
 );
 
-// GET /users/:username/likes — bài viết đã thích (chỉ chủ tài khoản).
+/**
+ * @openapi
+ * /users/{username}/likes:
+ *   get:
+ *     summary: Bài viết đã thích (chỉ chủ tài khoản)
+ *     tags: [Users]
+ *     security:
+ *       - {}
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/UsernamePath'
+ *       - $ref: '#/components/parameters/CursorQuery'
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, minimum: 1, maximum: 50, default: 12 }
+ *       - in: query
+ *         name: kind
+ *         schema: { type: string, enum: [image, video], default: image }
+ *     responses:
+ *       200:
+ *         description: items + nextCursor
+ */
 router.get(
   '/:username/likes',
   validate(usernameParamSchema, 'params'),
@@ -97,7 +170,26 @@ router.get(
   },
 );
 
-// GET /users/:username/followers — danh sách người đang follow user này.
+/**
+ * @openapi
+ * /users/{username}/followers:
+ *   get:
+ *     summary: Danh sách người đang follow user này
+ *     tags: [Users]
+ *     security:
+ *       - {}
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/UsernamePath'
+ *       - $ref: '#/components/parameters/CursorQuery'
+ *       - $ref: '#/components/parameters/LimitQuery'
+ *       - in: query
+ *         name: q
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: items + nextCursor
+ */
 router.get(
   '/:username/followers',
   validate(usernameParamSchema, 'params'),
@@ -118,7 +210,26 @@ router.get(
   },
 );
 
-// GET /users/:username/following — danh sách user mà người này đang follow.
+/**
+ * @openapi
+ * /users/{username}/following:
+ *   get:
+ *     summary: Danh sách user mà người này đang follow
+ *     tags: [Users]
+ *     security:
+ *       - {}
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/UsernamePath'
+ *       - $ref: '#/components/parameters/CursorQuery'
+ *       - $ref: '#/components/parameters/LimitQuery'
+ *       - in: query
+ *         name: q
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: items + nextCursor
+ */
 router.get(
   '/:username/following',
   validate(usernameParamSchema, 'params'),
@@ -139,7 +250,20 @@ router.get(
   },
 );
 
-// POST /users/:id/follow — follow một user (yêu cầu auth).
+/**
+ * @openapi
+ * /users/{id}/follow:
+ *   post:
+ *     summary: Follow một user
+ *     tags: [Users]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/UserIdPath'
+ *     responses:
+ *       200:
+ *         description: OK
+ */
 router.post(
   '/:id/follow',
   requireAuth,
@@ -155,7 +279,20 @@ router.post(
   },
 );
 
-// DELETE /users/:id/follow — hủy follow một user (yêu cầu auth).
+/**
+ * @openapi
+ * /users/{id}/follow:
+ *   delete:
+ *     summary: Hủy follow một user
+ *     tags: [Users]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/UserIdPath'
+ *     responses:
+ *       200:
+ *         description: OK
+ */
 router.delete(
   '/:id/follow',
   requireAuth,
@@ -171,7 +308,21 @@ router.delete(
   },
 );
 
-// GET /users/:username — profile công khai của một user.
+/**
+ * @openapi
+ * /users/{username}:
+ *   get:
+ *     summary: Profile công khai của một user
+ *     tags: [Users]
+ *     security:
+ *       - {}
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/UsernamePath'
+ *     responses:
+ *       200:
+ *         description: Profile
+ */
 router.get('/:username', validate(usernameParamSchema, 'params'), async (req, res, next) => {
   try {
     const { username } = req.params as z.infer<typeof usernameParamSchema>;
