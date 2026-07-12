@@ -17,6 +17,7 @@
     "verify:hybrid-search": "prisma db execute --file scripts/verify-hybrid-search.sql",
     "studio": "prisma studio",
     "seed": "prisma db seed",
+    "seed:accounts": "tsx prisma/seed-demo-accounts.cli.ts",
     "format": "prisma format",
     "type-check": "tsc --noEmit",
     "clean": "rimraf dist .turbo generated node_modules/.prisma"
