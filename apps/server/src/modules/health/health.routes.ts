@@ -29,9 +29,12 @@ async function checkRedis(): Promise<boolean> {
  *   get:
  *     summary: Liveness + dependency health probe
  *     tags: [Health]
+ *     security: []
  *     responses:
  *       200:
- *         description: All checks passed
+ *         description: '{ status, uptimeSec, db, redis }'
+ *       503:
+ *         description: DB hoặc Redis không sẵn sàng
  */
 router.get('/', async (_req, res, next) => {
   try {

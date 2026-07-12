@@ -10,7 +10,21 @@ export const blocksRouter = Router();
 
 blocksRouter.use(requireAuth, requireActiveAccount);
 
-/** GET /blocks — danh sách user đã chặn. */
+/**
+ * @openapi
+ * /blocks:
+ *   get:
+ *     summary: Danh sách user đã chặn
+ *     tags: [Blocks]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/CursorQuery'
+ *       - $ref: '#/components/parameters/LimitQuery'
+ *     responses:
+ *       200:
+ *         description: items + nextCursor
+ */
 blocksRouter.get('/', validate(cursorPageQuerySchema, 'query'), async (req, res, next) => {
   try {
     const { limit, cursor } = req.query as { limit?: number; cursor?: string };
@@ -21,7 +35,20 @@ blocksRouter.get('/', validate(cursorPageQuerySchema, 'query'), async (req, res,
   }
 });
 
-/** POST /blocks/:id — chặn user. */
+/**
+ * @openapi
+ * /blocks/{id}:
+ *   post:
+ *     summary: Chặn user
+ *     tags: [Blocks]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/UserIdPath'
+ *     responses:
+ *       201:
+ *         description: Created
+ */
 blocksRouter.post('/:id', validate(userIdParamSchema, 'params'), async (req, res, next) => {
   try {
     const { id } = req.params as { id: string };
@@ -32,7 +59,20 @@ blocksRouter.post('/:id', validate(userIdParamSchema, 'params'), async (req, res
   }
 });
 
-/** DELETE /blocks/:id — bỏ chặn user. */
+/**
+ * @openapi
+ * /blocks/{id}:
+ *   delete:
+ *     summary: Bỏ chặn user
+ *     tags: [Blocks]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/UserIdPath'
+ *     responses:
+ *       200:
+ *         description: OK
+ */
 blocksRouter.delete('/:id', validate(userIdParamSchema, 'params'), async (req, res, next) => {
   try {
     const { id } = req.params as { id: string };

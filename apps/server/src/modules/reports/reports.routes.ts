@@ -7,7 +7,24 @@ import { createReport } from '../admin/admin-reports.service.js';
 
 export const reportsRouter = Router();
 
-/** User gửi báo cáo nội dung vi phạm. */
+/**
+ * @openapi
+ * /reports:
+ *   post:
+ *     summary: Gửi báo cáo nội dung vi phạm
+ *     tags: [Reports]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateReportBody'
+ *     responses:
+ *       201:
+ *         description: Report đã tạo
+ */
 reportsRouter.post('/', requireAuth, requireActiveAccount, async (req, res, next) => {
   try {
     const body = createReportBodySchema.parse(req.body);

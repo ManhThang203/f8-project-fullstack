@@ -26,13 +26,35 @@ const createRoomBody = z.object({
   memberUserIds: z.array(z.string().min(1)).min(1),
 });
 
-/** POST — token handshake cho Socket.io `/chat` */
+/**
+ * @openapi
+ * /chat/socket-token:
+ *   post:
+ *     summary: Token handshake cho Socket.io /chat
+ *     tags: [Chat]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: '{ token }'
+ */
 router.post('/socket-token', requireAuth, (req, res) => {
   const token = mintSocketToken(req.auth!.userId);
   res.json(ok({ token }));
 });
 
-/** GET — danh sách hội thoại */
+/**
+ * @openapi
+ * /chat/conversations:
+ *   get:
+ *     summary: Danh sách hội thoại
+ *     tags: [Chat]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Danh sách conversation
+ */
 router.get('/conversations', requireAuth, async (req, res, next) => {
   try {
     const rows = await chatService.listConversationsForUser(req.auth!.userId);
@@ -42,7 +64,30 @@ router.get('/conversations', requireAuth, async (req, res, next) => {
   }
 });
 
-/** GET — lịch sử tin nhắn trong phòng */
+/**
+ * @openapi
+ * /chat/rooms/{roomId}/messages:
+ *   get:
+ *     summary: Lịch sử tin nhắn trong phòng
+ *     tags: [Chat]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roomId
+ *         required: true
+ *         schema: { type: string }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, minimum: 1, maximum: 200 }
+ *       - in: query
+ *         name: before
+ *         schema: { type: string }
+ *         description: Message id — lấy tin nhắn cũ hơn
+ *     responses:
+ *       200:
+ *         description: Danh sách message
+ */
 router.get(
   '/rooms/:roomId/messages',
   requireAuth,
@@ -63,7 +108,23 @@ router.get(
   },
 );
 
-/** POST — đánh dấu đã đọc phòng */
+/**
+ * @openapi
+ * /chat/rooms/{roomId}/read:
+ *   post:
+ *     summary: Đánh dấu đã đọc phòng
+ *     tags: [Chat]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roomId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: '{ roomId }'
+ */
 router.post(
   '/rooms/:roomId/read',
   requireAuth,
@@ -79,7 +140,24 @@ router.post(
   },
 );
 
-/** POST — Tạo phòng chat 1-1 hoặc nhóm */
+/**
+ * @openapi
+ * /chat/rooms:
+ *   post:
+ *     summary: Tạo phòng chat 1-1 hoặc nhóm
+ *     tags: [Chat]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateChatRoomBody'
+ *     responses:
+ *       201:
+ *         description: Room đã tạo
+ */
 router.post('/rooms', requireAuth, validate(createRoomBody), async (req, res, next) => {
   try {
     const body = req.body as z.infer<typeof createRoomBody>;

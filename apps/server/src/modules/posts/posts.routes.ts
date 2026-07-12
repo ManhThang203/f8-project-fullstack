@@ -10,6 +10,7 @@ import {
   type ReelsFeedQuery,
 } from '@costy/shared';
 import { Router } from 'express';
+import { z } from 'zod';
 
 import { requireAuth } from '../../middleware/auth.middleware.js';
 import { realtimeBroadcast } from '../../middleware/realtime.middleware.js';
@@ -26,19 +27,21 @@ const router = Router();
  *   get:
  *     summary: Random reels feed (video posts)
  *     tags: [Posts]
+ *     security:
+ *       - {}
+ *       - cookieAuth: []
  *     parameters:
- *       - in: query
- *         name: cursor
- *         schema:
- *           type: string
+ *       - $ref: '#/components/parameters/CursorQuery'
  *       - in: query
  *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
+ *         schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+ *       - in: query
+ *         name: startPostId
+ *         schema: { type: string }
+ *         description: Bắt đầu feed từ bài viết này
  *     responses:
  *       200:
- *         description: Shuffled reels feed
+ *         description: Shuffled reels feed (items + nextCursor)
  */
 router.get('/reels', validate(reelsFeedQuerySchema, 'query'), async (req, res, next) => {
   try {
@@ -59,19 +62,21 @@ router.get('/reels', validate(reelsFeedQuerySchema, 'query'), async (req, res, n
  *   get:
  *     summary: Home feed (root posts)
  *     tags: [Posts]
+ *     security:
+ *       - {}
+ *       - cookieAuth: []
  *     parameters:
+ *       - $ref: '#/components/parameters/CursorQuery'
+ *       - $ref: '#/components/parameters/LimitQuery'
  *       - in: query
- *         name: cursor
- *         schema:
- *           type: string
+ *         name: sort
+ *         schema: { type: string, enum: [recent, top], default: recent }
  *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 20
+ *         name: scope
+ *         schema: { type: string, enum: [all, following], default: all }
  *     responses:
  *       200:
- *         description: Paginated feed
+ *         description: Paginated feed (items + nextCursor)
  */
 router.get('/', validate(feedQuerySchema, 'query'), async (req, res, next) => {
   try {
@@ -92,44 +97,32 @@ router.get('/', validate(feedQuerySchema, 'query'), async (req, res, next) => {
  *   post:
  *     summary: Create a post with optional media (multipart)
  *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
  *     requestBody:
+ *       required: true
  *       content:
  *         multipart/form-data:
  *           schema:
- *             type: object
- *             properties:
- *               content:
- *                 type: string
- *               files:
- *                 type: array
- *                 items:
- *                   type: string
- *                   format: binary
+ *             $ref: '#/components/schemas/CreatePostBody'
  *     responses:
  *       201:
  *         description: Created post
  */
-router.post(
-  '/',
-  requireAuth,
-  uploadPostMedia,
-  async (req, res, next) => {
-    try {
-      const body = createPostBodySchema.parse(req.body);
-      const files = (req.files as Express.Multer.File[] | undefined) ?? [];
-      const post = await postsService.createPost({
-        authorId: req.auth!.userId,
-        body,
-        files,
-      });
-      res.status(201).json(ok(post));
-    } catch (e) {
-      next(e);
-    }
-  },
-);
-
-import { z } from 'zod';
+router.post('/', requireAuth, uploadPostMedia, async (req, res, next) => {
+  try {
+    const body = createPostBodySchema.parse(req.body);
+    const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+    const post = await postsService.createPost({
+      authorId: req.auth!.userId,
+      body,
+      files,
+    });
+    res.status(201).json(ok(post));
+  } catch (e) {
+    next(e);
+  }
+});
 
 const reactionBodySchema = z.object({
   type: z.enum(['like', 'love', 'haha', 'wow', 'sad', 'angry', 'care']).nullable(),
@@ -141,21 +134,16 @@ const reactionBodySchema = z.object({
  *   put:
  *     summary: Bày tỏ cảm xúc (like, haha...)
  *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
  *     parameters:
- *       - in: path
- *         name: postId
- *         required: true
- *         schema:
- *           type: string
+ *       - $ref: '#/components/parameters/PostIdPath'
  *     requestBody:
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               type:
- *                 type: string
- *                 nullable: true
+ *             $ref: '#/components/schemas/ReactionBody'
  *     responses:
  *       200:
  *         description: OK
@@ -188,10 +176,11 @@ router.put(
  *   get:
  *     summary: Lấy chi tiết 1 bài viết
  *     tags: [Posts]
+ *     security:
+ *       - {}
+ *       - cookieAuth: []
  *     parameters:
- *       - in: path
- *         name: postId
- *         required: true
+ *       - $ref: '#/components/parameters/PostIdPath'
  *     responses:
  *       200:
  *         description: OK
@@ -212,13 +201,14 @@ router.get('/:postId', async (req, res, next) => {
  *   get:
  *     summary: Lấy id của bài viết gốc (đệ quy)
  *     tags: [Posts]
+ *     security:
+ *       - {}
+ *       - cookieAuth: []
  *     parameters:
- *       - in: path
- *         name: postId
- *         required: true
+ *       - $ref: '#/components/parameters/PostIdPath'
  *     responses:
  *       200:
- *         description: OK
+ *         description: '{ rootPostId }'
  */
 router.get('/:postId/root', async (req, res, next) => {
   try {
@@ -233,15 +223,16 @@ router.get('/:postId/root', async (req, res, next) => {
  * @openapi
  * /posts/{postId}/ancestry:
  *   get:
- *     summary: Chuỗi tổ tiên (cấp 1 → chính nó) của 1 comment/reply, dùng để cuộn tới khi deep-link sâu nhiều cấp
+ *     summary: Chuỗi tổ tiên (cấp 1 → chính nó) của comment/reply (deep-link)
  *     tags: [Posts]
+ *     security:
+ *       - {}
+ *       - cookieAuth: []
  *     parameters:
- *       - in: path
- *         name: postId
- *         required: true
+ *       - $ref: '#/components/parameters/PostIdPath'
  *     responses:
  *       200:
- *         description: OK
+ *         description: Mảng post theo thứ tự ancestry
  */
 router.get('/:postId/ancestry', async (req, res, next) => {
   try {
@@ -259,28 +250,19 @@ router.get('/:postId/ancestry', async (req, res, next) => {
  *   get:
  *     summary: Danh sách comment của bài viết
  *     tags: [Posts]
+ *     security:
+ *       - {}
+ *       - cookieAuth: []
  *     parameters:
- *       - in: path
- *         name: postId
- *         required: true
- *       - in: query
- *         name: cursor
- *         schema:
- *           type: string
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 20
+ *       - $ref: '#/components/parameters/PostIdPath'
+ *       - $ref: '#/components/parameters/CursorQuery'
+ *       - $ref: '#/components/parameters/LimitQuery'
  *       - in: query
  *         name: order
- *         schema:
- *           type: string
- *           enum: [asc, desc]
- *           default: desc
+ *         schema: { type: string, enum: [asc, desc], default: desc }
  *     responses:
  *       200:
- *         description: OK
+ *         description: OK (items + nextCursor)
  */
 const commentQuerySchema = cursorPageQuerySchema.extend({
   order: z.enum(['asc', 'desc']).optional(),
@@ -305,6 +287,19 @@ router.get('/:postId/comments', validate(commentQuerySchema, 'query'), async (re
  *   put:
  *     summary: Sửa nội dung / chế độ riêng tư bài viết
  *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/PostIdPath'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdatePostBody'
+ *     responses:
+ *       200:
+ *         description: Bài viết đã cập nhật
  */
 router.put(
   '/:postId',
@@ -327,6 +322,13 @@ router.put(
  *   post:
  *     summary: Lưu bài viết
  *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/PostIdPath'
+ *     responses:
+ *       200:
+ *         description: OK
  */
 router.post('/:postId/save', requireAuth, async (req, res, next) => {
   try {
@@ -343,6 +345,13 @@ router.post('/:postId/save', requireAuth, async (req, res, next) => {
  *   delete:
  *     summary: Bỏ lưu bài viết
  *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/PostIdPath'
+ *     responses:
+ *       200:
+ *         description: OK
  */
 router.delete('/:postId/save', requireAuth, async (req, res, next) => {
   try {
@@ -359,6 +368,13 @@ router.delete('/:postId/save', requireAuth, async (req, res, next) => {
  *   post:
  *     summary: Chia sẻ bài viết (đếm lượt chia sẻ)
  *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/PostIdPath'
+ *     responses:
+ *       200:
+ *         description: OK
  */
 router.post('/:postId/share', requireAuth, async (req, res, next) => {
   try {
@@ -375,10 +391,10 @@ router.post('/:postId/share', requireAuth, async (req, res, next) => {
  *   delete:
  *     summary: Xóa bài viết / bình luận
  *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
  *     parameters:
- *       - in: path
- *         name: postId
- *         required: true
+ *       - $ref: '#/components/parameters/PostIdPath'
  *     responses:
  *       200:
  *         description: OK

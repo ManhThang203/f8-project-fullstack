@@ -6,10 +6,32 @@ import { uploadLocalMedia } from '../../middleware/local-upload.middleware.js';
 
 export const mediaRouter = Router();
 
-// Endpoint upload media cho Chat (lưu tại VPS)
+/**
+ * @openapi
+ * /media/upload:
+ *   post:
+ *     summary: Upload media cho Chat (lưu local VPS)
+ *     tags: [Media]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [files]
+ *             properties:
+ *               files:
+ *                 type: array
+ *                 items: { type: string, format: binary }
+ *     responses:
+ *       201:
+ *         description: Custom envelope — message + data[{ mediaId, url, expiresAt }] (not ok())
+ */
 mediaRouter.post(
   '/upload',
-  attachWebAuthSession, // Đảm bảo user đã đăng nhập
-  uploadLocalMedia, // Xử lý multipart/form-data lưu vào đĩa
+  attachWebAuthSession,
+  uploadLocalMedia,
   handleUploadMedia,
 );
