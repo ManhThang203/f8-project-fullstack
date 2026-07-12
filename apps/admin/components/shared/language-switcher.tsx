@@ -2,7 +2,7 @@
 
 import { useTranslation } from 'react-i18next';
 
-import { LANGUAGE_STORAGE_KEY } from '@/lib/i18n/config';
+import { LANGUAGE_STORAGE_KEY, setLanguageCookie, type AppLanguage } from '@/lib/i18n/config';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -11,13 +11,15 @@ type Props = {
 
 export function LanguageSwitcher({ className }: Props) {
   const { i18n, t } = useTranslation();
-  const current = i18n.language === 'en' ? 'en' : 'vi';
-  const next = current === 'vi' ? 'en' : 'vi';
+  const current: AppLanguage = i18n.language === 'en' ? 'en' : 'vi';
+  const next: AppLanguage = current === 'vi' ? 'en' : 'vi';
 
-  /** Chuyển ngôn ngữ và lưu preference vào localStorage. */
+  /** Chuyển ngôn ngữ: cookie là source of truth, localStorage chỉ mirror. */
   function handleSwitch() {
     void i18n.changeLanguage(next);
+    setLanguageCookie(next);
     localStorage.setItem(LANGUAGE_STORAGE_KEY, next);
+    document.documentElement.lang = next;
   }
 
   return (

@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import type { ReactNode } from 'react';
 
 import { I18nProvider } from '@/components/shared/i18n-provider';
 import { QueryProvider } from '@/components/shared/query-provider';
 import { ThemeProvider } from '@/components/shared/theme-provider';
 import { AppToaster } from '@/components/shared/app-toaster';
+import { isAppLanguage, LANGUAGE_COOKIE_KEY, type AppLanguage } from '@/lib/i18n/language';
 
 import './globals.css';
 
@@ -31,15 +33,19 @@ const themeScript = `
 })();
 `;
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const cookieStore = await cookies();
+  const raw = cookieStore.get(LANGUAGE_COOKIE_KEY)?.value;
+  const initialLanguage: AppLanguage = isAppLanguage(raw) ? raw : 'vi';
+
   return (
-    <html lang="vi" suppressHydrationWarning>
+    <html lang={initialLanguage} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
         <QueryProvider>
-          <I18nProvider>
+          <I18nProvider initialLanguage={initialLanguage}>
             <ThemeProvider>
               {children}
               <AppToaster />

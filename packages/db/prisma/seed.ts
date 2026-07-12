@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 
 import { seedBlockedUsersForUser } from './seed-blocked-users.js';
+import { seedDemoAccounts } from './seed-demo-accounts.js';
 import { seedNestedRepliesForTesting } from './seed-nested-replies.js';
 import { seedSavedPostsForUser } from './seed-saved-posts.js';
 
@@ -371,6 +372,12 @@ async function seedFriendshipsForUser(targetUserId: string): Promise<{
 
 async function main() {
   await seedPermissions();
+
+  const demoAccounts = await seedDemoAccounts(prisma);
+  // eslint-disable-next-line no-console
+  console.log(
+    `[seed] demo accounts ${demoAccounts.count}: ${demoAccounts.emails.join(', ')}`,
+  );
 
   await prisma.user.upsert({
     where: { username: 'demo' },

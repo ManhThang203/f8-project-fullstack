@@ -3,12 +3,19 @@ import { initReactI18next } from 'react-i18next';
 
 import { en } from '@/lib/i18n/locales/en';
 import { vi } from '@/lib/i18n/locales/vi';
+import type { AppLanguage } from '@/lib/i18n/language';
 
-export const LANGUAGE_STORAGE_KEY = 'admin-language';
+export type { AppLanguage } from '@/lib/i18n/language';
+export {
+  LANGUAGE_COOKIE_KEY,
+  LANGUAGE_STORAGE_KEY,
+  isAppLanguage,
+  setLanguageCookie,
+} from '@/lib/i18n/language';
 
-/** Khởi tạo i18next với resource bundle VI/EN. */
-export function initI18n() {
-  if (i18n.isInitialized) return i18n;
+/** Đảm bảo i18n gốc đã load resources; không đổi language theo request. */
+function ensureBaseI18n() {
+  if (i18n.isInitialized) return;
 
   void i18n.use(initReactI18next).init({
     resources: {
@@ -17,12 +24,18 @@ export function initI18n() {
     },
     lng: 'vi',
     fallbackLng: 'vi',
+    initImmediate: false,
     interpolation: { escapeValue: false },
     react: { useSuspense: false },
     nsSeparator: false,
   });
-
-  return i18n;
 }
 
-export { i18n };
+/** Tạo instance riêng theo ngôn ngữ — tránh race singleton khi SSR đồng thời. */
+export function createI18nInstance(lng: AppLanguage) {
+  ensureBaseI18n();
+  return i18n.cloneInstance({
+    lng,
+    initImmediate: false,
+  });
+}
