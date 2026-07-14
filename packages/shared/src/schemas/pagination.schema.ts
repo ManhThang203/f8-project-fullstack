@@ -6,9 +6,14 @@ export const cursorPageQuerySchema = z.object({
 });
 export type CursorPageQuery = z.infer<typeof cursorPageQuerySchema>;
 
-export const reelsFeedQuerySchema = cursorPageQuerySchema.extend({
-  startPostId: z.string().min(1).optional(),
-});
+export const reelsFeedQuerySchema = cursorPageQuerySchema
+  .extend({
+    startPostId: z.string().min(1).optional(),
+  })
+  .refine((q) => !q.startPostId || q.limit >= 2, {
+    message: 'limit phải >= 2 khi có startPostId',
+    path: ['limit'],
+  });
 export type ReelsFeedQuery = z.infer<typeof reelsFeedQuerySchema>;
 
 export const feedQuerySchema = cursorPageQuerySchema.extend({

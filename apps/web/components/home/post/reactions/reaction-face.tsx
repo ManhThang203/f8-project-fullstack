@@ -1,7 +1,5 @@
 'use client';
 
-import Image from 'next/image';
-
 import { cn } from '@/lib/utils';
 
 export type PostReactionId = 'like' | 'love' | 'care' | 'haha' | 'wow' | 'sad' | 'angry';
@@ -37,43 +35,25 @@ export const REACTION_COLORS: Record<PostReactionId, string> = {
   angry: 'text-orange-500',
 };
 
-const SIZE_PX = { sm: 24, md: 44 } as const;
+const SIZE_CLASS = { xs: 'size-4', sm: 'size-6', md: 'size-11' } as const;
 
 type Props = {
   id: PostReactionId;
-  size?: 'sm' | 'md';
+  size?: keyof typeof SIZE_CLASS;
   className?: string;
 };
 
-export function reactionIconSrc(id: PostReactionId): string {
-  return REACTION_ICON_SRC[id];
-}
-
+/** Icon cảm xúc dạng vòng tròn — dùng background để căn giữa chính xác, tránh lệch do img. */
 export function ReactionFace({ id, size = 'md', className }: Props) {
-  const px = SIZE_PX[size];
-  const src = REACTION_ICON_SRC[id];
-
-  if (!src) return null;
-
-  const dim = size === 'sm' ? 'h-6 w-6' : 'h-11 w-11';
-
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-full',
-        dim,
+        'block shrink-0 rounded-full bg-cover bg-center bg-no-repeat',
+        SIZE_CLASS[size],
         className,
       )}
+      style={{ backgroundImage: `url(${REACTION_ICON_SRC[id]})` }}
       aria-hidden
-    >
-      <Image
-        src={src}
-        alt=""
-        width={px}
-        height={px}
-        className="h-full w-full object-contain object-center"
-        unoptimized
-      />
-    </span>
+    />
   );
 }

@@ -71,7 +71,7 @@ export function PostFooter({
     likeColor = REACTION_COLORS[currentReaction];
     // If it's anything but a normal 'like', show the reaction face
     if (!isLiked) {
-      likeIcon = <ReactionFace id={currentReaction} size="sm" />;
+      likeIcon = <ReactionFace id={currentReaction} size="xs" />;
     } else {
       likeIcon = <ThumbsUp className="h-5 w-5 fill-current" strokeWidth={1.75} />;
     }
@@ -166,7 +166,7 @@ export function PostFooter({
               <ReactionFace
                 id={id}
                 size="sm"
-                className="ring-muted rounded-full ring-2"
+                className="ring-muted ring-2"
               />
             </span>
           ))}

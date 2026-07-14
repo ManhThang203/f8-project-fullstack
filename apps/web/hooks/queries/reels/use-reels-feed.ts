@@ -8,7 +8,6 @@ import { queryKeys } from '@/lib/query';
 
 const LIMIT = 10;
 
-
 /** Lấy feed reels phân trang vô hạn; trang đầu có thể bắt đầu từ startPostId, các trang sau dùng cursor. */
 export function useReelsFeed(startPostId?: string) {
   return useInfiniteQuery({
@@ -16,7 +15,7 @@ export function useReelsFeed(startPostId?: string) {
     queryFn: ({ pageParam }) => {
       const params = new URLSearchParams({ limit: String(LIMIT) });
       if (pageParam) params.set('cursor', pageParam);
-      else if (startPostId) params.set('startPostId', startPostId);
+      if (startPostId) params.set('startPostId', startPostId);
 
       return apiQuery<ReelsFeedItemDto[], ReelsFeedMeta>(`/posts/reels?${params}`);
     },
@@ -24,7 +23,6 @@ export function useReelsFeed(startPostId?: string) {
     getNextPageParam: (lastPage) => lastPage.meta?.nextCursor ?? undefined,
   });
 }
-
 
 /** Gộp mảng data từ các trang infinite query thành một danh sách reels phẳng. */
 export function flattenReelsFeedPages(

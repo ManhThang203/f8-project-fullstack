@@ -30,7 +30,7 @@ export function ActionButton({
 
   const content = (
     <Fragment>
-      <span className="flex h-5 w-5 shrink-0 items-center justify-center" aria-hidden>
+      <span className="flex size-5 shrink-0 items-center justify-center" aria-hidden>
         {icon}
       </span>
       {showCount && <span className="text-sm tabular-nums">{formatCount(count)}</span>}

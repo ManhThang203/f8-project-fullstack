@@ -9,6 +9,8 @@ import { getTopReactionsMap } from './posts.access.js';
 import { mapPostToReelsFeedItemDto, postReelInclude } from './posts.mapper.js';
 import { decodeCursor, encodeCursor, shuffle } from './posts.utils.js';
 
+type ReelRow = Prisma.PostGetPayload<{ include: typeof postReelInclude }>;
+
 /** Lấy feed reels video, phân trang cursor và ẩn bài từ user đã block. */
 export async function listReelsFeed(
   query: ReelsFeedQuery,
@@ -18,68 +20,68 @@ export async function listReelsFeed(
   const blockedIds = viewerId ? await getBlockedRelatedUserIds(viewerId) : [];
   const blockedAuthorFilter: Prisma.PostWhereInput =
     blockedIds.length > 0 ? { authorId: { notIn: blockedIds } } : {};
-  // Fetch a larger pool to shuffle from; use offset cursor to page through pool
-  const POOL = Math.min(limit * 5, 100);
 
   const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
-  const startPostId = !cursorData ? query.startPostId : undefined;
+  // Luôn exclude khi có startPostId (kể cả trang cursor) để không trùng video đã pin.
+  const excludePostId = query.startPostId;
+  const shouldPin = Boolean(excludePostId) && !cursorData;
 
-  const where = cursorData
-    ? {
-        deletedAt: null,
-        hiddenAt: null,
-        parentId: null,
-        ...blockedAuthorFilter,
-        media: { some: { kind: MediaKind.VIDEO, status: MediaStatus.READY } },
-        OR: [
-          { createdAt: { lt: cursorData.createdAt } },
-          { AND: [{ createdAt: { equals: cursorData.createdAt } }, { id: { lt: cursorData.id } }] },
-        ],
-      }
-    : {
-        deletedAt: null,
-        hiddenAt: null,
-        parentId: null,
-        ...blockedAuthorFilter,
-        media: { some: { kind: MediaKind.VIDEO, status: MediaStatus.READY } },
-      };
+  const baseWhere: Prisma.PostWhereInput = {
+    deletedAt: null,
+    hiddenAt: null,
+    parentId: null,
+    ...blockedAuthorFilter,
+    media: { some: { kind: MediaKind.VIDEO, status: MediaStatus.READY } },
+  };
 
-  const rows = await prisma.post.findMany({
-    where,
-    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-    take: POOL,
-    include: postReelInclude,
-  });
-
-  const hasMore = rows.length === POOL;
-  const pool = hasMore ? rows.slice(0, POOL) : rows;
-
-  shuffle(pool);
-  let page = pool.slice(0, limit);
-
-  let pinnedRow: (typeof rows)[number] | null = null;
-  if (startPostId) {
+  let pinnedRow: ReelRow | null = null;
+  if (shouldPin && excludePostId) {
     pinnedRow = await prisma.post.findFirst({
-      where: {
-        id: startPostId,
-        deletedAt: null,
-        hiddenAt: null,
-        parentId: null,
-        ...blockedAuthorFilter,
-        media: { some: { kind: MediaKind.VIDEO, status: MediaStatus.READY } },
-      },
+      where: { ...baseWhere, id: excludePostId },
       include: postReelInclude,
     });
 
     if (!pinnedRow || !mapPostToReelsFeedItemDto(pinnedRow, false)) {
       throw AppError.notFound('Không tìm thấy reel');
     }
-
-    page = page.filter((p) => p.id !== startPostId);
-    page = [pinnedRow, ...page].slice(0, limit);
   }
 
-  // Batch-check isFollowing for all unique authors
+  // Trang có pin: lấy limit-1 slot cho phần còn lại; không pin: lấy đủ limit.
+  const restLimit = pinnedRow ? Math.max(limit - 1, 0) : limit;
+  const cursorCondition: Prisma.PostWhereInput | null = cursorData
+    ? {
+        OR: [
+          { createdAt: { lt: cursorData.createdAt } },
+          { AND: [{ createdAt: { equals: cursorData.createdAt } }, { id: { lt: cursorData.id } }] },
+        ],
+      }
+    : null;
+
+  const feedWhere: Prisma.PostWhereInput = {
+    AND: [
+      baseWhere,
+      ...(excludePostId ? [{ id: { not: excludePostId } }] : []),
+      ...(cursorCondition ? [cursorCondition] : []),
+    ],
+  };
+
+  const rows = await prisma.post.findMany({
+    where: feedWhere,
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    take: restLimit + 1,
+    include: postReelInclude,
+  });
+
+  const hasMore = rows.length > restLimit;
+  const chronoRest = hasMore ? rows.slice(0, restLimit) : rows;
+  const tail = chronoRest[chronoRest.length - 1];
+  const nextCursor = hasMore && tail ? encodeCursor(tail.createdAt, tail.id) : null;
+
+  // Giữ pin đầu trang; chỉ shuffle phần còn lại.
+  const rest = [...chronoRest];
+  shuffle(rest);
+  const page: ReelRow[] = pinnedRow ? [pinnedRow, ...rest] : rest;
+
   const authorIds = [...new Set(page.map((p) => p.author.id))];
   let followingSet = new Set<string>();
   let reactionMap = new Map<string, string>();
@@ -122,11 +124,6 @@ export async function listReelsFeed(
     );
     if (dto) items.push(dto);
   }
-
-  // Cursor points to the last item in the deterministic order (before shuffle)
-  // so next page fetches older posts
-  const tail = page[page.length - 1];
-  const nextCursor = hasMore && tail ? encodeCursor(tail.createdAt, tail.id) : null;
 
   return { items, nextCursor };
 }

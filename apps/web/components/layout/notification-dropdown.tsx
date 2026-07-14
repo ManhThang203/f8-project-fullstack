@@ -103,7 +103,7 @@ function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose:
 
   function getTypeBadgeIcon(): ReactNode {
     if (notif.type === 'POST_LIKED' && isPostReactionId(notif.reactionType)) {
-      return <ReactionFace id={notif.reactionType} size="sm" className="h-4 w-4 min-h-4 min-w-4" />;
+      return <ReactionFace id={notif.reactionType} size="xs" />;
     }
     return iconMap[notif.type];
   }
@@ -157,9 +157,9 @@ function NotificationItem({ notif, onClose }: { notif: NotificationDto; onClose:
           username={notif.actor?.username || ''}
           size="md"
         />
-        <div className="bg-background absolute -bottom-1 -right-1 rounded-full p-0.5">
+        <span className="bg-background absolute -bottom-1 -right-1 flex size-5 items-center justify-center overflow-hidden rounded-full">
           {getTypeBadgeIcon()}
-        </div>
+        </span>
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm">

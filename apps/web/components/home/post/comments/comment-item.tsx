@@ -292,7 +292,7 @@ export function CommentItem({
                     className={cn('relative', index > 0 && '-ml-1.5')}
                     style={{ zIndex: reactionStack.length - index }}
                   >
-                    <ReactionFace id={id} size="sm" className="h-4 min-h-4 w-4 min-w-4" />
+                    <ReactionFace id={id} size="xs" />
                   </span>
                 ))}
               </span>
