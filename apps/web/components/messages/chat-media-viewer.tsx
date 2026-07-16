@@ -20,7 +20,7 @@ export function ChatMediaViewer({ mediaUrl, width, height, mimeType }: Props) {
 
   if (!isImage && !isVideo) {
     return (
-      <div className="border-border bg-card mt-2 flex max-w-[280px] items-center gap-3 rounded-lg border p-3 shadow-sm">
+      <div className="border-border bg-card mt-2 flex max-w-[280px] items-center gap-3 rounded-lg border p-3 shadow-xs">
         <div className="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
           <FileIcon className="h-5 w-5" />
         </div>
@@ -33,7 +33,7 @@ export function ChatMediaViewer({ mediaUrl, width, height, mimeType }: Props) {
         <a
           href={mediaUrl}
           download
-          className="hover:bg-muted text-muted-foreground focus-visible:ring-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
+          className="hover:bg-muted text-muted-foreground focus-visible:ring-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-hidden focus-visible:ring-2"
           title="Tải xuống"
         >
           <Download className="h-4 w-4" />
@@ -77,11 +77,11 @@ export function ChatMediaViewer({ mediaUrl, width, height, mimeType }: Props) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-300 flex items-center justify-center bg-black/90 p-4 backdrop-blur-xs"
             onClick={() => setIsZoomed(false)}
           >
             <button
-              className="absolute right-4 top-4 rounded-full bg-black/50 p-2 text-white/70 transition-colors hover:bg-black/80 hover:text-white focus-visible:outline-none focus-visible:ring-2"
+              className="absolute right-4 top-4 rounded-full bg-black/50 p-2 text-white/70 transition-colors hover:bg-black/80 hover:text-white focus-visible:outline-hidden focus-visible:ring-2"
               onClick={() => setIsZoomed(false)}
               aria-label="Đóng"
             >

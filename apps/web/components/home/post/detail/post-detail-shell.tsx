@@ -17,7 +17,7 @@ export function PostDetailShell({ header, children, ariaBusy, statusMessage }: P
       aria-busy={ariaBusy || undefined}
     >
       {statusMessage ? <span className="sr-only">{statusMessage}</span> : null}
-      <div className="bg-background border-border flex h-full w-full max-w-[600px] flex-col overflow-hidden border-x shadow-sm">
+      <div className="bg-background border-border flex h-full w-full max-w-[600px] flex-col overflow-hidden border-x shadow-xs">
         <div className="bg-background/80 border-border z-20 flex shrink-0 items-center border-b p-4 backdrop-blur-md">
           {header}
         </div>

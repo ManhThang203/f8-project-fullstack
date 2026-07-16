@@ -2,7 +2,7 @@
 
 import { Heart, LayoutList, Play } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useId, type RefObject } from 'react';
+import { useCallback, useId } from 'react';
 
 import type { ProfileTab } from '@/components/profile/profile-utils';
 import { cn } from '@/lib/utils';
@@ -11,7 +11,6 @@ type Props = {
   username: string;
   isOwner: boolean;
   activeTab: ProfileTab;
-  tabsRef?: RefObject<HTMLDivElement | null>;
   onBeforeNavigate?: () => void;
 };
 
@@ -21,13 +20,7 @@ const TABS: { id: ProfileTab; label: string; icon: typeof LayoutList }[] = [
   { id: 'liked', label: 'Đã thích', icon: Heart },
 ];
 
-export function ProfileTabs({
-  username,
-  isOwner,
-  activeTab,
-  tabsRef,
-  onBeforeNavigate,
-}: Props) {
+export function ProfileTabs({ username, isOwner, activeTab, onBeforeNavigate }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tablistId = useId();
@@ -63,13 +56,7 @@ export function ProfileTabs({
   }
 
   return (
-    <div
-      ref={tabsRef}
-      role="tablist"
-      id={tablistId}
-      aria-label="Nội dung trang cá nhân"
-      className="border-border bg-background sticky top-14 z-10 border-b"
-    >
+    <div role="tablist" id={tablistId} aria-label="Nội dung trang cá nhân" className="border-border bg-background border-b">
       <div className="flex">
         {visibleTabs.map((tab, index) => {
           const selected = activeTab === tab.id;
@@ -88,7 +75,7 @@ export function ProfileTabs({
               className={cn(
                 'text-muted-foreground flex min-h-11 flex-1 items-center justify-center gap-2 px-3 text-sm font-medium',
                 'hover:text-foreground transition-colors duration-150',
-                'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset',
+                'focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset',
                 selected && 'text-foreground border-primary border-b-2',
               )}
             >

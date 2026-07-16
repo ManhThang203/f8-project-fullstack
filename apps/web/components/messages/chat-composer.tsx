@@ -147,7 +147,7 @@ export function ChatComposer({
             <button
               type="button"
               disabled={sending}
-              className="text-muted-foreground hover:bg-muted focus-visible:ring-ring relative flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:opacity-40"
+              className="text-muted-foreground hover:bg-muted focus-visible:ring-ring relative flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-hidden focus-visible:ring-2 disabled:opacity-40"
               aria-label="Emoji và Sticker"
             >
               <Smile className="h-5 w-5" />
@@ -162,14 +162,14 @@ export function ChatComposer({
             if (e.target.value.trim()) notifyTyping();
           }}
           placeholder="Nhập tin nhắn…"
-          className="border-border bg-muted/50 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring min-h-11 min-w-0 flex-1 rounded-full border px-4 text-sm focus-visible:outline-none focus-visible:ring-2"
+          className="border-border bg-muted/50 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring min-h-11 min-w-0 flex-1 rounded-full border px-4 text-sm focus-visible:outline-hidden focus-visible:ring-2"
           maxLength={8000}
           disabled={sending}
         />
         <button
           type="submit"
           disabled={sending || !draft.trim()}
-          className="bg-primary text-primary-foreground focus-visible:ring-ring flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 disabled:opacity-40"
+          className="bg-primary text-primary-foreground focus-visible:ring-ring flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full transition-opacity hover:opacity-90 focus-visible:outline-hidden focus-visible:ring-2 disabled:opacity-40"
           aria-label="Gửi"
         >
           {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}

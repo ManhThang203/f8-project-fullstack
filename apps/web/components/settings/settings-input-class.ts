@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 export const settingsInputClass = cn(
   'min-h-11 w-full rounded-xl border-0 bg-muted px-4 py-2.5 text-base text-foreground sm:text-sm',
   'placeholder:text-muted-foreground',
-  'outline-none transition-[box-shadow] duration-150',
+  'outline-hidden transition-shadow duration-150',
   'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
 );
 

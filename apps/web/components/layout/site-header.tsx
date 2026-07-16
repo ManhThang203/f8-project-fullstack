@@ -88,7 +88,7 @@ export function SiteHeader({ initialUser }: Props) {
   return (
     <header
       className={cn(
-        'border-border bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-50 border-b backdrop-blur-sm',
+        'border-border bg-background/95 supports-backdrop-filter:bg-background/80 sticky top-0 z-50 border-b backdrop-blur-xs',
         hideOnMobileTablet && 'hidden lg:block',
       )}
     >

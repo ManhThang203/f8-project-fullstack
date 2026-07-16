@@ -41,7 +41,7 @@ function VerifyEmailStatusInner() {
 
     return (
       <main className="bg-background min-h-dvh px-4 py-12">
-        <div className="border-border bg-card mx-auto w-full max-w-md rounded-[var(--radius)] border p-6 shadow-sm">
+        <div className="border-border bg-card mx-auto w-full max-w-md rounded-(--radius) border p-6 shadow-xs">
           <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
           <p className="text-muted-foreground mt-2 text-sm" role="alert">
             {message}
@@ -74,7 +74,7 @@ function VerifyEmailStatusInner() {
 
   return (
     <main className="bg-background min-h-dvh px-4 py-12">
-      <div className="border-border bg-card mx-auto w-full max-w-md rounded-[var(--radius)] border p-6 shadow-sm">
+      <div className="border-border bg-card mx-auto w-full max-w-md rounded-(--radius) border p-6 shadow-xs">
         <h1 className="text-xl font-semibold tracking-tight">Xác thực email thành công</h1>
         <p className="text-muted-foreground mt-2 text-sm" role="status">
           Tài khoản của bạn đã được kích hoạt. Đang chuyển hướng…

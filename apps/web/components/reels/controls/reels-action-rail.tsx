@@ -20,7 +20,7 @@ type Props = {
 };
 
 const btnBase =
-  'flex flex-col items-center justify-center gap-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60';
+  'flex flex-col items-center justify-center gap-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white/60';
 const iconWrap =
   'flex min-h-11 min-w-11 items-center justify-center rounded-full text-white transition-colors duration-150 hover:bg-white/10';
 const countClass = 'text-xs font-semibold text-white tabular-nums';

@@ -126,7 +126,7 @@ export function BanUserModal({ isOpen, onClose, user }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="bg-background/80 fixed inset-0 backdrop-blur-sm transition-opacity duration-200"
+        className="bg-background/80 fixed inset-0 backdrop-blur-xs transition-opacity duration-200"
         onClick={onClose}
       />
 
@@ -161,7 +161,7 @@ export function BanUserModal({ isOpen, onClose, user }: Props) {
               {t('users.statusLabel')}
             </label>
             <Select value={action} onValueChange={setAction}>
-              <SelectTrigger className="border-border bg-background text-foreground focus:ring-ring h-10 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:ring-1">
+              <SelectTrigger className="border-border bg-background text-foreground focus:ring-ring h-10 w-full rounded-lg border px-3 py-2 text-sm shadow-xs focus:ring-1">
                 <SelectValue placeholder={t('users.statusLabel')} />
               </SelectTrigger>
               <SelectContent>
@@ -197,7 +197,7 @@ export function BanUserModal({ isOpen, onClose, user }: Props) {
                   {t('users.banDurationLabel')}
                 </label>
                 <Select value={durationPreset} onValueChange={setDurationPreset}>
-                  <SelectTrigger className="border-border bg-background text-foreground focus:ring-ring h-10 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:ring-1">
+                  <SelectTrigger className="border-border bg-background text-foreground focus:ring-ring h-10 w-full rounded-lg border px-3 py-2 text-sm shadow-xs focus:ring-1">
                     <SelectValue placeholder={t('users.banDurationLabel')} />
                   </SelectTrigger>
                   <SelectContent>
@@ -223,7 +223,7 @@ export function BanUserModal({ isOpen, onClose, user }: Props) {
                     value={customDate}
                     onChange={(e) => setCustomDate(e.target.value)}
                     required
-                    className="datetime-input border-border bg-background text-foreground focus:ring-ring flex h-10 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1"
+                    className="datetime-input border-border bg-background text-foreground focus:ring-ring flex h-10 w-full rounded-lg border px-3 py-2 text-sm shadow-xs focus:outline-hidden focus:ring-1"
                   />
                 </div>
               )}
@@ -242,7 +242,7 @@ export function BanUserModal({ isOpen, onClose, user }: Props) {
               placeholder={t('users.reasonPlaceholder')}
               required
               rows={3}
-              className="border-border bg-background text-foreground focus:ring-ring flex w-full resize-none rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1"
+              className="border-border bg-background text-foreground focus:ring-ring flex w-full resize-none rounded-lg border px-3 py-2 text-sm shadow-xs focus:outline-hidden focus:ring-1"
             />
           </div>
 

@@ -43,14 +43,14 @@ export function HashtagsTable({ hashtags, isPending, onAction }: Props) {
                       <button
                         type="button"
                         onClick={() => onAction(tag.id, tag.featured ? 'unfeature' : 'feature')}
-                        className="cursor-pointer transition-transform focus:outline-none active:scale-95"
+                        className="cursor-pointer transition-transform focus:outline-hidden active:scale-95"
                         title={tag.featured ? t('hashtags.unfeature') : t('hashtags.feature')}
                         disabled={isPending}
                       >
                         <Star
                           className={`size-4 transition-all duration-200 ${
                             tag.featured
-                              ? 'fill-amber-400 text-amber-400 drop-shadow-sm'
+                              ? 'fill-amber-400 text-amber-400 drop-shadow-xs'
                               : 'text-muted-foreground hover:fill-amber-400/20 hover:text-amber-600 dark:hover:text-amber-400'
                           }`}
                         />

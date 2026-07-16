@@ -59,7 +59,7 @@ export function CursorPagination({
                         setOpen(false);
                       }}
                       className={cn(
-                        'hover:bg-accent hover:text-accent-foreground relative flex w-full cursor-default select-none items-center justify-center rounded-sm py-1.5 text-sm outline-none transition-colors',
+                        'hover:bg-accent hover:text-accent-foreground relative flex w-full cursor-default select-none items-center justify-center rounded-sm py-1.5 text-sm outline-hidden transition-colors',
                         isSelected && 'bg-accent text-accent-foreground font-medium',
                       )}
                     >

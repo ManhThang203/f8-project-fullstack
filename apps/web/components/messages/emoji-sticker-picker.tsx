@@ -89,7 +89,7 @@ export function EmojiStickerPicker({
                     <button
                       key={sticker.id}
                       type="button"
-                      className="hover:bg-muted focus-visible:ring-primary flex aspect-square items-center justify-center rounded-xl p-2 transition-colors focus-visible:outline-none focus-visible:ring-2"
+                      className="hover:bg-muted focus-visible:ring-primary flex aspect-square items-center justify-center rounded-xl p-2 transition-colors focus-visible:outline-hidden focus-visible:ring-2"
                       onClick={() => {
                         onStickerSelect(sticker.id);
                         onOpenChange(false);

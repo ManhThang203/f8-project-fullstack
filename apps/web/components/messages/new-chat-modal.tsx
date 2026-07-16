@@ -90,7 +90,7 @@ export function NewChatModal({
                   <button
                     type="button"
                     onClick={() => toggleUser(u)}
-                    className="text-muted-foreground hover:bg-background hover:text-foreground focus-visible:ring-ring flex h-6 w-6 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
+                    className="text-muted-foreground hover:bg-background hover:text-foreground focus-visible:ring-ring flex h-6 w-6 items-center justify-center rounded-full transition-colors focus-visible:outline-hidden focus-visible:ring-2"
                     aria-label={`Bỏ chọn ${userLabel(u)}`}
                   >
                     <X className="h-3 w-3" aria-hidden />
@@ -109,7 +109,7 @@ export function NewChatModal({
               onChange={(e) => setGroupName(e.target.value)}
               placeholder="Tên nhóm (tuỳ chọn)"
               maxLength={191}
-              className="border-border bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring h-10 w-full rounded-lg border px-3 text-sm focus-visible:outline-none focus-visible:ring-2"
+              className="border-border bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring h-10 w-full rounded-lg border px-3 text-sm focus-visible:outline-hidden focus-visible:ring-2"
             />
           </div>
         ) : null}
@@ -120,7 +120,7 @@ export function NewChatModal({
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Tìm theo tên hoặc @username…"
-            className="border-border bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring h-10 w-full rounded-lg border px-3 text-sm focus-visible:outline-none focus-visible:ring-2"
+            className="border-border bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring h-10 w-full rounded-lg border px-3 text-sm focus-visible:outline-hidden focus-visible:ring-2"
             autoFocus
           />
         </div>
@@ -142,7 +142,7 @@ export function NewChatModal({
                   <button
                     type="button"
                     className={cn(
-                      'hover:bg-muted focus-visible:ring-ring flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2',
+                      'hover:bg-muted focus-visible:ring-ring flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition-colors focus-visible:outline-hidden focus-visible:ring-2',
                       checked && 'bg-muted',
                     )}
                     onClick={() => toggleUser(u)}
@@ -172,7 +172,7 @@ export function NewChatModal({
             type="button"
             onClick={handleCreate}
             disabled={selected.length === 0}
-            className="bg-primary text-primary-foreground focus-visible:ring-ring flex min-h-11 w-full items-center justify-center rounded-full text-sm font-semibold transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 disabled:opacity-40"
+            className="bg-primary text-primary-foreground focus-visible:ring-ring flex min-h-11 w-full items-center justify-center rounded-full text-sm font-semibold transition-opacity hover:opacity-90 focus-visible:outline-hidden focus-visible:ring-2 disabled:opacity-40"
           >
             {isGroup ? `Tạo nhóm (${selected.length + 1} người)` : 'Bắt đầu chat'}
           </button>

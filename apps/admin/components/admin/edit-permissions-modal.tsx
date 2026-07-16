@@ -131,7 +131,7 @@ export function EditPermissionsModal({ isOpen, onClose, user }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="bg-background/80 fixed inset-0 backdrop-blur-sm transition-opacity duration-200"
+        className="bg-background/80 fixed inset-0 backdrop-blur-xs transition-opacity duration-200"
         onClick={onClose}
       />
 

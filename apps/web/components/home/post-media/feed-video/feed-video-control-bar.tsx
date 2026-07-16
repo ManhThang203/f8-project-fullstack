@@ -55,7 +55,7 @@ function FeedVideoProgressTrack({ currentTimeMs, durationMs, onSeek }: ProgressT
         />
         {isHovering && (
           <div
-            className="pointer-events-none absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow"
+            className="pointer-events-none absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-sm"
             style={{ left: `${progress * 100}%` }}
             aria-hidden
           />
@@ -78,7 +78,7 @@ type Props = {
 };
 
 const iconBtn =
-  'flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60';
+  'flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white/60';
 
 /** Bottom bar kiểu Facebook: Play | time | progress | volume. */
 export function FeedVideoControlBar({
@@ -94,7 +94,7 @@ export function FeedVideoControlBar({
 }: Props) {
   return (
     <div
-      className="feed-video-controls absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/80 to-transparent px-3 pb-2 pt-6"
+      className="feed-video-controls absolute inset-x-0 bottom-0 z-20 bg-linear-to-t from-black/80 to-transparent px-3 pb-2 pt-6"
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
     >

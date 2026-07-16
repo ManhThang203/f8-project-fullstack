@@ -350,7 +350,7 @@ export function PostDetailModal({ open, onClose, post, me }: Props) {
                   replyingToUsername ? `Trả lời @${replyingToUsername}...` : 'Viết bình luận...'
                 }
                 maxLength={2000}
-                className="placeholder:text-muted-foreground w-full resize-none bg-transparent text-sm outline-none"
+                className="placeholder:text-muted-foreground w-full resize-none bg-transparent text-sm outline-hidden"
                 rows={drafts.length > 0 ? 2 : 1}
                 disabled={busy}
               />

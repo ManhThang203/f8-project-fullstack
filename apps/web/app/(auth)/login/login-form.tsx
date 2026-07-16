@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 const inputClass = cn(
   'min-h-11 w-full rounded-xl border-0 bg-muted px-4 py-2.5 text-base text-foreground sm:text-sm',
   'placeholder:text-muted-foreground',
-  'outline-none transition-[box-shadow] duration-150',
+  'outline-hidden transition-shadow duration-150',
   'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
 );
 
@@ -158,10 +158,10 @@ export function LoginForm() {
   }
 
   return (
-    <main className="bg-muted/40 min-h-[100dvh] overflow-x-hidden">
+    <main className="bg-muted/40 min-h-dvh overflow-x-hidden">
       <div
         className={cn(
-          'mx-auto flex min-h-[100dvh] w-full max-w-6xl flex-col gap-8',
+          'mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-8',
           'px-4 py-8 sm:gap-10 sm:px-6 sm:py-10',
           'md:flex-row md:items-center md:gap-10 md:py-12',
           'lg:gap-12 lg:px-8 lg:py-16',
@@ -226,7 +226,7 @@ export function LoginForm() {
                 <div className="mt-2 flex justify-end">
                   <Link
                     href={forgotHref}
-                    className="text-foreground focus-visible:ring-ring focus-visible:ring-offset-card inline-flex min-h-11 min-w-[44px] items-center rounded-sm text-sm font-medium transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                    className="text-foreground focus-visible:ring-ring focus-visible:ring-offset-card inline-flex min-h-11 min-w-[44px] items-center rounded-sm text-sm font-medium transition-opacity hover:opacity-80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2"
                   >
                     Quên mật khẩu?
                   </Link>
@@ -265,7 +265,7 @@ export function LoginForm() {
               Chưa có tài khoản?{' '}
               <Link
                 href={registerHref}
-                className="text-foreground focus-visible:ring-ring focus-visible:ring-offset-card rounded-sm font-semibold transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                className="text-foreground focus-visible:ring-ring focus-visible:ring-offset-card rounded-sm font-semibold transition-opacity hover:opacity-80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2"
               >
                 Đăng ký
               </Link>

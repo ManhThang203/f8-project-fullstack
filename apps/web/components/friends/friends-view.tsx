@@ -57,7 +57,7 @@ function FriendRow({ user, tab, pendingUserId, pendingAction, onAction }: Friend
     <div className="border-border bg-card flex items-center gap-3 rounded-xl border p-3">
       <Link
         href={`/${encodeURIComponent(user.username)}`}
-        className="rounded-full focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2"
+        className="rounded-full focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2"
         aria-label={`Xem trang cá nhân của ${user.name ?? user.username}`}
       >
         <Avatar as="span" src={user.image} name={user.name} username={user.username} size="md" />
@@ -66,7 +66,7 @@ function FriendRow({ user, tab, pendingUserId, pendingAction, onAction }: Friend
       <div className="min-w-0 flex-1">
         <Link
           href={`/${encodeURIComponent(user.username)}`}
-          className="text-foreground block truncate text-sm font-semibold hover:underline focus-visible:outline-none focus-visible:underline"
+          className="text-foreground block truncate text-sm font-semibold hover:underline focus-visible:outline-hidden focus-visible:underline"
         >
           {user.name ?? user.username}
         </Link>
@@ -227,7 +227,7 @@ export function FriendsView() {
               onClick={() => setTab(item.id)}
               className={cn(
                 'min-h-11 rounded-xl px-3 text-sm font-medium transition-colors duration-150',
-                'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
+                'focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2',
                 tab === item.id
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -250,7 +250,7 @@ export function FriendsView() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Tìm bạn bè"
-          className="border-border bg-card text-foreground placeholder:text-muted-foreground min-h-11 rounded-xl border px-4 text-sm focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2"
+          className="border-border bg-card text-foreground placeholder:text-muted-foreground min-h-11 rounded-xl border px-4 text-sm focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2"
         />
       ) : null}
 

@@ -30,7 +30,7 @@ export function CreatePostTrigger({ username, avatarUrl, onOpen }: Props) {
       <button
         type="button"
         onClick={() => onOpen(false)}
-        className="text-muted-foreground hover:text-foreground/70 focus-visible:ring-ring focus-visible:ring-offset-background flex-1 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+        className="text-muted-foreground hover:text-foreground/70 focus-visible:ring-ring focus-visible:ring-offset-background flex-1 text-left text-sm transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2"
         aria-label="Tạo bài viết mới"
       >
         {placeholder}
@@ -44,7 +44,7 @@ export function CreatePostTrigger({ username, avatarUrl, onOpen }: Props) {
           aria-label="Thêm ảnh/video"
           className={cn(
             'hover:bg-muted flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors',
-            'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
+            'focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2',
           )}
         >
           <Image className="h-5 w-5 text-[hsl(145,60%,50%)]" aria-hidden />
@@ -56,7 +56,7 @@ export function CreatePostTrigger({ username, avatarUrl, onOpen }: Props) {
           aria-label="Cảm xúc/hoạt động"
           className={cn(
             'hover:bg-muted flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors',
-            'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
+            'focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2',
           )}
         >
           <Smile className="h-5 w-5 text-[hsl(40,90%,60%)]" aria-hidden />

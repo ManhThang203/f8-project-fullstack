@@ -43,7 +43,7 @@ export function ConversationList({
         <button
           type="button"
           onClick={onNewChat}
-          className="text-muted-foreground hover:bg-muted focus-visible:ring-ring flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
+          className="text-muted-foreground hover:bg-muted focus-visible:ring-ring flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors focus-visible:outline-hidden focus-visible:ring-2"
           aria-label="Tin nhắn mới"
         >
           <Plus className="h-5 w-5" />
@@ -68,7 +68,7 @@ export function ConversationList({
                     type="button"
                     onClick={() => onSelect(c.id)}
                     className={cn(
-                      'hover:bg-muted focus-visible:ring-ring flex min-h-11 w-full items-center gap-3 px-3 py-3 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2',
+                      'hover:bg-muted focus-visible:ring-ring flex min-h-11 w-full items-center gap-3 px-3 py-3 text-left text-sm transition-colors focus-visible:outline-hidden focus-visible:ring-2',
                       active && 'bg-muted',
                     )}
                   >

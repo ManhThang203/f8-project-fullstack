@@ -19,7 +19,7 @@ export function MessagesSsrFallback() {
         <div className="border-border border-b px-4 py-3">
           <div className="bg-muted/60 h-4 w-32 rounded" aria-hidden />
         </div>
-        <div className="flex min-h-[12rem] flex-col justify-end gap-2 p-4">
+        <div className="flex min-h-48 flex-col justify-end gap-2 p-4">
           <div className="bg-muted/40 h-20 rounded-2xl" aria-hidden />
         </div>
       </section>

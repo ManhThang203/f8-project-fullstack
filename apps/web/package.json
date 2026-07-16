@@ -46,6 +46,7 @@
   "devDependencies": {
     "@costy/eslint-config": "workspace:*",
     "@costy/typescript-config": "workspace:*",
+    "@tailwindcss/postcss": "^4.3.2",
     "@tanstack/react-query-devtools": "^5.62.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
@@ -53,14 +54,13 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",
-    "autoprefixer": "^10.4.20",
     "eslint": "^9.15.0",
     "eslint-config-next": "16.2.6",
     "jsdom": "^29.1.1",
     "postcss": "^8.4.49",
-    "prettier-plugin-tailwindcss": "^0.6.8",
+    "prettier-plugin-tailwindcss": "^0.8.1",
     "rimraf": "^6.0.1",
-    "tailwindcss": "^3.4.15",
+    "tailwindcss": "^4.3.2",
     "typescript": "^5.6.3",
     "vitest": "^2.1.8"
   }

@@ -27,7 +27,7 @@ export function iconButtonClass({
 }: IconButtonClassOpts = {}) {
   return cn(
     'flex shrink-0 items-center justify-center transition-colors',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
     size === 'md' ? 'min-h-11 min-w-11' : 'min-h-9 min-w-9',
     shape === 'circle' ? 'rounded-full' : 'rounded-lg',
     tone === 'muted' ? 'text-muted-foreground hover:bg-muted' : 'text-white hover:bg-white/10',

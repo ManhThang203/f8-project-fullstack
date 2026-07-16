@@ -71,7 +71,7 @@ export function EditPostModal({ open, onClose, post }: Props) {
       <Modal.Panel
         from="bottom"
         size="md"
-        className="flex max-h-[100dvh] w-full flex-col rounded-t-2xl sm:rounded-2xl"
+        className="flex max-h-dvh w-full flex-col rounded-t-2xl sm:rounded-2xl"
       >
         <Modal.Header title="Chỉnh sửa bài viết" closeDisabled={saving} />
 
@@ -90,7 +90,7 @@ export function EditPostModal({ open, onClose, post }: Props) {
             aria-invalid={trimmedContent.length === 0}
             className={cn(
               'border-border bg-muted text-foreground w-full resize-none rounded-xl border px-3 py-3 text-sm leading-relaxed',
-              'placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+              'placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2',
               'disabled:cursor-not-allowed disabled:opacity-60',
             )}
           />

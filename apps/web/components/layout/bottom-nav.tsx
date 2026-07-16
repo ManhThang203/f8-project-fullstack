@@ -32,7 +32,7 @@ function BottomNavItem({
       aria-current={isActive ? 'page' : undefined}
       className={cn(
         'relative flex min-h-11 min-w-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1 text-[10px] font-medium transition-colors',
-        'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+        'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2',
         isActive ? 'text-primary' : 'text-muted-foreground',
       )}
     >
@@ -54,9 +54,9 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Điều hướng chính"
-      className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/80 fixed inset-x-0 bottom-0 z-50 border-t backdrop-blur-sm lg:hidden"
+      className="border-border bg-background/95 supports-backdrop-filter:bg-background/80 fixed inset-x-0 bottom-0 z-50 border-t backdrop-blur-xs lg:hidden"
     >
-      <div className="mx-auto flex h-14 max-w-screen-2xl items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto flex h-14 max-w-(--breakpoint-2xl) items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)]">
         <BottomNavItem
           href="/"
           label="Trang chủ"

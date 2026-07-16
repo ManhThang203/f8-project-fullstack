@@ -27,7 +27,7 @@ export function ProfileHeader({ profile, onAvatarClick, onCoverClick, actions, s
           disabled={!onCoverClick}
           className={cn(
             'bg-muted mb-4 block h-32 w-full overflow-hidden rounded-xl md:h-40',
-            'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+            'focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
             onCoverClick && 'cursor-pointer',
             isDeleted && 'opacity-60',
           )}

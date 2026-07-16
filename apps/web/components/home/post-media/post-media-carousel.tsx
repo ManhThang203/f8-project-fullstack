@@ -153,7 +153,7 @@ function HorizontalScroller({ children }: { children: ReactNode }) {
       onPointerCancel={endDrag}
       className={cn(
         'relative mt-3 w-full touch-pan-x overflow-x-auto overflow-y-hidden overscroll-x-contain',
-        '[-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [scrollbar-width:none]',
+        '[-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] scrollbar-none',
         '[&::-webkit-scrollbar]:hidden',
         grabbing ? 'cursor-grabbing select-none' : 'cursor-grab',
       )}
@@ -226,7 +226,7 @@ export function PostMediaCarousel(props: Props) {
                 onClick={() => props.onRemove(draft.tempId)}
                 aria-label="Xóa ảnh"
                 className={cn(
-                  'focus-visible:ring-ring absolute flex items-center justify-center rounded-full bg-black/60 text-white transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2',
+                  'focus-visible:ring-ring absolute flex items-center justify-center rounded-full bg-black/60 text-white transition-opacity hover:opacity-80 focus-visible:outline-hidden focus-visible:ring-2',
                   isCompactEditable
                     ? 'right-1 top-1 h-5 w-5'
                     : 'right-2 top-2 h-7 w-7',
@@ -297,7 +297,7 @@ export function PostMediaCarousel(props: Props) {
                 onClick={() => props.onRemove(draft.tempId)}
                 aria-label="Xóa ảnh"
                 className={cn(
-                  'focus-visible:ring-ring absolute flex items-center justify-center rounded-full bg-black/60 text-white transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2',
+                  'focus-visible:ring-ring absolute flex items-center justify-center rounded-full bg-black/60 text-white transition-opacity hover:opacity-80 focus-visible:outline-hidden focus-visible:ring-2',
                   isCompactEditable
                     ? 'right-1 top-1 h-5 w-5'
                     : 'right-2 top-2 h-7 w-7',

@@ -18,13 +18,13 @@ type Props = {
   onVolumeIconTap?: (e: React.MouseEvent) => void;
 };
 
-const pillShell = 'flex min-h-11 items-center rounded-full bg-black/40 text-white backdrop-blur-sm';
+const pillShell = 'flex min-h-11 items-center rounded-full bg-black/40 text-white backdrop-blur-xs';
 
 const iconBtn =
-  'flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60';
+  'flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white/60';
 
 const hoverSliderReveal =
-  'reels-volume-slider-wrap grid w-0 grid-cols-1 opacity-0 transition-[width,opacity,padding] duration-150 group-hover/volume:w-[8.5rem] group-hover/volume:opacity-100 group-hover/volume:pl-1 group-hover/volume:pr-2 group-focus-within/volume:w-[8.5rem] group-focus-within/volume:opacity-100 group-focus-within/volume:pl-1 group-focus-within/volume:pr-2';
+  'reels-volume-slider-wrap grid w-0 grid-cols-1 opacity-0 transition-[width,opacity,padding] duration-150 group-hover/volume:w-34 group-hover/volume:opacity-100 group-hover/volume:pl-1 group-hover/volume:pr-2 group-focus-within/volume:w-34 group-focus-within/volume:opacity-100 group-focus-within/volume:pl-1 group-focus-within/volume:pr-2';
 
 export function ReelsVolumeControl({
   volume,
@@ -92,7 +92,7 @@ export function ReelsVolumeControl({
       ? cn(
           'reels-volume-slider-wrap grid grid-cols-1 transition-[width,opacity,padding] duration-150',
           isOpen
-            ? 'reels-volume-slider-wrap--open w-[8.5rem] pl-1 pr-2 opacity-100'
+            ? 'reels-volume-slider-wrap--open w-34 pl-1 pr-2 opacity-100'
             : 'w-0 opacity-0',
         )
       : hoverSliderReveal;
@@ -131,7 +131,7 @@ export function ReelsVolumeControl({
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={sliderValue}
-            className="reels-volume-slider w-full min-w-[6.5rem] cursor-pointer"
+            className="reels-volume-slider w-full min-w-26 cursor-pointer"
             style={{ ['--reels-volume-pct' as string]: `${sliderValue}%` }}
             onChange={handleSliderChange}
             onClick={(e) => e.stopPropagation()}

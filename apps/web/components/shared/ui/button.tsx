@@ -45,7 +45,7 @@ export function Button({
       disabled={disabled || loading}
       className={cn(
         'inline-flex items-center justify-center gap-2 font-medium transition-colors duration-150',
-        'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+        'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2',
         'active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50',
         variantClasses[variant],
         sizeClasses[size],

@@ -31,7 +31,7 @@ export function RichText({ text, className }: Props) {
             <Link
               key={`${part}-${index}`}
               href={`/${encodeURIComponent(username)}`}
-              className="text-primary font-medium hover:underline focus-visible:outline-none focus-visible:underline"
+              className="text-primary font-medium hover:underline focus-visible:outline-hidden focus-visible:underline"
             >
               {part}
             </Link>
@@ -54,7 +54,7 @@ export function RichText({ text, className }: Props) {
               href={href}
               target="_blank"
               rel="noreferrer"
-              className="text-primary font-medium hover:underline focus-visible:outline-none focus-visible:underline"
+              className="text-primary font-medium hover:underline focus-visible:outline-hidden focus-visible:underline"
             >
               {part}
             </a>

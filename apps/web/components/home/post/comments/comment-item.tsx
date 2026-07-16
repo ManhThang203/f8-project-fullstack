@@ -236,7 +236,7 @@ export function CommentItem({
           href={profileHref}
           prefetch={false}
           aria-label={`Xem trang cá nhân của ${profileLabel}`}
-          className="focus-visible:ring-ring inline-flex rounded-full transition-opacity duration-150 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2"
+          className="focus-visible:ring-ring inline-flex rounded-full transition-opacity duration-150 hover:opacity-90 focus-visible:outline-hidden focus-visible:ring-2"
         >
           <Avatar
             as="span"
@@ -257,12 +257,12 @@ export function CommentItem({
               <Link
                 href={profileHref}
                 prefetch={false}
-                className="text-foreground focus-visible:ring-ring text-sm font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2"
+                className="text-foreground focus-visible:ring-ring text-sm font-semibold hover:underline focus-visible:outline-hidden focus-visible:ring-2"
               >
                 {profileLabel}
               </Link>
             </div>
-            <p className="whitespace-pre-wrap break-words text-sm">
+            <p className="whitespace-pre-wrap wrap-break-word text-sm">
               {leadingMention ? (
                 <>
                   <Link
@@ -282,7 +282,7 @@ export function CommentItem({
 
           {hasReactions && (
             <div
-              className="bg-card border-border absolute bottom-0 right-2 z-10 flex translate-y-1/2 items-center gap-0.5 rounded-full border px-1.5 py-0.5 shadow-sm"
+              className="bg-card border-border absolute bottom-0 right-2 z-10 flex translate-y-1/2 items-center gap-0.5 rounded-full border px-1.5 py-0.5 shadow-xs"
               aria-label={`${localLikeCount} lượt cảm xúc`}
             >
               <span className="flex items-center" aria-hidden>
@@ -356,7 +356,7 @@ export function CommentItem({
               </button>
 
               {showMenu && (
-                <div className="border-border bg-card absolute bottom-full right-0 z-20 mb-1 min-w-[10rem] rounded-xl border py-1 shadow-lg">
+                <div className="border-border bg-card absolute bottom-full right-0 z-20 mb-1 min-w-40 rounded-xl border py-1 shadow-lg">
                   <button
                     onClick={openDeleteConfirm}
                     className="hover:bg-muted w-full px-4 py-2 text-left text-sm text-red-500 transition-colors duration-150"

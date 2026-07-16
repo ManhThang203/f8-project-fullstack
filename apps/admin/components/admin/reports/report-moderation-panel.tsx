@@ -141,7 +141,7 @@ export function ReportModerationPanel({
                 action: actionLabel(selectedAction).toLowerCase(),
               })}
               rows={3}
-              className="border-border bg-muted/20 text-foreground placeholder:text-muted-foreground/60 focus:border-ring focus:ring-ring w-full resize-none rounded-lg border px-3 py-2 text-xs focus:outline-none focus:ring-1"
+              className="border-border bg-muted/20 text-foreground placeholder:text-muted-foreground/60 focus:border-ring focus:ring-ring w-full resize-none rounded-lg border px-3 py-2 text-xs focus:outline-hidden focus:ring-1"
             />
           </div>
 
@@ -154,7 +154,7 @@ export function ReportModerationPanel({
                 type="datetime-local"
                 value={bannedUntil}
                 onChange={(e) => setBannedUntil(e.target.value)}
-                className="border-border bg-muted/20 text-foreground focus:border-ring focus:ring-ring w-full rounded-lg border px-3 py-2 text-xs focus:outline-none focus:ring-1"
+                className="border-border bg-muted/20 text-foreground focus:border-ring focus:ring-ring w-full rounded-lg border px-3 py-2 text-xs focus:outline-hidden focus:ring-1"
               />
             </div>
           )}

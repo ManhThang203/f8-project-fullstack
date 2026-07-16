@@ -81,7 +81,7 @@ export function FacebookReelsPlayer({
             preload={isActive ? 'metadata' : 'none'}
           />
 
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
 
           {isMobile && !isPlaying ? <ReelsCenterPlayIndicator /> : null}
 
@@ -124,7 +124,7 @@ export function FacebookReelsPlayer({
           {isImmersive ? (
             <ReelsActionRail
               {...railProps}
-              className="reels-immersive-rail absolute bottom-[4.5rem] right-2"
+              className="reels-immersive-rail absolute bottom-18 right-2"
             />
           ) : null}
         </div>

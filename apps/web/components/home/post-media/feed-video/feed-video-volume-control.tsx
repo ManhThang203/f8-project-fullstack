@@ -13,7 +13,7 @@ type Props = {
 };
 
 const iconBtn =
-  'flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60';
+  'flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white/60';
 
 const SLIDER_CLOSE_DELAY_MS = 150;
 
@@ -105,7 +105,7 @@ export function FeedVideoVolumeControl({ volume, muted, onVolumeChange, onToggle
         )}
         aria-hidden={!sliderVisible}
       >
-        <div className="flex h-20 w-11 items-center justify-center rounded-full bg-black/60 backdrop-blur-sm">
+        <div className="flex h-20 w-11 items-center justify-center rounded-full bg-black/60 backdrop-blur-xs">
           <input
             type="range"
             min={0}

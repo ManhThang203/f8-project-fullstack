@@ -22,7 +22,7 @@ import { useScrollLock } from '@/hooks/ui';
 import { cn } from '@/lib/utils';
 
 /** z-index cao hơn site-header (z-50) để phủ toàn màn hình kể cả header. */
-const MODAL_Z = 'z-[100]';
+const MODAL_Z = 'z-100';
 
 // ── Context ────────────────────────────────────────────────────────────────────
 
@@ -111,7 +111,7 @@ function Backdrop({ className }: BackdropProps) {
       type="button"
       aria-label="Đóng"
       tabIndex={-1}
-      className={cn('absolute inset-0', className ?? 'bg-black/60 backdrop-blur-sm')}
+      className={cn('absolute inset-0', className ?? 'bg-black/60 backdrop-blur-xs')}
       onClick={dismissOnBackdrop ? onClose : undefined}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -225,7 +225,7 @@ function Header({ title, closeDisabled = false }: HeaderProps) {
         disabled={closeDisabled}
         className={cn(
           'text-muted-foreground hover:bg-muted flex h-11 w-11 items-center justify-center rounded-full transition-colors',
-          'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
+          'focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2',
           'disabled:opacity-40',
         )}
       >

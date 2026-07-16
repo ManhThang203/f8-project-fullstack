@@ -48,7 +48,7 @@ export function BlockedSettingsSection() {
             >
               <Link
                 href={`/${encodeURIComponent(user.username)}`}
-                className="focus-visible:ring-ring min-w-0 flex-1 rounded-lg focus-visible:outline-none focus-visible:ring-2"
+                className="focus-visible:ring-ring min-w-0 flex-1 rounded-lg focus-visible:outline-hidden focus-visible:ring-2"
               >
                 <div className="flex items-center gap-3">
                   <Avatar

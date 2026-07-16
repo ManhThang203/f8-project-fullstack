@@ -135,7 +135,7 @@ export function PostOptionsMenu({
         className={cn(
           'text-muted-foreground flex h-11 w-11 items-center justify-center rounded-full',
           'hover:bg-muted transition-colors duration-150',
-          'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
+          'focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2',
         )}
       >
         <MoreHorizontal className="h-5 w-5" aria-hidden />
@@ -146,7 +146,7 @@ export function PostOptionsMenu({
           id={menuId}
           role="menu"
           className={cn(
-            'border-border bg-card absolute right-0 top-full z-20 mt-1 min-w-[12rem]',
+            'border-border bg-card absolute right-0 top-full z-20 mt-1 min-w-48',
             'rounded-xl border py-1 shadow-lg',
           )}
         >
@@ -165,7 +165,7 @@ export function PostOptionsMenu({
                 className={cn(
                   'text-foreground w-full px-4 py-3 text-left text-sm',
                   'hover:bg-muted transition-colors duration-150',
-                  'focus-visible:bg-muted focus-visible:outline-none',
+                  'focus-visible:bg-muted focus-visible:outline-hidden',
                 )}
               >
                 {item.label}

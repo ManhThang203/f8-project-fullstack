@@ -12,7 +12,7 @@ type Props = {
 };
 
 const navBtn =
-  'flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/60 bg-black/40 text-white backdrop-blur-sm transition-colors duration-150 hover:bg-black/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 disabled:pointer-events-none disabled:opacity-30';
+  'flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/60 bg-black/40 text-white backdrop-blur-xs transition-colors duration-150 hover:bg-black/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white/60 disabled:pointer-events-none disabled:opacity-30';
 
 export function ReelsNavControls({ onPrev, onNext, canPrev, canNext }: Props) {
   return (

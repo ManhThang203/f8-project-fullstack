@@ -39,7 +39,7 @@ export function SettingsToggle({
         onClick={() => onCheckedChange(!checked)}
         className={cn(
           'inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full',
-          'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+          'focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
           'disabled:pointer-events-none disabled:opacity-40',
         )}
       >
@@ -57,7 +57,7 @@ export function SettingsToggle({
               'h-6 w-6 shrink-0 rounded-full shadow-md transition-[transform,background-color,box-shadow] duration-150',
               checked
                 ? 'bg-primary-foreground'
-                : 'bg-foreground shadow-sm ring-1 ring-border/70',
+                : 'bg-foreground shadow-xs ring-1 ring-border/70',
             )}
           />
         </span>

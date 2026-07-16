@@ -64,7 +64,7 @@ function NavTab({
       title={label}
       className={cn(
         'relative flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors',
-        'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+        'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2',
         isActive ? 'text-primary' : 'text-muted-foreground hover:bg-muted',
       )}
     >
@@ -134,7 +134,7 @@ export function SiteHeaderDesktop({
   return (
     <div
       className={cn(
-        'mx-auto h-14 max-w-screen-2xl items-center gap-4 px-4',
+        'mx-auto h-14 max-w-(--breakpoint-2xl) items-center gap-4 px-4',
         className,
       )}
     >
@@ -144,7 +144,7 @@ export function SiteHeaderDesktop({
           href="/"
           onClick={(e) => handleHomeNavClick(pathname, e)}
           aria-label="Cotsy — Trang chủ"
-          className="text-foreground hover:text-foreground/90 focus-visible:ring-ring focus-visible:ring-offset-background flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-1 text-base font-semibold tracking-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+          className="text-foreground hover:text-foreground/90 focus-visible:ring-ring focus-visible:ring-offset-background flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-1 text-base font-semibold tracking-tight transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2"
         >
           <CotsyLogo className="h-10 w-10" priority />
           Cotsy
@@ -177,7 +177,7 @@ export function SiteHeaderDesktop({
             type="search"
             placeholder="Tìm kiếm…"
             autoComplete="off"
-            className="border-border bg-muted/60 text-foreground placeholder:text-muted-foreground hover:bg-muted focus-visible:bg-background focus-visible:ring-ring h-10 w-full rounded-full border py-2 pl-9 pr-3 text-sm transition-[box-shadow,background-color] focus-visible:outline-none focus-visible:ring-2"
+            className="border-border bg-muted/60 text-foreground placeholder:text-muted-foreground hover:bg-muted focus-visible:bg-background focus-visible:ring-ring h-10 w-full rounded-full border py-2 pl-9 pr-3 text-sm transition-[box-shadow,background-color] focus-visible:outline-hidden focus-visible:ring-2"
           />
         </form>
       </div>
@@ -242,7 +242,7 @@ export function SiteHeaderDesktop({
           <nav aria-label="Tài khoản" className="flex items-center justify-end gap-2">
             <Link
               href="/login"
-              className="bg-primary text-primary-foreground focus-visible:ring-ring focus-visible:ring-offset-background flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+              className="bg-primary text-primary-foreground focus-visible:ring-ring focus-visible:ring-offset-background flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold transition-opacity hover:opacity-90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2"
             >
               Đăng nhập
             </Link>

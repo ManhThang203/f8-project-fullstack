@@ -75,7 +75,7 @@ export function SiteHeaderCompact({
   }
 
   return (
-    <div className={cn('relative mx-auto h-14 w-full max-w-screen-2xl px-3', className)}>
+    <div className={cn('relative mx-auto h-14 w-full max-w-(--breakpoint-2xl) px-3', className)}>
       {/* Hàng header mặc định — tìm kiếm trái, logo giữa, chuông + avatar phải */}
       <div
         className={cn(
@@ -115,7 +115,7 @@ export function SiteHeaderCompact({
             href="/"
             onClick={(e) => handleHomeNavClick(pathname, e)}
             aria-label="Cotsy — Trang chủ"
-            className="text-foreground hover:text-foreground/90 focus-visible:ring-ring focus-visible:ring-offset-background flex min-h-11 items-center gap-2 rounded-lg px-1 text-base font-semibold tracking-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            className="text-foreground hover:text-foreground/90 focus-visible:ring-ring focus-visible:ring-offset-background flex min-h-11 items-center gap-2 rounded-lg px-1 text-base font-semibold tracking-tight transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2"
           >
             <CotsyLogo className="h-10 w-10" priority />
             <span className="hidden md:inline">Cotsy</span>
@@ -139,7 +139,7 @@ export function SiteHeaderCompact({
             <nav aria-label="Tài khoản" className="flex items-center justify-end gap-1.5">
               <Link
                 href="/login"
-                className="bg-primary text-primary-foreground focus-visible:ring-ring focus-visible:ring-offset-background flex min-h-11 items-center justify-center rounded-full px-3 text-sm font-semibold transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                className="bg-primary text-primary-foreground focus-visible:ring-ring focus-visible:ring-offset-background flex min-h-11 items-center justify-center rounded-full px-3 text-sm font-semibold transition-opacity hover:opacity-90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2"
               >
                 Đăng nhập
               </Link>
@@ -184,7 +184,7 @@ export function SiteHeaderCompact({
               type="search"
               placeholder="Tìm kiếm…"
               autoComplete="off"
-              className="border-border bg-muted/60 text-foreground placeholder:text-muted-foreground hover:bg-muted focus-visible:bg-background focus-visible:ring-ring h-10 w-full rounded-full border py-2 pl-9 pr-3 text-sm transition-[box-shadow,background-color] focus-visible:outline-none focus-visible:ring-2"
+              className="border-border bg-muted/60 text-foreground placeholder:text-muted-foreground hover:bg-muted focus-visible:bg-background focus-visible:ring-ring h-10 w-full rounded-full border py-2 pl-9 pr-3 text-sm transition-[box-shadow,background-color] focus-visible:outline-hidden focus-visible:ring-2"
             />
           </div>
         </form>

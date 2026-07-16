@@ -13,7 +13,7 @@ type Props = {
   className?: string;
 };
 
-const cardClassName = 'rounded-xl border border-border bg-card p-4 shadow-sm';
+const cardClassName = 'rounded-xl border border-border bg-card p-4 shadow-xs';
 
 export function KpiCard({ title, value, subtitle, href, linkLabel, icon: Icon, className }: Props) {
   return (

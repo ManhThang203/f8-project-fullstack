@@ -14,7 +14,7 @@ type Props = {
 
 export function StatChartCard({ title, description, children, className }: Props) {
   return (
-    <section className={cn('border-border bg-card rounded-xl border p-6 shadow-sm', className)}>
+    <section className={cn('border-border bg-card rounded-xl border p-6 shadow-xs', className)}>
       <header className="mb-4 space-y-1">
         <h2 className="text-foreground text-base font-semibold">{title}</h2>
         {description ? <p className="text-muted-foreground text-sm">{description}</p> : null}

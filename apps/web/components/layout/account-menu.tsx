@@ -64,7 +64,7 @@ export function AccountMenu({ me, loggingOut, onLogout }: Props) {
 
       {open ? (
         <div
-          className="border-border bg-card absolute right-0 top-full z-[60] mt-2 w-56 rounded-xl border py-2 text-sm shadow-md"
+          className="border-border bg-card absolute right-0 top-full z-60 mt-2 w-56 rounded-xl border py-2 text-sm shadow-md"
           role="menu"
         >
           <p className="border-border text-muted-foreground border-b px-4 py-3 text-xs">
@@ -74,7 +74,7 @@ export function AccountMenu({ me, loggingOut, onLogout }: Props) {
             <Link
               href={`/${me.username}`}
               onClick={close}
-              className="text-card-foreground hover:bg-muted focus-visible:bg-muted block px-4 py-3 transition-colors focus-visible:outline-none"
+              className="text-card-foreground hover:bg-muted focus-visible:bg-muted block px-4 py-3 transition-colors focus-visible:outline-hidden"
               role="menuitem"
             >
               Trang cá nhân
@@ -83,7 +83,7 @@ export function AccountMenu({ me, loggingOut, onLogout }: Props) {
           <Link
             href="/saved"
             onClick={close}
-            className="text-card-foreground hover:bg-muted focus-visible:bg-muted block px-4 py-3 transition-colors focus-visible:outline-none"
+            className="text-card-foreground hover:bg-muted focus-visible:bg-muted block px-4 py-3 transition-colors focus-visible:outline-hidden"
             role="menuitem"
           >
             Bài viết đã lưu
@@ -95,7 +95,7 @@ export function AccountMenu({ me, loggingOut, onLogout }: Props) {
               onLogout();
             }}
             disabled={loggingOut}
-            className="text-foreground hover:bg-muted focus-visible:bg-muted w-full px-4 py-3 text-left font-medium transition-colors focus-visible:outline-none disabled:opacity-40"
+            className="text-foreground hover:bg-muted focus-visible:bg-muted w-full px-4 py-3 text-left font-medium transition-colors focus-visible:outline-hidden disabled:opacity-40"
             role="menuitem"
           >
             {loggingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}

@@ -36,15 +36,15 @@
   "devDependencies": {
     "@costy/eslint-config": "workspace:*",
     "@costy/typescript-config": "workspace:*",
+    "@tailwindcss/postcss": "^4.3.2",
     "@types/node": "^22.10.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "autoprefixer": "^10.4.20",
     "eslint": "^9.15.0",
     "eslint-config-next": "16.2.6",
     "postcss": "^8.4.49",
     "rimraf": "^6.0.1",
-    "tailwindcss": "^3.4.15",
+    "tailwindcss": "^4.3.2",
     "typescript": "^5.6.3",
     "vitest": "^2.1.8"
   }

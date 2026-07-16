@@ -68,7 +68,7 @@ export function PostCard({
             href={`/${encodeURIComponent(post.author.username)}`}
             prefetch={false}
             aria-label={`Xem trang cá nhân của ${post.author.name ?? post.author.username}`}
-            className="mt-0.5 shrink-0 self-start rounded-full transition-opacity duration-150 hover:opacity-90 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2"
+            className="mt-0.5 shrink-0 self-start rounded-full transition-opacity duration-150 hover:opacity-90 focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2"
           >
             <Avatar
               as="span"
@@ -118,7 +118,7 @@ export function PostCard({
                     className={cn(
                       'text-muted-foreground flex h-11 w-11 items-center justify-center rounded-full',
                       'hover:bg-muted transition-colors duration-150',
-                      'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
+                      'focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2',
                     )}
                   >
                     <X className="h-5 w-5" aria-hidden />

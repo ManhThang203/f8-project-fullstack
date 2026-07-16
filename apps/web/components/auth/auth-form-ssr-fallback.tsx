@@ -1,8 +1,8 @@
 /** Shell tĩnh — khớp `login-form` (responsive), không gọi `useSession`. */
 export function LoginFormSsrFallback() {
   return (
-    <main className="bg-muted/40 min-h-[100dvh] overflow-x-hidden">
-      <div className="mx-auto flex min-h-[100dvh] w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:gap-10 sm:px-6 sm:py-10 md:flex-row md:items-center md:gap-10 md:py-12 lg:gap-12 lg:px-8 lg:py-16">
+    <main className="bg-muted/40 min-h-dvh overflow-x-hidden">
+      <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:gap-10 sm:px-6 sm:py-10 md:flex-row md:items-center md:gap-10 md:py-12 lg:gap-12 lg:px-8 lg:py-16">
         <section className="hidden min-w-0 flex-1 flex-col justify-center md:flex md:pr-2 lg:pr-6">
           <div className="bg-muted/50 h-8 w-full max-w-md rounded sm:h-10" aria-hidden />
           <div className="bg-muted/40 mt-3 h-4 w-full max-w-sm rounded" aria-hidden />
@@ -37,8 +37,8 @@ export function LoginFormSsrFallback() {
 /** Shell tĩnh — khớp `register-form` (responsive, giống login), không gọi `useSession`. */
 export function RegisterFormSsrFallback() {
   return (
-    <main className="bg-muted/40 min-h-[100dvh] overflow-x-hidden">
-      <div className="mx-auto flex min-h-[100dvh] w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:gap-10 sm:px-6 sm:py-10 md:flex-row md:items-center md:gap-10 md:py-12 lg:gap-12 lg:px-8 lg:py-16">
+    <main className="bg-muted/40 min-h-dvh overflow-x-hidden">
+      <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:gap-10 sm:px-6 sm:py-10 md:flex-row md:items-center md:gap-10 md:py-12 lg:gap-12 lg:px-8 lg:py-16">
         <section className="hidden min-w-0 flex-1 flex-col justify-center md:flex md:pr-2 lg:pr-6">
           <div className="bg-muted/50 h-8 w-full max-w-md rounded sm:h-10" aria-hidden />
           <div className="bg-muted/40 mt-3 h-4 w-full max-w-sm rounded" aria-hidden />
@@ -75,8 +75,8 @@ export function RegisterFormSsrFallback() {
 /** Shell — `forgot-password-form` (responsive, giống login/register). */
 export function ForgotPasswordSsrFallback() {
   return (
-    <main className="bg-muted/40 min-h-[100dvh] overflow-x-hidden">
-      <div className="mx-auto flex min-h-[100dvh] w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:gap-10 sm:px-6 sm:py-10 md:flex-row md:items-center md:gap-10 md:py-12 lg:gap-12 lg:px-8 lg:py-16">
+    <main className="bg-muted/40 min-h-dvh overflow-x-hidden">
+      <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:gap-10 sm:px-6 sm:py-10 md:flex-row md:items-center md:gap-10 md:py-12 lg:gap-12 lg:px-8 lg:py-16">
         <section className="hidden min-w-0 flex-1 flex-col justify-center md:flex md:pr-2 lg:pr-6">
           <div className="bg-muted/50 h-8 w-full max-w-md rounded sm:h-10" aria-hidden />
           <div className="bg-muted/40 mt-3 h-4 w-full max-w-sm rounded" aria-hidden />
@@ -108,7 +108,7 @@ export function ForgotPasswordSsrFallback() {
 export function ResetPasswordSsrFallback() {
   return (
     <main className="bg-background min-h-dvh px-4 py-12">
-      <div className="border-border bg-card mx-auto w-full max-w-md rounded-[var(--radius)] border p-6 shadow-sm">
+      <div className="border-border bg-card mx-auto w-full max-w-md rounded-(--radius) border p-6 shadow-xs">
         <div className="bg-muted/50 h-7 w-56 rounded" aria-hidden />
         <div className="bg-muted/40 mt-2 h-4 w-full max-w-sm rounded" aria-hidden />
         <div className="mt-6 space-y-4">

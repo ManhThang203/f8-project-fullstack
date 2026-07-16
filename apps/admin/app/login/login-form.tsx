@@ -28,7 +28,7 @@ const loginSchema = z.object({
 const inputClass = cn(
   'min-h-11 w-full rounded-xl border border-auth-form-input-border bg-auth-form-input px-4 py-2.5 text-base text-auth-form-title sm:text-sm',
   'placeholder:text-muted-foreground',
-  'outline-none transition-[border-color,box-shadow] duration-150',
+  'outline-hidden transition-[border-color,box-shadow] duration-150',
   'focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-auth-hero-illustration',
   '[&:-webkit-autofill]:[-webkit-text-fill-color:hsl(var(--auth-form-title))]',
   '[&:-webkit-autofill]:shadow-[inset_0_0_0_1000px_hsl(var(--auth-form-input-bg))]',
@@ -38,7 +38,7 @@ const passwordToggleClass = cn(
   'absolute right-0 top-0 inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg',
   'text-auth-form-input-icon transition-colors duration-150',
   'hover:text-auth-form-title active:text-auth-form-title',
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-auth-hero-illustration',
+  'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-auth-hero-illustration',
 );
 
 function LoginHero({ compact }: { compact?: boolean }) {
@@ -155,10 +155,10 @@ export default function LoginForm() {
   }, [t]);
 
   return (
-    <main className="bg-muted/40 min-h-[100dvh] overflow-x-hidden">
+    <main className="bg-muted/40 min-h-dvh overflow-x-hidden">
       <div
         className={cn(
-          'mx-auto flex min-h-[100dvh] w-full max-w-6xl flex-col justify-center gap-6',
+          'mx-auto flex min-h-dvh w-full max-w-6xl flex-col justify-center gap-6',
           'px-4 py-6 sm:gap-8 sm:px-6 sm:py-8',
           'md:flex-row md:items-center md:gap-10 md:py-12',
           'lg:gap-12 lg:px-8 lg:py-16',

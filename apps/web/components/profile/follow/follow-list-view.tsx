@@ -111,7 +111,7 @@ export function FollowListView({ username, title, mode, onClose, asModal }: Prop
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Tìm kiếm"
           aria-label="Tìm kiếm người dùng"
-          className="bg-muted text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-lg px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+          className="bg-muted text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-lg px-3 py-2 text-sm focus-visible:outline-hidden focus-visible:ring-2"
         />
       </div>
 

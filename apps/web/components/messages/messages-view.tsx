@@ -266,7 +266,7 @@ export function MessagesView() {
         <p className="text-muted-foreground">Đăng nhập để xem tin nhắn.</p>
         <Link
           href="/login?next=/messages"
-          className="bg-primary text-primary-foreground focus-visible:ring-ring mt-4 inline-flex min-h-11 items-center justify-center rounded-full px-6 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2"
+          className="bg-primary text-primary-foreground focus-visible:ring-ring mt-4 inline-flex min-h-11 items-center justify-center rounded-full px-6 text-sm font-semibold focus-visible:outline-hidden focus-visible:ring-2"
         >
           Đăng nhập
         </Link>

@@ -61,7 +61,7 @@ export function ReportStatusDonutChart({ breakdown, isLoading }: Props) {
         <div className="flex flex-col items-center gap-6 md:flex-row md:items-center md:justify-center md:gap-10">
           <ChartContainer
             config={chartConfig}
-            className="aspect-square h-56 w-full max-w-[14rem] shrink-0"
+            className="aspect-square h-56 w-full max-w-56 shrink-0"
           >
             <PieChart>
               <ChartTooltip content={<ChartTooltipContent hideLabel nameKey="status" />} />

@@ -189,7 +189,7 @@ export function CreatePostModal({
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
           {parentPost && (
             <div className="border-border relative mb-4 ml-5 border-l-2 pl-4">
-              <div className="bg-background absolute -left-[21px] top-0">
+              <div className="bg-background absolute left-[-21px] top-0">
                 <Avatar
                   src={parentPost.author.image || null}
                   name={parentPost.author.name}
@@ -226,7 +226,7 @@ export function CreatePostModal({
             disabled={busy}
             className={cn(
               'text-foreground w-full resize-none bg-transparent text-sm leading-relaxed',
-              'placeholder:text-muted-foreground outline-none',
+              'placeholder:text-muted-foreground outline-hidden',
               'disabled:opacity-60',
             )}
           />
@@ -293,7 +293,7 @@ export function CreatePostModal({
             className={cn(
               'min-h-11 w-full rounded-xl py-2.5 text-sm font-semibold transition-opacity',
               'bg-primary text-primary-foreground',
-              'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+              'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2',
               'disabled:opacity-40',
             )}
           >

@@ -64,7 +64,7 @@ function ReportsTableSkeletonRow() {
       <td className={colActions.td}>
         <div className={colActions.cell}>
           <Skeleton className="h-9 w-14 shrink-0 rounded-lg" />
-          <Skeleton className="h-9 w-[4.5rem] shrink-0 rounded-lg" />
+          <Skeleton className="h-9 w-18 shrink-0 rounded-lg" />
         </div>
       </td>
     </tr>

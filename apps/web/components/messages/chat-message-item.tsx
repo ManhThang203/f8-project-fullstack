@@ -66,7 +66,7 @@ export function ChatMessageItem({
     >
       {!isMine && (
         <div
-          className="mt-auto flex-shrink-0"
+          className="mt-auto shrink-0"
           title={senderInfo?.name || senderInfo?.username || 'Unknown'}
         >
           {senderInfo?.image ? (
@@ -85,7 +85,7 @@ export function ChatMessageItem({
       <div className={cn('group/bubble relative min-w-0 max-w-[75%]', isMine && 'mr-6 lg:mr-8')}>
         <div
           className={cn(
-            'min-w-0 break-words break-all rounded-2xl px-3 py-2 text-sm transition-colors duration-500',
+            'min-w-0 wrap-break-word break-all rounded-2xl px-3 py-2 text-sm transition-colors duration-500',
             isMine ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground',
             isPulsing &&
               (isMine
@@ -110,7 +110,7 @@ export function ChatMessageItem({
           ) : (
             <>
               {message.type === 'text' && message.content ? (
-                <p className="whitespace-pre-wrap break-words break-all">{message.content}</p>
+                <p className="whitespace-pre-wrap wrap-break-word break-all">{message.content}</p>
               ) : null}
               {message.type === 'sticker' ? (
                 sticker ? (
@@ -148,7 +148,7 @@ export function ChatMessageItem({
           {/* Reactions */}
           {message.reactions && message.reactions.length > 0 && (
             <div
-              className="bg-background border-border absolute -bottom-3 z-10 flex gap-1 rounded-full border px-1.5 py-0.5 text-xs shadow-sm"
+              className="bg-background border-border absolute -bottom-3 z-10 flex gap-1 rounded-full border px-1.5 py-0.5 text-xs shadow-xs"
               style={isMine ? { right: 10 } : { left: 10 }}
             >
               {Array.from(new Set(message.reactions.map((r) => r.emoji))).map((emoji) => {
@@ -174,7 +174,7 @@ export function ChatMessageItem({
         {!message.isUnsent && (
           <div
             className={cn(
-              'bg-background border-border text-foreground absolute z-20 flex items-center gap-1 rounded-lg border p-1 opacity-0 shadow-sm transition-opacity group-hover/bubble:opacity-100',
+              'bg-background border-border text-foreground absolute z-20 flex items-center gap-1 rounded-lg border p-1 opacity-0 shadow-xs transition-opacity group-hover/bubble:opacity-100',
               'bottom-full mb-1',
               isMine ? 'right-0' : 'left-0',
               'sm:bottom-auto sm:top-0 sm:mb-0',

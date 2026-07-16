@@ -60,7 +60,7 @@ export function ReelsProgressBar({
             style={{ width: `${progress * 100}%` }}
           />
           <div
-            className="pointer-events-none absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow"
+            className="pointer-events-none absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-sm"
             style={{ left: `${progress * 100}%` }}
             aria-hidden
           />

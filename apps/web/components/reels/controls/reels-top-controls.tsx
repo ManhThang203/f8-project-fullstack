@@ -25,7 +25,7 @@ type Props = {
 };
 
 const glassBtn =
-  'flex min-h-11 min-w-11 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors duration-150 hover:bg-black/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60';
+  'flex min-h-11 min-w-11 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-xs transition-colors duration-150 hover:bg-black/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white/60';
 
 const visibilityClass =
   'transition-[opacity,visibility] duration-150 motion-reduce:transition-none';

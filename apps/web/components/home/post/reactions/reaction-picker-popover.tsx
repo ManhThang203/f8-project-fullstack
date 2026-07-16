@@ -65,7 +65,7 @@ export function ReactionPickerPopover({
                   className={cn(
                     'flex h-11 w-11 shrink-0 items-center justify-center rounded-full',
                     'transition-transform duration-150 motion-safe:hover:z-10 motion-safe:hover:scale-125',
-                    'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+                    'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2',
                   )}
                 >
                   <ReactionFace id={r.id} />

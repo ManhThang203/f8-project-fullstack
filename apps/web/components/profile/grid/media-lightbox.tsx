@@ -14,7 +14,7 @@ type Props = {
 export function MediaLightbox({ item, username, onClose }: Props) {
   return (
     <Modal open={Boolean(item)} onClose={onClose}>
-      <Modal.Backdrop className="bg-black/80 backdrop-blur-sm" />
+      <Modal.Backdrop className="bg-black/80 backdrop-blur-xs" />
       <Modal.Panel size="md" className="max-h-[90dvh]">
         <Modal.Header title={`@${username}`} />
         {item ? (

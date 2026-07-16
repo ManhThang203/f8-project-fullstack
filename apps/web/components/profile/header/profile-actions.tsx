@@ -241,14 +241,14 @@ export function ProfileActions({ profile, onFollowChange }: Props) {
           {menuOpen ? (
             <div
               role="menu"
-              className="border-border bg-card absolute left-0 top-full z-50 mt-1 min-w-[10rem] rounded-lg border py-1 shadow-lg"
+              className="border-border bg-card absolute left-0 top-full z-50 mt-1 min-w-40 rounded-lg border py-1 shadow-lg"
             >
               <button
                 type="button"
                 role="menuitem"
                 className={cn(
                   'text-foreground hover:bg-muted w-full px-4 py-2 text-left text-sm',
-                  'focus-visible:bg-muted focus-visible:outline-none',
+                  'focus-visible:bg-muted focus-visible:outline-hidden',
                 )}
                 onClick={() => toggleFollow(false)}
               >
@@ -284,14 +284,14 @@ export function ProfileActions({ profile, onFollowChange }: Props) {
         {moreMenuOpen ? (
           <div
             role="menu"
-            className="border-border bg-card absolute right-0 top-full z-50 mt-1 min-w-[12rem] rounded-lg border py-1 shadow-lg"
+            className="border-border bg-card absolute right-0 top-full z-50 mt-1 min-w-48 rounded-lg border py-1 shadow-lg"
           >
             <button
               type="button"
               role="menuitem"
               className={cn(
                 'text-foreground hover:bg-muted w-full px-4 py-2 text-left text-sm',
-                'focus-visible:bg-muted focus-visible:outline-none',
+                'focus-visible:bg-muted focus-visible:outline-hidden',
               )}
               onClick={openReport}
             >
@@ -302,7 +302,7 @@ export function ProfileActions({ profile, onFollowChange }: Props) {
               role="menuitem"
               className={cn(
                 'text-foreground hover:bg-muted w-full px-4 py-2 text-left text-sm',
-                'focus-visible:bg-muted focus-visible:outline-none',
+                'focus-visible:bg-muted focus-visible:outline-hidden',
               )}
               onClick={openBlockConfirm}
             >

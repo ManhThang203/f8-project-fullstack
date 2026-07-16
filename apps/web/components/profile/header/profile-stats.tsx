@@ -22,7 +22,7 @@ function StatButton({ count, label, href, onClick }: StatProps) {
   const className = cn(
     'flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-lg px-2 md:flex-row md:gap-1',
     'hover:bg-muted transition-colors duration-150',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
   );
 
   const aria = `${count} ${label.toLowerCase()}`;

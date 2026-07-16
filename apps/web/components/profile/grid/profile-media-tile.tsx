@@ -31,7 +31,7 @@ export function ProfileMediaTile({ item, username, onClick }: Props) {
       onClick={onClick}
       className={cn(
         'bg-muted group relative aspect-square w-full overflow-hidden',
-        'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset',
+        'focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset',
         !reduceMotion && 'transition-transform duration-150 hover:scale-[1.02]',
       )}
     >
@@ -59,13 +59,13 @@ export function ProfileMediaTile({ item, username, onClick }: Props) {
       )}
 
       {item.isVideo ? (
-        <span className="text-primary-foreground absolute right-2 top-2 drop-shadow">
+        <span className="text-primary-foreground absolute right-2 top-2 drop-shadow-sm">
           <Play className="h-5 w-5 fill-current" aria-hidden />
         </span>
       ) : null}
 
       {item.mediaCount > 1 ? (
-        <span className="text-primary-foreground absolute right-2 top-2 drop-shadow">
+        <span className="text-primary-foreground absolute right-2 top-2 drop-shadow-sm">
           <Copy className="h-4 w-4" aria-hidden />
         </span>
       ) : null}

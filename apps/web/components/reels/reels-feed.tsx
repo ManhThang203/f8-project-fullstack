@@ -18,7 +18,7 @@ import { useScrollLock } from '@/hooks/ui';
 import { getUserFacingErrorMessage, isApiQueryError } from '@/lib/api';
 
 const SCROLL_CONTAINER_BASE =
-  'overflow-y-auto snap-y snap-mandatory [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden';
+  'overflow-y-auto snap-y snap-mandatory [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] scrollbar-none [&::-webkit-scrollbar]:hidden';
 
 function syncReelUrl(postId: string) {
   const targetPath = `/reel/${postId}`;

@@ -102,7 +102,7 @@ export function ChangeRoleModal({ isOpen, onClose, user, currentUserIsSuperAdmin
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className="bg-background/80 fixed inset-0 backdrop-blur-sm transition-opacity duration-200"
+        className="bg-background/80 fixed inset-0 backdrop-blur-xs transition-opacity duration-200"
         onClick={onClose}
       />
 
@@ -146,10 +146,10 @@ export function ChangeRoleModal({ isOpen, onClose, user, currentUserIsSuperAdmin
             <div className="space-y-1.5">
               <label className="text-muted-foreground text-xs font-medium">{t('users.roleLabel')}</label>
               <Select value={role} onValueChange={setRole}>
-                <SelectTrigger className="border-border bg-background text-foreground focus:ring-ring h-10 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:ring-1">
+                <SelectTrigger className="border-border bg-background text-foreground focus:ring-ring h-10 w-full rounded-lg border px-3 py-2 text-sm shadow-xs focus:ring-1">
                   <SelectValue placeholder={t('users.roleLabel')} />
                 </SelectTrigger>
-                <SelectContent className="z-[100]">
+                <SelectContent className="z-100">
                   {assignableRoles.map((r) => (
                     <SelectItem key={r} value={r}>
                       {t(`roles.${r}`, r)}
@@ -169,7 +169,7 @@ export function ChangeRoleModal({ isOpen, onClose, user, currentUserIsSuperAdmin
                 onChange={(e) => setReason(e.target.value)}
                 placeholder={t('users.reasonPlaceholder')}
                 rows={3}
-                className="border-border bg-background text-foreground focus:ring-ring flex w-full resize-none rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1"
+                className="border-border bg-background text-foreground focus:ring-ring flex w-full resize-none rounded-lg border px-3 py-2 text-sm shadow-xs focus:outline-hidden focus:ring-1"
               />
             </div>
 

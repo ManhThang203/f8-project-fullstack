@@ -40,7 +40,7 @@ function TabButton({
       aria-pressed={active}
       className={cn(
         'min-h-11 flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-        'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
+        'focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2',
         active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted',
       )}
     >
@@ -86,7 +86,7 @@ function HashtagResultRow({
       onClick={() => onSelect(tag)}
       className={cn(
         'hover:bg-muted flex min-h-11 w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left transition-colors',
-        'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
+        'focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2',
       )}
     >
       <span className="text-sm font-semibold">#{tag.tag}</span>
@@ -162,7 +162,7 @@ export function SearchView() {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Tìm kiếm…"
             autoComplete="off"
-            className="border-border bg-muted/60 text-foreground placeholder:text-muted-foreground focus-visible:bg-background focus-visible:ring-ring h-11 min-w-0 flex-1 rounded-full border px-4 text-sm transition-[box-shadow,background-color] focus-visible:outline-none focus-visible:ring-2"
+            className="border-border bg-muted/60 text-foreground placeholder:text-muted-foreground focus-visible:bg-background focus-visible:ring-ring h-11 min-w-0 flex-1 rounded-full border px-4 text-sm transition-[box-shadow,background-color] focus-visible:outline-hidden focus-visible:ring-2"
           />
           <Button type="submit" size="md" disabled={input.trim().length < 2}>
             Tìm

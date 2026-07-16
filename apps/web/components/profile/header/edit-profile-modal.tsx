@@ -200,7 +200,7 @@ export function EditProfileModal({ open, onClose, profile }: Props) {
             {coverPreview ? (
               <img src={coverPreview} alt="" className="h-full w-full object-cover" />
             ) : (
-              <div className="from-primary/30 to-muted h-full w-full bg-gradient-to-br" />
+              <div className="from-primary/30 to-muted h-full w-full bg-linear-to-br" />
             )}
           </div>
           <label className="text-primary mb-4 inline-block cursor-pointer text-sm font-medium hover:underline">
@@ -234,7 +234,7 @@ export function EditProfileModal({ open, onClose, profile }: Props) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={50}
-            className="bg-muted text-foreground focus-visible:ring-ring mb-4 w-full rounded-lg px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+            className="bg-muted text-foreground focus-visible:ring-ring mb-4 w-full rounded-lg px-3 py-2 text-sm focus-visible:outline-hidden focus-visible:ring-2"
           />
 
           <label className="text-foreground mb-1 block text-sm font-medium" htmlFor="edit-bio">
@@ -246,7 +246,7 @@ export function EditProfileModal({ open, onClose, profile }: Props) {
             onChange={(e) => setBio(e.target.value)}
             maxLength={160}
             rows={3}
-            className="bg-muted text-foreground focus-visible:ring-ring w-full resize-none rounded-lg px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+            className="bg-muted text-foreground focus-visible:ring-ring w-full resize-none rounded-lg px-3 py-2 text-sm focus-visible:outline-hidden focus-visible:ring-2"
           />
         </div>
 
@@ -257,7 +257,7 @@ export function EditProfileModal({ open, onClose, profile }: Props) {
             disabled={saving}
             className={cn(
               'bg-primary text-primary-foreground min-h-11 w-full rounded-xl py-2.5 text-sm font-semibold',
-              'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
+              'focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2',
               'disabled:opacity-40',
             )}
           >

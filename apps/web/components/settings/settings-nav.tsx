@@ -30,7 +30,7 @@ export function SettingsNav() {
             aria-current={active ? 'page' : undefined}
             className={cn(
               'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors duration-150',
-              'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+              'focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
               active
                 ? 'bg-muted text-foreground'
                 : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',

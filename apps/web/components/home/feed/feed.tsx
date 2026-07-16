@@ -67,7 +67,7 @@ function FeedToggleButton({
       aria-pressed={active}
       className={cn(
         'min-h-9 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
-        'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
+        'focus-visible:ring-ring focus-visible:outline-hidden focus-visible:ring-2',
         active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted',
       )}
     >

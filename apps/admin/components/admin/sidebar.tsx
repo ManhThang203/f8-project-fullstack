@@ -145,7 +145,7 @@ export function Sidebar(props: Props) {
       <>
         <button
           type="button"
-          className="bg-background/80 fixed inset-0 z-40 backdrop-blur-sm md:hidden"
+          className="bg-background/80 fixed inset-0 z-40 backdrop-blur-xs md:hidden"
           onClick={onCloseMobile}
           aria-label={props.onCloseMobile ? undefined : 'Close'}
         />

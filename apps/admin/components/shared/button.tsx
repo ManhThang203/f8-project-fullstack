@@ -10,11 +10,11 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const variants = {
   primary:
-    'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/10 border border-primary/20',
+    'bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs shadow-primary/10 border border-primary/20',
   secondary:
-    'border border-border bg-card text-foreground hover:bg-muted hover:border-muted-foreground/35 shadow-sm',
+    'border border-border bg-card text-foreground hover:bg-muted hover:border-muted-foreground/35 shadow-xs',
   ghost: 'bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground',
-  danger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm shadow-red-600/10',
+  danger: 'bg-red-600 text-white hover:bg-red-700 shadow-xs shadow-red-600/10',
 };
 
 export function Button({ variant = 'primary', className, children, ...props }: Props) {

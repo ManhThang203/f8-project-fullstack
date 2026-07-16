@@ -18,7 +18,7 @@ export function ReelsCenterPlayIndicator({ className }: Props) {
       )}
       aria-hidden
     >
-      <div className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm">
+      <div className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-xs">
         <Play className="h-10 w-10 fill-white pl-1" aria-hidden />
       </div>
     </div>

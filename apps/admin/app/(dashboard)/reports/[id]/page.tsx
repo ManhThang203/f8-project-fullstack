@@ -108,7 +108,7 @@ export default function ReportDetailPage() {
               {/* Target author */}
               {report.targetAuthor && (
                 <div className="border-border mt-3 flex flex-wrap items-center gap-3 rounded-lg border p-3">
-                  <div className="bg-muted flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold uppercase">
+                  <div className="bg-muted flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold uppercase">
                     {report.targetAuthor.username[0]}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -226,7 +226,7 @@ export default function ReportDetailPage() {
                     {report.auditLogs.map((log, idx) => (
                       <div key={log.id} className="flex gap-3">
                         <div className="flex flex-col items-center">
-                          <div className="bg-primary/60 mt-1 h-2 w-2 flex-shrink-0 rounded-full" />
+                          <div className="bg-primary/60 mt-1 h-2 w-2 shrink-0 rounded-full" />
                           {idx < report.auditLogs.length - 1 && (
                             <div className="bg-border w-px flex-1" />
                           )}

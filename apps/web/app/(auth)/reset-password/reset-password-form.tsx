@@ -12,7 +12,7 @@ import { PasswordInput } from '@/components/auth/password-input';
 import { authClient, getAuthClientErrorMessage } from '@/lib/auth';
 
 const inputClass =
-  'w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring';
+  'w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-hidden ring-offset-background focus-visible:ring-2 focus-visible:ring-ring';
 
 type FormValues = z.infer<typeof resetPasswordFormSchema>;
 
@@ -59,7 +59,7 @@ export function ResetPasswordForm() {
   if (tokenInvalid) {
     return (
       <main className="bg-background min-h-dvh px-4 py-12">
-        <div className="border-border bg-card mx-auto w-full max-w-md rounded-[var(--radius)] border p-6 shadow-sm">
+        <div className="border-border bg-card mx-auto w-full max-w-md rounded-(--radius) border p-6 shadow-xs">
           <h1 className="text-xl font-semibold tracking-tight">Liên kết không hợp lệ</h1>
           <p className="text-muted-foreground mt-2 text-sm" role="alert">
             Liên kết đặt lại mật khẩu đã hết hạn hoặc không đúng. Hãy yêu cầu gửi lại email.
@@ -85,7 +85,7 @@ export function ResetPasswordForm() {
   if (!token) {
     return (
       <main className="bg-background min-h-dvh px-4 py-12">
-        <div className="border-border bg-card mx-auto w-full max-w-md rounded-[var(--radius)] border p-6 shadow-sm">
+        <div className="border-border bg-card mx-auto w-full max-w-md rounded-(--radius) border p-6 shadow-xs">
           <h1 className="text-xl font-semibold tracking-tight">Đặt lại mật khẩu</h1>
           <p className="text-muted-foreground mt-2 text-sm" role="alert">
             Thiếu mã xác thực. Mở liên kết đầy đủ từ email hoặc yêu cầu gửi lại.
@@ -105,7 +105,7 @@ export function ResetPasswordForm() {
 
   return (
     <main className="bg-background min-h-dvh px-4 py-12">
-      <div className="border-border bg-card mx-auto w-full max-w-md rounded-[var(--radius)] border p-6 shadow-sm">
+      <div className="border-border bg-card mx-auto w-full max-w-md rounded-(--radius) border p-6 shadow-xs">
         <h1 className="text-xl font-semibold tracking-tight">Đặt lại mật khẩu</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           Nhập mật khẩu mới cho tài khoản của bạn.

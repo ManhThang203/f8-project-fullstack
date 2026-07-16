@@ -3,9 +3,7 @@
 import { ErrorCode, type ProfileDto, type ProfileGridItemDto } from '@costy/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-import { useProfileTabScrollAnchor } from '@/components/profile/hooks/use-profile-tab-scroll-anchor';
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 
 import { CreatePostModal } from '@/components/home/compose/create-post-modal';
 import { ProfileFeed } from '@/components/profile/feed/profile-feed';
@@ -15,6 +13,7 @@ import { ProfileImageLightbox } from '@/components/profile/header/avatar-lightbo
 import { ProfileActions } from '@/components/profile/header/profile-actions';
 import { ProfileHeader } from '@/components/profile/header/profile-header';
 import { ProfileStats } from '@/components/profile/header/profile-stats';
+import { useProfileTabHeightPlaceholder } from '@/components/profile/hooks/use-profile-tab-height-placeholder';
 import { ProfileSkeleton } from '@/components/profile/profile-skeleton';
 import { parseProfileTab } from '@/components/profile/profile-utils';
 import { ProfileTabs } from '@/components/profile/tabs/profile-tabs';
@@ -52,12 +51,12 @@ function ProfileViewInner({ username, initialUser }: Props) {
   const tabParam = searchParams.get('tab');
   const activeTab = parseProfileTab(tabParam, profile?.isOwner ?? false);
 
-  const tabsRef = useRef<HTMLDivElement>(null);
-  const { panelRef, captureBeforeTabChange } = useProfileTabScrollAnchor(activeTab);
+  const { panelRef, captureBeforeTabChange } = useProfileTabHeightPlaceholder(activeTab);
 
-  const handleBeforeTabNavigate = useCallback(() => {
-    if (tabsRef.current) captureBeforeTabChange(tabsRef.current);
-  }, [captureBeforeTabChange]);
+  /** Cuộn lên đầu trang khi vào profile hoặc chuyển sang user khác. */
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, [username]);
 
   const me = useMemo(() => {
     if (currentUser) {
@@ -163,8 +162,7 @@ function ProfileViewInner({ username, initialUser }: Props) {
             username={profile.username}
             isOwner={profile.isOwner}
             activeTab={activeTab}
-            tabsRef={tabsRef}
-            onBeforeNavigate={handleBeforeTabNavigate}
+            onBeforeNavigate={captureBeforeTabChange}
           />
           <div
             ref={panelRef}

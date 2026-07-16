@@ -33,7 +33,7 @@ const sizeClasses: Record<Size, string> = {
   md: 'h-10 w-10 text-sm',
   lg: 'h-12 w-12 text-base',
   xl: 'h-14 w-14 text-lg',
-  '2xl': 'h-[5.5rem] w-[5.5rem] text-2xl md:h-24 md:w-24',
+  '2xl': 'h-22 w-22 text-2xl md:h-24 md:w-24',
 };
 
 function getInitial(name?: string | null, username?: string | null) {
@@ -104,7 +104,7 @@ export function Avatar(props: Props) {
       disabled={disabled}
       className={cn(
         baseClass,
-        'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+        'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2',
         sizeClass,
         className,
       )}

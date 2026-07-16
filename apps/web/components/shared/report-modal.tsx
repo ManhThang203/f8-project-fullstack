@@ -179,7 +179,7 @@ export function ReportModal({ open, onClose, targetType, targetId }: Props) {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Nhập thêm chi tiết hoặc ngữ cảnh cụ thể..."
-                className="border-border text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary w-full rounded-xl border bg-transparent p-3 text-sm focus:outline-none focus:ring-1 disabled:opacity-50"
+                className="border-border text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary w-full rounded-xl border bg-transparent p-3 text-sm focus:outline-hidden focus:ring-1 disabled:opacity-50"
                 disabled={submitting}
               />
             </div>
