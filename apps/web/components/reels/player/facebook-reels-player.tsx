@@ -124,7 +124,7 @@ export function FacebookReelsPlayer({
           {isImmersive ? (
             <ReelsActionRail
               {...railProps}
-              className="reels-immersive-rail absolute bottom-18 right-2"
+              className="reels-immersive-rail absolute right-2 bottom-18"
             />
           ) : null}
         </div>

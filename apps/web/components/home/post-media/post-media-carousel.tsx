@@ -2,11 +2,11 @@
 
 import type { PostMediaDto } from '@costy/shared';
 import { X } from 'lucide-react';
-import { motion } from 'motion/react';
-import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
-import { useRef, useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 
 import { FeedPostVideo } from './feed-video/feed-post-video';
+import { InstagramMediaCarousel, InstagramMediaSlide } from './instagram-media-carousel';
+import { getFrameAspectFromSize, resolveFrameAspectRatio } from './media-frame.utils';
 
 import { cn } from '@/lib/utils';
 
@@ -39,8 +39,6 @@ type Props =
       compact?: boolean;
     };
 
-type DragScrollSession = { startX: number; scrollLeft: number; pointerId: number };
-
 function MediaPreview({
   type,
   url,
@@ -63,7 +61,9 @@ function MediaPreview({
   const [errored, setErrored] = useState(false);
 
   if (!url.trim() || errored) {
-    return <div className={cn('bg-muted min-h-[120px] w-full rounded-2xl', className)} aria-hidden />;
+    return (
+      <div className={cn('bg-muted min-h-[120px] w-full rounded-2xl', className)} aria-hidden />
+    );
   }
 
   if (type === 'video') {
@@ -95,72 +95,57 @@ function MediaPreview({
       src={url}
       alt=""
       loading="lazy"
-      className={className}
+      className={cn('cursor-grab active:cursor-grabbing', className)}
       draggable={false}
       onError={() => setErrored(true)}
     />
   );
 }
 
-/** Horizontal scroll + mouse drag (native touch scroll unchanged). */
-function HorizontalScroller({ children }: { children: ReactNode }) {
-  const elRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<DragScrollSession | null>(null);
-  const [grabbing, setGrabbing] = useState(false);
-
-  function endDrag(e: ReactPointerEvent<HTMLDivElement>) {
-    const s = dragRef.current;
-    if (!s || e.pointerId !== s.pointerId) return;
-    dragRef.current = null;
-    try {
-      elRef.current?.releasePointerCapture(e.pointerId);
-    } catch {
-      /* already released */
-    }
-    setGrabbing(false);
-  }
-
-  function onPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
-    if (e.button !== 0) return;
-    if (e.pointerType !== 'mouse') return;
-    if ((e.target as HTMLElement).closest('button, .feed-video-controls, input[type="range"]'))
-      return;
-    const el = elRef.current;
-    if (!el) return;
-    dragRef.current = {
-      startX: e.clientX,
-      scrollLeft: el.scrollLeft,
-      pointerId: e.pointerId,
-    };
-    el.setPointerCapture(e.pointerId);
-    setGrabbing(true);
-  }
-
-  function onPointerMove(e: ReactPointerEvent<HTMLDivElement>) {
-    const s = dragRef.current;
-    if (!s || e.pointerId !== s.pointerId) return;
-    const el = elRef.current;
-    if (!el) return;
-    el.scrollLeft = s.scrollLeft - (e.clientX - s.startX);
-  }
-
+/** Overlay upload / xóa cho draft media. */
+function DraftOverlays({
+  draft,
+  onRemove,
+  compact,
+}: {
+  draft: DraftMedia;
+  onRemove?: (tempId: string) => void;
+  compact?: boolean;
+}) {
   return (
-    <div
-      ref={elRef}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={endDrag}
-      onPointerCancel={endDrag}
-      className={cn(
-        'relative mt-3 w-full touch-pan-x overflow-x-auto overflow-y-hidden overscroll-x-contain',
-        '[-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] scrollbar-none',
-        '[&::-webkit-scrollbar]:hidden',
-        grabbing ? 'cursor-grabbing select-none' : 'cursor-grab',
+    <>
+      {draft.status === 'uploading' && (
+        <div
+          className={cn(
+            'absolute inset-x-0 bottom-0 h-1 overflow-hidden bg-black/20',
+            compact ? 'rounded-b-lg' : 'rounded-b-2xl',
+          )}
+        >
+          <div
+            className="bg-primary h-full transition-[width] duration-200"
+            style={{ width: `${draft.progress}%` }}
+          />
+        </div>
       )}
-      aria-label="Carousel ảnh"
-    >
-      <div className="flex w-max gap-2 pb-1">{children}</div>
-    </div>
+      {draft.status === 'error' && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-xs text-white">
+          Lỗi tải lên
+        </div>
+      )}
+      {onRemove ? (
+        <button
+          type="button"
+          onClick={() => onRemove(draft.tempId)}
+          aria-label="Xóa ảnh"
+          className={cn(
+            'focus-visible:ring-ring absolute flex items-center justify-center rounded-full bg-black/60 text-white transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:outline-hidden',
+            compact ? 'top-1 right-1 h-5 w-5' : 'top-2 right-2 z-20 h-7 w-7',
+          )}
+        >
+          <X className={compact ? 'h-3 w-3' : 'h-4 w-4'} aria-hidden />
+        </button>
+      ) : null}
+    </>
   );
 }
 
@@ -171,157 +156,123 @@ export function PostMediaCarousel(props: Props) {
       : props.items.map((d) => ({ kind: 'draft', data: d }));
 
   const isCompactEditable = props.mode === 'editable' && props.compact;
+  const onRemove = props.mode === 'editable' ? props.onRemove : undefined;
+  const feedPostId = props.mode === 'feed' ? props.postId : undefined;
 
   if (displayItems.length === 0) return null;
 
-  // Single image — large display, preserve aspect ratio
+  // Single media — large display
   if (displayItems.length === 1) {
     const item = displayItems[0]!;
-    const url = item.kind === 'posted' ? item.data.url : item.data.url;
+    const url = item.data.url;
     const mediaType = item.kind === 'posted' ? item.data.type : (item.data.mediaType ?? 'image');
     const isDraft = item.kind === 'draft';
-    const draft = isDraft ? (item.data as DraftMedia) : null;
+    const draft = isDraft ? item.data : null;
+    const isVideo = mediaType === 'video';
+    // Mobile: khung cố định + object-cover để bo góc kín, không lộ viền hai bên
+    const mobileFillFrame = !isCompactEditable && !isVideo;
+    const frameAr = resolveFrameAspectRatio(item.data.width, item.data.height);
 
     return (
-      <motion.div
+      <div
         className={cn(
-          'bg-muted relative overflow-hidden rounded-2xl',
+          'bg-muted relative overflow-hidden',
           isCompactEditable
             ? 'mt-2 h-20 w-20 shrink-0 rounded-lg'
-            : 'mt-3 flex w-full justify-center',
+            : cn(
+                'mt-3 w-full',
+                isVideo ? 'rounded-3xl' : 'rounded-3xl md:flex md:justify-center md:rounded-none',
+                mobileFillFrame && 'max-md:[aspect-ratio:var(--frame-ar)] max-md:max-h-[520px]',
+              ),
         )}
+        style={
+          mobileFillFrame
+            ? ({ ['--frame-ar']: String(frameAr) } as CSSProperties)
+            : undefined
+        }
       >
         <MediaPreview
           type={mediaType}
           url={url}
-          postId={props.mode === 'feed' ? props.postId : undefined}
-          feedVideo={props.mode === 'feed' && mediaType === 'video'}
+          postId={feedPostId}
+          feedVideo={props.mode === 'feed' && isVideo}
           durationMs={item.kind === 'posted' ? item.data.durationMs : undefined}
           width={item.data.width}
           height={item.data.height}
           className={cn(
-            isCompactEditable ? 'h-20 w-20 rounded-lg object-cover' : 'rounded-2xl',
+            isCompactEditable ? 'h-20 w-20 rounded-lg object-cover' : '',
+            !isCompactEditable && !isVideo && 'rounded-3xl md:rounded-none',
             props.mode === 'feed'
-              ? mediaType === 'video'
-                ? 'w-full'
-                : 'max-h-[520px] w-auto max-w-full object-contain'
+              ? isVideo
+                ? 'w-full rounded-3xl'
+                : 'h-full w-full object-cover md:h-auto md:max-h-[520px] md:w-auto md:max-w-full md:object-contain'
               : isCompactEditable
                 ? ''
-                : 'h-auto max-h-[360px] w-auto max-w-full object-contain',
+                : 'h-full w-full object-cover md:h-auto md:max-h-[360px] md:w-auto md:max-w-full md:object-contain',
           )}
         />
-        {isDraft && draft && (
-          <>
-            {draft.status === 'uploading' && (
-              <div className="absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-2xl bg-black/20">
-                <div
-                  className="bg-primary h-full transition-[width] duration-200"
-                  style={{ width: `${draft.progress}%` }}
-                />
-              </div>
-            )}
-            {props.mode === 'editable' && (
-              <button
-                type="button"
-                onClick={() => props.onRemove(draft.tempId)}
-                aria-label="Xóa ảnh"
-                className={cn(
-                  'focus-visible:ring-ring absolute flex items-center justify-center rounded-full bg-black/60 text-white transition-opacity hover:opacity-80 focus-visible:outline-hidden focus-visible:ring-2',
-                  isCompactEditable
-                    ? 'right-1 top-1 h-5 w-5'
-                    : 'right-2 top-2 h-7 w-7',
-                )}
-              >
-                <X className={isCompactEditable ? 'h-3 w-3' : 'h-4 w-4'} aria-hidden />
-              </button>
-            )}
-          </>
-        )}
-      </motion.div>
+        {isDraft && draft ? (
+          <DraftOverlays draft={draft} onRemove={onRemove} compact={isCompactEditable} />
+        ) : null}
+      </div>
     );
   }
 
-  // Multiple images — natural aspect per card, horizontal scroll
-  const slides = displayItems.map((item) => {
-    const key = item.kind === 'posted' ? item.data.id : item.data.tempId;
-    const url = item.kind === 'posted' ? item.data.url : item.data.url;
-    const mediaType = item.kind === 'posted' ? item.data.type : (item.data.mediaType ?? 'image');
-    const isDraft = item.kind === 'draft';
-    const draft = isDraft ? (item.data as DraftMedia) : null;
-
-    return (
-      <div
-        key={key}
-        className={cn(
-          'bg-muted relative shrink-0 overflow-hidden rounded-2xl',
-          isCompactEditable && 'h-20 w-20 rounded-lg',
-        )}
-      >
-        <MediaPreview
-          type={mediaType}
-          url={url}
-          postId={props.mode === 'feed' ? props.postId : undefined}
-          feedVideo={props.mode === 'feed' && mediaType === 'video'}
-          durationMs={item.kind === 'posted' ? item.data.durationMs : undefined}
-          width={item.data.width}
-          height={item.data.height}
-          className={
-            props.mode === 'feed' && mediaType === 'video'
-              ? 'w-full rounded-2xl'
-              : isCompactEditable
-                ? 'h-20 w-20 select-none rounded-lg object-cover'
-                : props.mode === 'editable'
-                  ? 'h-[420px] w-auto select-none object-contain'
-                  : 'h-[420px] w-auto select-none object-contain'
-          }
-        />
-
-        {isDraft && draft && (
-          <>
-            {draft.status === 'uploading' && (
-              <div className="absolute inset-x-0 bottom-0 h-1 overflow-hidden bg-black/20">
-                <div
-                  className="bg-primary h-full transition-[width] duration-200"
-                  style={{ width: `${draft.progress}%` }}
-                />
-              </div>
-            )}
-            {draft.status === 'error' && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-xs text-white">
-                Lỗi tải lên
-              </div>
-            )}
-            {props.mode === 'editable' && (
-              <button
-                type="button"
-                onClick={() => props.onRemove(draft.tempId)}
-                aria-label="Xóa ảnh"
-                className={cn(
-                  'focus-visible:ring-ring absolute flex items-center justify-center rounded-full bg-black/60 text-white transition-opacity hover:opacity-80 focus-visible:outline-hidden focus-visible:ring-2',
-                  isCompactEditable
-                    ? 'right-1 top-1 h-5 w-5'
-                    : 'right-2 top-2 h-7 w-7',
-                )}
-              >
-                <X className={isCompactEditable ? 'h-3 w-3' : 'h-4 w-4'} aria-hidden />
-              </button>
-            )}
-          </>
-        )}
-      </div>
-    );
-  });
-
+  // Compact editable — wrap thumbnails (không carousel)
   if (isCompactEditable) {
     return (
-      <div
-        className="mt-2 flex flex-wrap gap-2"
-        aria-label="Ảnh đính kèm bình luận"
-      >
-        {slides}
+      <div className="mt-2 flex flex-wrap gap-2" aria-label="Ảnh đính kèm bình luận">
+        {displayItems.map((item) => {
+          const key = item.kind === 'posted' ? item.data.id : item.data.tempId;
+          const mediaType =
+            item.kind === 'posted' ? item.data.type : (item.data.mediaType ?? 'image');
+          const draft = item.kind === 'draft' ? item.data : null;
+
+          return (
+            <div
+              key={key}
+              className="bg-muted relative h-20 w-20 shrink-0 overflow-hidden rounded-lg"
+            >
+              <MediaPreview
+                type={mediaType}
+                url={item.data.url}
+                className="h-20 w-20 select-none rounded-lg object-cover"
+              />
+              {draft ? <DraftOverlays draft={draft} onRemove={onRemove} compact /> : null}
+            </div>
+          );
+        })}
       </div>
     );
   }
 
-  return <HorizontalScroller>{slides}</HorizontalScroller>;
+  // Multiple images — Instagram carousel (product: không mix ảnh+video)
+  const first = displayItems[0]!;
+  const frameAspect = getFrameAspectFromSize(first.data.width, first.data.height);
+
+  return (
+    <InstagramMediaCarousel frameAspect={frameAspect}>
+      {displayItems.map((item) => {
+        const key = item.kind === 'posted' ? item.data.id : item.data.tempId;
+        const mediaType =
+          item.kind === 'posted' ? item.data.type : (item.data.mediaType ?? 'image');
+        const isDraft = item.kind === 'draft';
+        const draft = isDraft ? item.data : null;
+
+        return (
+          <InstagramMediaSlide key={key}>
+            <MediaPreview
+              type={mediaType}
+              url={item.data.url}
+              durationMs={item.kind === 'posted' ? item.data.durationMs : undefined}
+              width={item.data.width}
+              height={item.data.height}
+              className="h-full w-full select-none object-cover md:object-contain"
+            />
+            {isDraft && draft ? <DraftOverlays draft={draft} onRemove={onRemove} /> : null}
+          </InstagramMediaSlide>
+        );
+      })}
+    </InstagramMediaCarousel>
+  );
 }

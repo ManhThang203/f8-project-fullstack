@@ -3,14 +3,14 @@
 import { useRouter } from 'next/navigation';
 import { useMemo, useRef } from 'react';
 
+import { MAX_FRAME_HEIGHT_PX } from '../media-frame.utils';
 import { FeedVideoControlBar } from './feed-video-control-bar';
 
 import { useFeedPostVideo } from '@/hooks/post';
 import { markUnmuteOnEntry } from '@/lib/post';
 import { cn } from '@/lib/utils';
-
+/** Ngưỡng px: kéo dưới mức này vẫn tính là click (mở Reels), trên thì bỏ qua. */
 const DRAG_THRESHOLD_PX = 8;
-const MAX_VIDEO_HEIGHT_PX = 520;
 
 type Props = {
   src: string;
@@ -22,15 +22,22 @@ type Props = {
 };
 
 /** Video inline trong feed: autoplay muted, bottom controls, click mở Reels. */
-export function FeedPostVideo({ src, postId, durationMs, width, height, className }: Props) {
+export function FeedPostVideo({
+  src,
+  postId,
+  durationMs,
+  width,
+  height,
+  className,
+}: Props) {
   const router = useRouter();
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const containerStyle = useMemo(() => {
     if (width && height && width > 0 && height > 0) {
-      return { aspectRatio: `${width} / ${height}`, maxHeight: MAX_VIDEO_HEIGHT_PX };
+      return { aspectRatio: `${width} / ${height}`, maxHeight: MAX_FRAME_HEIGHT_PX };
     }
-    return { aspectRatio: '9 / 16', maxHeight: MAX_VIDEO_HEIGHT_PX };
+    return { aspectRatio: '9 / 16', maxHeight: MAX_FRAME_HEIGHT_PX };
   }, [width, height]);
 
   const {
@@ -59,6 +66,7 @@ export function FeedPostVideo({ src, postId, durationMs, width, height, classNam
 
     const dx = Math.abs(e.clientX - start.x);
     const dy = Math.abs(e.clientY - start.y);
+
     if (dx > DRAG_THRESHOLD_PX || dy > DRAG_THRESHOLD_PX) return;
 
     markUnmuteOnEntry();
@@ -86,7 +94,7 @@ export function FeedPostVideo({ src, postId, durationMs, width, height, classNam
   return (
     <div
       ref={containerRef}
-      className={cn('relative w-full overflow-hidden bg-black', className)}
+      className={cn('relative w-full overflow-hidden rounded-3xl bg-black', className)}
       style={containerStyle}
     >
       <video

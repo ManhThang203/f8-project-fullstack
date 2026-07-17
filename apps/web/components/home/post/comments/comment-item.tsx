@@ -13,7 +13,7 @@ import { ReactionPickerPopover } from '@/components/home/post/reactions/reaction
 import { PostMediaCarousel } from '@/components/home/post-media/post-media-carousel';
 import { useCurrentUser } from '@/components/shared/providers/current-user-context';
 import { Avatar, ConfirmDialog, RelativeTime } from '@/components/shared/ui';
-import { useReactionPickerHover, useReactPost } from '@/hooks/post';
+import { useReactionLongPress, useReactionPickerHover, useReactPost } from '@/hooks/post';
 import { buildDeleteCommentInput, useDeletePost, usePostComments } from '@/hooks/queries/posts';
 import { getUserFacingErrorMessage } from '@/lib/api';
 import { displayTopReactions, patchTopReactionsOptimistic } from '@/lib/post';
@@ -107,7 +107,15 @@ export function CommentItem({
     });
   }, [rawReplies, pinnedChild]);
 
-  const { showPicker, setShowPicker, openPicker, scheduleHidePicker } = useReactionPickerHover();
+  const { showPicker, openPicker, closePicker, scheduleOpenPicker, scheduleHidePicker } =
+    useReactionPickerHover();
+  const {
+    onPointerDown,
+    onPointerUp,
+    onPointerLeave,
+    onPointerCancel,
+    guardClick,
+  } = useReactionLongPress(openPicker);
   const [showMenu, setShowMenu] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -170,7 +178,7 @@ export function CommentItem({
   }
 
   function handleReaction(type: PostReactionId) {
-    setShowPicker(false);
+    closePicker();
 
     const isSameReaction = localReaction === type;
     const newReaction = isSameReaction ? null : type;
@@ -320,13 +328,19 @@ export function CommentItem({
 
           <ReactionPickerPopover
             open={showPicker}
-            onOpen={openPicker}
+            onOpen={scheduleOpenPicker}
             onScheduleClose={scheduleHidePicker}
+            onDismiss={closePicker}
             reactions={COMMENT_REACTIONS.map((id) => ({ id, label: REACTION_LABELS[id] }))}
             onSelect={handleReaction}
           >
             <button
-              onClick={handleLike}
+              type="button"
+              onClick={guardClick(handleLike)}
+              onPointerDown={onPointerDown}
+              onPointerUp={onPointerUp}
+              onPointerLeave={onPointerLeave}
+              onPointerCancel={onPointerCancel}
               className={cn(
                 'text-xs font-semibold hover:underline',
                 reactionId

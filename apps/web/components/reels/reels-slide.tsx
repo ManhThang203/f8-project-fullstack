@@ -17,11 +17,7 @@ type Props = {
  */
 export function ReelsSlide({ item, slideHeight, isActive, currentUserId, currentUser }: Props) {
   return (
-    <div
-      data-reels-slide
-      className="w-full shrink-0 snap-start"
-      style={{ height: slideHeight }}
-    >
+    <div data-reels-slide className="w-full shrink-0 snap-start" style={{ height: slideHeight }}>
       <FacebookReelsPlayer
         item={item}
         isActive={isActive}

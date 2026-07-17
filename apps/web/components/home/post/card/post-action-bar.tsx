@@ -1,12 +1,16 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { PostFooter } from './post-footer';
 
 import type { PostReactionId } from '@/components/home/post/reactions/reaction-face';
-import { useReactionPickerHover, useReactPost } from '@/hooks/post';
+import {
+  useReactionLongPress,
+  useReactionPickerHover,
+  useReactPost,
+} from '@/hooks/post';
 import { useSharePost, useToggleSavePost } from '@/hooks/queries/posts';
 import { useRequireAuth } from '@/hooks/use-require-auth';
 import { displayTopReactions } from '@/lib/post';
@@ -22,8 +26,6 @@ const REACTIONS: { id: PostReactionId; label: string }[] = [
   { id: 'sad', label: 'Buồn' },
   { id: 'angry', label: 'Phẫn nộ' },
 ];
-
-const LONG_PRESS_MS = 400;
 
 type Props = {
   postId: string;
@@ -61,9 +63,16 @@ export function PostActionBar({
   const saveMutation = useToggleSavePost();
   const shareMutation = useSharePost();
 
-  const { showPicker, setShowPicker, openPicker, scheduleHidePicker } = useReactionPickerHover();
+  const { showPicker, openPicker, closePicker, scheduleOpenPicker, scheduleHidePicker } =
+    useReactionPickerHover();
 
-  const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const {
+    onPointerDown: onLikePointerDown,
+    onPointerUp: onLikePointerUp,
+    onPointerLeave: onLikePointerLeave,
+    onPointerCancel: onLikePointerCancel,
+    guardClick,
+  } = useReactionLongPress(openPicker);
 
   function submitReaction(newReaction: PostReactionId | null) {
     if (!requireAuth()) return;
@@ -78,7 +87,7 @@ export function PostActionBar({
   }
 
   function selectReaction(id: PostReactionId) {
-    setShowPicker(false);
+    closePicker();
     if (initialReaction === id) {
       submitReaction(null);
     } else {
@@ -163,31 +172,21 @@ export function PostActionBar({
         commentCount={commentCount}
         shareCount={shareCount}
         summaryReactions={summaryReactions}
-        onLikeClick={toggleLike}
+        onLikeClick={guardClick(toggleLike)}
         onCommentClick={handleComment}
         onShareClick={() => void handleShare()}
         reactionPicker={{
           open: showPicker,
-          onOpen: openPicker,
+          onOpen: scheduleOpenPicker,
           onScheduleClose: scheduleHidePicker,
+          onDismiss: closePicker,
           reactions: REACTIONS,
           onSelect: selectReaction,
         }}
-        onLikePointerDown={() => {
-          longPressRef.current = setTimeout(() => openPicker(), LONG_PRESS_MS);
-        }}
-        onLikePointerUp={() => {
-          if (longPressRef.current) {
-            clearTimeout(longPressRef.current);
-            longPressRef.current = null;
-          }
-        }}
-        onLikePointerLeave={() => {
-          if (longPressRef.current) {
-            clearTimeout(longPressRef.current);
-            longPressRef.current = null;
-          }
-        }}
+        onLikePointerDown={onLikePointerDown}
+        onLikePointerUp={onLikePointerUp}
+        onLikePointerLeave={onLikePointerLeave}
+        onLikePointerCancel={onLikePointerCancel}
         onSaveClick={handleSave}
         saved={saved}
         currentReaction={initialReaction}

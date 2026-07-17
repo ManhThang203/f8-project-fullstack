@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 
 import { ReactionFace, type PostReactionId } from './reaction-face';
 
@@ -15,6 +15,8 @@ type Props = {
   open: boolean;
   onOpen: () => void;
   onScheduleClose: () => void;
+  /** Đóng ngay khi tap/click ngoài popover (mobile). */
+  onDismiss?: () => void;
   reactions: ReactionOption[];
   onSelect: (id: PostReactionId) => void;
   children: ReactNode;
@@ -23,11 +25,17 @@ type Props = {
   zIndexClassName?: string;
 };
 
+/** Chỉ gọi onOpen khi thiết bị thật sự hỗ trợ hover (tránh mở nhầm trên touch). */
+function canHoverOpen() {
+  return typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches;
+}
+
 /** Popover chọn cảm xúc: vùng cầu nối padding giữ hover khi di chuột chậm từ trigger lên toolbar. */
 export function ReactionPickerPopover({
   open,
   onOpen,
   onScheduleClose,
+  onDismiss,
   reactions,
   onSelect,
   children,
@@ -35,10 +43,26 @@ export function ReactionPickerPopover({
   toolbarClassName,
   zIndexClassName = 'z-30',
 }: Props) {
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open || !onDismiss) return;
+    function onDocPointerDown(e: PointerEvent) {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        onDismiss?.();
+      }
+    }
+    document.addEventListener('pointerdown', onDocPointerDown);
+    return () => document.removeEventListener('pointerdown', onDocPointerDown);
+  }, [open, onDismiss]);
+
   return (
     <div
+      ref={rootRef}
       className={cn('relative', className)}
-      onMouseEnter={onOpen}
+      onMouseEnter={() => {
+        if (canHoverOpen()) onOpen();
+      }}
       onMouseLeave={onScheduleClose}
     >
       {open && (

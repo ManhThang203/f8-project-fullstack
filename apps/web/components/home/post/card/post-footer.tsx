@@ -29,12 +29,14 @@ type Props = {
     open: boolean;
     onOpen: () => void;
     onScheduleClose: () => void;
+    onDismiss?: () => void;
     reactions: { id: PostReactionId; label: string }[];
     onSelect: (id: PostReactionId) => void;
   };
   onLikePointerDown?: () => void;
   onLikePointerUp?: () => void;
   onLikePointerLeave?: () => void;
+  onLikePointerCancel?: () => void;
   onSaveClick?: () => void;
   saved?: boolean;
   currentReaction?: PostReactionId | null;
@@ -55,6 +57,7 @@ export function PostFooter({
   onLikePointerDown,
   onLikePointerUp,
   onLikePointerLeave,
+  onLikePointerCancel,
   onSaveClick,
   saved,
   currentReaction,
@@ -95,6 +98,7 @@ export function PostFooter({
             open={reactionPicker.open}
             onOpen={reactionPicker.onOpen}
             onScheduleClose={reactionPicker.onScheduleClose}
+            onDismiss={reactionPicker.onDismiss}
             reactions={reactionPicker.reactions}
             onSelect={reactionPicker.onSelect}
             className="flex flex-1"
@@ -109,6 +113,7 @@ export function PostFooter({
               onPointerDown={onLikePointerDown}
               onPointerUp={onLikePointerUp}
               onPointerLeave={onLikePointerLeave}
+              onPointerCancel={onLikePointerCancel}
               className={likeColor}
             />
           </ReactionPickerPopover>
@@ -126,6 +131,7 @@ export function PostFooter({
               onPointerDown={onLikePointerDown}
               onPointerUp={onLikePointerUp}
               onPointerLeave={onLikePointerLeave}
+              onPointerCancel={onLikePointerCancel}
               className={likeColor}
             />
           </div>

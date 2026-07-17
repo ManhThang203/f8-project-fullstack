@@ -13,6 +13,7 @@ type Props = {
   onPointerDown?: () => void;
   onPointerUp?: () => void;
   onPointerLeave?: () => void;
+  onPointerCancel?: () => void;
   className?: string;
 };
 
@@ -24,6 +25,7 @@ export function ActionButton({
   onPointerDown,
   onPointerUp,
   onPointerLeave,
+  onPointerCancel,
   className,
 }: Props) {
   const showCount = count !== undefined && count > 0;
@@ -55,6 +57,7 @@ export function ActionButton({
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
         onPointerLeave={onPointerLeave}
+        onPointerCancel={onPointerCancel}
         className={styles}
       >
         {content}
