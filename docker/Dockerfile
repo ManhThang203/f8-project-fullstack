@@ -55,7 +55,8 @@ RUN pnpm turbo run build --filter=@costy/web --filter=@costy/server --filter=@co
 # ─── runner stage: minimal runtime image ────────────────────────────────────
 FROM node:22-alpine AS runner
 ENV NODE_ENV=production
-RUN apk add --no-cache tini
+# tini: reap zombie; postgresql16-client: pg_dump cho job backup DB (BullMQ).
+RUN apk add --no-cache tini postgresql16-client
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable && corepack prepare pnpm@9.12.3 --activate

@@ -11,10 +11,11 @@ import { setRealtimeIo } from './lib/realtime.js';
 import { initSocket } from './socket/socket.js';
 import { startWorkers } from './workers/index.js';
 
-/** Đăng ký các repeatable job (cleanup media, refresh trending) lên BullMQ; nuốt lỗi Redis để không sập server. */
+/** Đăng ký các repeatable job (cleanup media, refresh trending, backup DB) lên BullMQ; nuốt lỗi Redis để không sập server. */
 async function scheduleRepeatableJobs(): Promise<void> {
   try {
-    const { mediaCleanupQueue, trendingHashtagsQueue } = await import('./queues/index.js');
+    const { mediaCleanupQueue, trendingHashtagsQueue, dbBackupQueue } =
+      await import('./queues/index.js');
     await mediaCleanupQueue.add(
       'hourly-cleanup',
       {},
@@ -31,6 +32,26 @@ async function scheduleRepeatableJobs(): Promise<void> {
         jobId: 'trending-hashtags-refresh',
       },
     );
+    // Bật: đăng ký cron; tắt: gỡ repeatable còn sót trong Redis (tránh backup “ma”).
+    if (env.BACKUP_ENABLED) {
+      await dbBackupQueue.add(
+        'daily-db-backup',
+        {},
+        {
+          repeat: { pattern: '0 3 * * *', tz: 'Asia/Ho_Chi_Minh' },
+          jobId: 'daily-db-backup',
+        },
+      );
+      logger.info('Đã đăng ký job backup DB hàng ngày 03:00 Asia/Ho_Chi_Minh');
+    } else {
+      const repeatables = await dbBackupQueue.getRepeatableJobs();
+      for (const job of repeatables) {
+        if (job.name === 'daily-db-backup' || job.id === 'daily-db-backup') {
+          await dbBackupQueue.removeRepeatableByKey(job.key);
+          logger.info({ key: job.key }, 'Đã gỡ lịch backup DB repeatable (BACKUP_ENABLED=false)');
+        }
+      }
+    }
   } catch (err) {
     logger.error({ err }, 'failed to schedule repeatable jobs');
   }

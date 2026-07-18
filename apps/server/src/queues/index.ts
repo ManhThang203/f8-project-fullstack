@@ -20,6 +20,7 @@ export const QueueName = {
   TrendingHashtags: 'trending-hashtags',
   ContentModeration: 'content-moderation',
   Embedding: 'embedding-index',
+  DbBackup: 'db-backup',
 } as const;
 export type QueueName = (typeof QueueName)[keyof typeof QueueName];
 
@@ -30,3 +31,4 @@ export const mediaCleanupQueue = new Queue(QueueName.MediaCleanup, defaults);
 export const trendingHashtagsQueue = new Queue(QueueName.TrendingHashtags, defaults);
 export const contentModerationQueue = new Queue(QueueName.ContentModeration, defaults);
 export const embeddingQueue = new Queue(QueueName.Embedding, defaults);
+export const dbBackupQueue = new Queue(QueueName.DbBackup, defaults);
