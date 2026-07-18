@@ -83,6 +83,21 @@ export function startWorkers(): Worker[] {
       baseOpts,
     ),
     createEmbeddingWorker(),
+    new Worker(
+      QueueName.DbBackup,
+      async (job) => {
+        const { env } = await import('../config/env.js');
+        if (!env.BACKUP_ENABLED) {
+          logger.info({ jobId: job.id }, 'Bỏ qua job backup DB vì BACKUP_ENABLED=false');
+          return;
+        }
+        const { runDbBackup } = await import('../modules/backup/backup.service.js');
+        logger.info({ jobId: job.id }, 'Bắt đầu job backup DB');
+        await runDbBackup();
+      },
+      // Backup nặng (pg_dump + upload): concurrency 1, tránh chồng dump.
+      { ...baseOpts, concurrency: 1 },
+    ),
   ];
 
   for (const w of workers) {
