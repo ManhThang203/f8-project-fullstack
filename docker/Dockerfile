@@ -49,8 +49,14 @@ ENV NEXT_PUBLIC_SOCKET_URL=$NEXT_PUBLIC_SOCKET_URL
 ENV NEXT_PUBLIC_DEMO_USER_ID=$NEXT_PUBLIC_DEMO_USER_ID
 ENV NEXT_PUBLIC_ADMIN_API_URL=$NEXT_PUBLIC_ADMIN_API_URL
 
-# Build web + server + admin (cả ba app production).
-RUN pnpm turbo run build --filter=@costy/web --filter=@costy/server --filter=@costy/admin
+# Build tuần tự — tránh OOM khi turbo chạy song song 3 app.
+# tsc @costy/server cần >1.5GB heap (1536 → FATAL heap OOM / exit 137).
+# Override: docker build --build-arg NODE_MAX_OLD_SPACE_SIZE=4096 ...
+ARG NODE_MAX_OLD_SPACE_SIZE=3072
+ENV NODE_OPTIONS=--max-old-space-size=${NODE_MAX_OLD_SPACE_SIZE}
+RUN pnpm turbo run build --filter=@costy/server --concurrency=1 && \
+    pnpm turbo run build --filter=@costy/web --concurrency=1 && \
+    pnpm turbo run build --filter=@costy/admin --concurrency=1
 
 # ─── runner stage: minimal runtime image ────────────────────────────────────
 FROM node:22-alpine AS runner
