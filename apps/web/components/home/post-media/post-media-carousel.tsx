@@ -181,7 +181,9 @@ export function PostMediaCarousel(props: Props) {
             ? 'mt-2 h-20 w-20 shrink-0 rounded-lg'
             : cn(
                 'mt-3 w-full',
-                isVideo ? 'rounded-3xl' : 'rounded-3xl md:flex md:justify-center md:rounded-none',
+                isVideo
+                  ? 'flex justify-center rounded-3xl'
+                  : 'rounded-3xl md:flex md:justify-center md:rounded-none',
                 mobileFillFrame && 'max-md:[aspect-ratio:var(--frame-ar)] max-md:max-h-[520px]',
               ),
         )}
