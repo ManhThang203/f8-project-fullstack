@@ -25,10 +25,10 @@ export function FacebookReelsPlayer({
     layoutMode,
     isImmersive,
     isMobile,
-    immersiveObjectFit,
     stageClassName,
     stageStyle,
     isPlaying,
+    userPaused,
     volume,
     muted,
     volumeVariant,
@@ -62,13 +62,14 @@ export function FacebookReelsPlayer({
       ref={containerRef}
       className="relative flex h-full w-full items-center justify-center overflow-hidden bg-black"
     >
-      <div className={cn('flex items-center', isImmersive ? 'h-full w-full' : 'gap-4 lg:gap-5')}>
+      <div
+        className={cn(
+          'flex items-center justify-center',
+          isImmersive ? 'h-full w-full' : 'gap-4 lg:gap-5',
+        )}
+      >
         <div
-          className={cn(
-            stageClassName,
-            'group/stage',
-            isImmersive && 'reels-stage-immersive h-full w-full',
-          )}
+          className={cn(stageClassName, 'group/stage', isImmersive && 'reels-stage-immersive')}
           style={stageStyle}
           onMouseLeave={handleStageMouseLeave}
         >
@@ -77,13 +78,13 @@ export function FacebookReelsPlayer({
             videoRef={videoRef}
             onVideoTap={handleVideoTap}
             onVideoSizeChange={onVideoSizeChange}
-            objectFit={isImmersive ? immersiveObjectFit : 'contain'}
+            objectFit={isImmersive ? 'cover' : 'contain'}
             preload={isActive ? 'metadata' : 'none'}
           />
 
           <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
 
-          {isMobile && !isPlaying ? <ReelsCenterPlayIndicator /> : null}
+          {isMobile && userPaused && !isPlaying ? <ReelsCenterPlayIndicator /> : null}
 
           <ReelsTopControls
             className="reels-stage-controls"

@@ -68,17 +68,16 @@ export function useFacebookReelsPlayer(
     return { width: 9, height: 16 };
   }, [videoWidth, videoHeight]);
 
-  const { containerRef, onVideoSizeChange, stageClassName, stageStyle, videoSize } =
-    useReelsVideoStage(item.video.url, { layoutMode, placeholderVideoSize });
+  const { containerRef, onVideoSizeChange, stageClassName, stageStyle } = useReelsVideoStage(
+    item.video.url,
+    { layoutMode, placeholderVideoSize },
+  );
 
-  const fitSize = videoSize ?? placeholderVideoSize;
-  const isPortraitVideo = fitSize.height > fitSize.width;
-  const immersiveObjectFit: 'cover' | 'contain' = isPortraitVideo ? 'cover' : 'contain';
-
-  const userPausedRef = useRef(false);
   const volumeRef = useRef(1);
   const mutedRef = useRef(false);
 
+  /** true khi user chủ động pause — dùng hiện center icon & chặn autoplay. */
+  const [userPaused, setUserPaused] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const { volume, muted, setVolume, setMuted, toggleMute } = useReelsAudio();
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
@@ -123,14 +122,15 @@ export function useFacebookReelsPlayer(
     videoRef.current?.pause();
   }, []);
 
+  /** Toggle play/pause; giữ userPaused đến khi video thật sự play (tránh icon tắt sớm). */
   const togglePlay = useCallback(() => {
     const v = videoRef.current;
     if (!v) return;
+
     if (v.paused) {
-      userPausedRef.current = false;
       play();
     } else {
-      userPausedRef.current = true;
+      setUserPaused(true);
       pause();
     }
   }, [play, pause]);
@@ -160,18 +160,21 @@ export function useFacebookReelsPlayer(
     const v = videoRef.current;
     if (!v) return;
 
-    if (isActive) {
-      if (!userPausedRef.current) {
-        play();
-      }
-    } else {
+    if (isActive && !userPaused) {
+      play();
+    } else if (!isActive) {
       v.pause();
     }
+  }, [isActive, play, userPaused]);
 
+  // Chỉ clear controller khi đổi slide / unmount — không clear khi user pause.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || !isActive) return;
     return () => {
       feedVideoController.clear(v);
     };
-  }, [isActive, play]);
+  }, [isActive, item.id]);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -190,10 +193,10 @@ export function useFacebookReelsPlayer(
   useEffect(() => {
     if (commentsOpen) {
       pause();
-    } else if (isActive && !userPausedRef.current) {
+    } else if (isActive && !userPaused) {
       play();
     }
-  }, [commentsOpen, isActive, pause, play]);
+  }, [commentsOpen, isActive, pause, play, userPaused]);
 
   /** Map reel item sang PostFeedItemDto để mở modal bình luận. */
   const postForModal = useMemo<PostFeedItemDto>(
@@ -222,6 +225,7 @@ export function useFacebookReelsPlayer(
 
     function onVideoPlay() {
       setIsPlaying(true);
+      setUserPaused(false);
     }
     function onVideoPause() {
       setIsPlaying(false);
@@ -387,10 +391,10 @@ export function useFacebookReelsPlayer(
     layoutMode,
     isImmersive,
     isMobile,
-    immersiveObjectFit,
     stageClassName,
     stageStyle,
     isPlaying,
+    userPaused,
     volume,
     muted,
     volumeVariant,

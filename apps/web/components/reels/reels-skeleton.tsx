@@ -65,7 +65,7 @@ function StageSkeleton({ reduceMotion }: { reduceMotion: boolean | null }) {
   return (
     <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-black">
       <div className="flex items-center gap-4 lg:gap-5">
-        <div className="relative aspect-9/16 h-[min(680px,90vh)] w-auto max-w-[580px] overflow-hidden rounded-xl bg-neutral-800">
+        <div className="relative aspect-9/16 h-[min(680px,90vh)] w-auto overflow-hidden rounded-xl bg-neutral-800">
           <SkeletonPulse className="absolute inset-0 bg-neutral-800" reduceMotion={reduceMotion} />
           <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
 

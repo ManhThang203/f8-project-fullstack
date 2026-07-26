@@ -10,6 +10,7 @@ import { EditProfileModal } from './edit-profile-modal';
 
 import { ReportModal } from '@/components/shared/report-modal';
 import { Button, ConfirmDialog } from '@/components/shared/ui';
+import { useCreateChatRoomMutation } from '@/hooks/queries/chat/use-chat-queries';
 import {
   useBlockMutation,
   useFollowMutation,
@@ -49,6 +50,7 @@ export function ProfileActions({ profile, onFollowChange }: Props) {
   });
 
   const blockMutation = useBlockMutation();
+  const createRoomMutation = useCreateChatRoomMutation();
   const { requireAuth } = useRequireAuth();
 
   /** Gọi API kết bạn với optimistic update, revert nếu lỗi. */
@@ -134,8 +136,19 @@ export function ProfileActions({ profile, onFollowChange }: Props) {
     );
   }
 
-  function handleMessage() {
-    router.push(`/messages?roomId=`); // We can't know room id yet. We can just send to /messages.
+  /** Tìm hoặc tạo phòng chat 1-1 với chủ profile, rồi mở đúng hội thoại. */
+  async function handleMessage() {
+    if (!requireAuth()) return;
+    // Nếu đang đang tạo phòng chat thì không tạo phòng chat mới
+    if (createRoomMutation.isPending) return;
+    try {
+      const room = await createRoomMutation.mutateAsync({
+        memberUserIds: [profile.id],
+      });
+      router.push(`/messages?roomId=${room.id}`);
+    } catch (err) {
+      toast.error(getUserFacingErrorMessage(err));
+    }
   }
 
   function openReport() {
@@ -241,7 +254,7 @@ export function ProfileActions({ profile, onFollowChange }: Props) {
           {menuOpen ? (
             <div
               role="menu"
-              className="border-border bg-card absolute left-0 top-full z-50 mt-1 min-w-40 rounded-lg border py-1 shadow-lg"
+              className="border-border bg-card absolute top-full left-0 z-50 mt-1 min-w-40 rounded-lg border py-1 shadow-lg"
             >
               <button
                 type="button"
@@ -267,7 +280,12 @@ export function ProfileActions({ profile, onFollowChange }: Props) {
           Theo dõi
         </Button>
       )}
-      <Button variant="secondary" size="md" onClick={handleMessage}>
+      <Button
+        variant="secondary"
+        size="md"
+        loading={createRoomMutation.isPending}
+        onClick={() => void handleMessage()}
+      >
         Nhắn tin
       </Button>
       <div className="relative" ref={moreMenuRef}>
@@ -284,7 +302,7 @@ export function ProfileActions({ profile, onFollowChange }: Props) {
         {moreMenuOpen ? (
           <div
             role="menu"
-            className="border-border bg-card absolute right-0 top-full z-50 mt-1 min-w-48 rounded-lg border py-1 shadow-lg"
+            className="border-border bg-card absolute top-full right-0 z-50 mt-1 min-w-48 rounded-lg border py-1 shadow-lg"
           >
             <button
               type="button"

@@ -14,7 +14,6 @@ export type UseReelsVideoStageOptions = {
   navReserve?: number;
   navGap?: number;
   maxStageHeight?: number;
-  uniformMaxWidth?: number;
   roundedClass?: string;
   placeholderVideoSize?: VideoNaturalSize;
 };
@@ -24,8 +23,9 @@ const DEFAULTS = {
   navReserve: 64,
   navGap: 16,
   maxStageHeight: 680,
-  uniformMaxWidth: 580,
   roundedClass: 'rounded-xl',
+  /** Padding nhỏ để bo góc stage hiện rõ trên immersive. */
+  immersiveInsetPx: 8,
 } as const;
 
 type FitStageOptions = {
@@ -33,10 +33,9 @@ type FitStageOptions = {
   navReserve: number;
   navGap: number;
   maxStageHeight: number;
-  uniformMaxWidth: number;
 };
 
-/** Desktop stage: chiều ngang cố định, chiều dọc theo tỉ lệ video. */
+/** Desktop stage: fit trong maxW×maxH, giữ đúng tỉ lệ video (width = đúng chiều ngang video). */
 function fitStageDimensions(
   video: VideoNaturalSize,
   container: ContainerSize,
@@ -45,13 +44,18 @@ function fitStageDimensions(
   const ratio = video.width / video.height;
   const horizontalReserve = 32 + opts.sideRailReserve + opts.navReserve + opts.navGap;
   const maxW = Math.max(160, container.width - horizontalReserve);
-  const stageWidth = Math.min(maxW, opts.uniformMaxWidth);
   const maxH = Math.min(Math.max(200, container.height * 0.9), opts.maxStageHeight);
-  const stageHeight = Math.min(stageWidth / ratio, maxH);
+
+  let width = maxW;
+  let height = width / ratio;
+  if (height > maxH) {
+    height = maxH;
+    width = height * ratio;
+  }
 
   return {
-    width: Math.round(stageWidth),
-    height: Math.round(stageHeight),
+    width: Math.round(width),
+    height: Math.round(height),
   };
 }
 
@@ -62,7 +66,6 @@ export function useReelsVideoStage(src: string, options?: UseReelsVideoStageOpti
   const navReserve = options?.navReserve ?? DEFAULTS.navReserve;
   const navGap = options?.navGap ?? DEFAULTS.navGap;
   const maxStageHeight = options?.maxStageHeight ?? DEFAULTS.maxStageHeight;
-  const uniformMaxWidth = options?.uniformMaxWidth ?? DEFAULTS.uniformMaxWidth;
   const roundedClass = options?.roundedClass ?? DEFAULTS.roundedClass;
   const placeholderVideoSize = options?.placeholderVideoSize;
 
@@ -105,7 +108,15 @@ export function useReelsVideoStage(src: string, options?: UseReelsVideoStageOpti
   const isImmersive = layoutMode === 'immersive';
 
   const stageDimensions = useMemo(() => {
-    if (isImmersive) return null;
+    // Immersive: full khung (trừ inset), không shrink theo tỉ lệ — video cover để không lộ đen 2 bên.
+    if (isImmersive) {
+      if (containerSize.width <= 0 || containerSize.height <= 0) return null;
+      const inset = DEFAULTS.immersiveInsetPx * 2;
+      return {
+        width: Math.max(120, Math.round(containerSize.width - inset)),
+        height: Math.max(160, Math.round(containerSize.height - inset)),
+      };
+    }
 
     if (containerSize.width <= 0 || containerSize.height <= 0) {
       return null;
@@ -119,7 +130,6 @@ export function useReelsVideoStage(src: string, options?: UseReelsVideoStageOpti
       navReserve,
       navGap,
       maxStageHeight,
-      uniformMaxWidth,
     });
   }, [
     videoSize,
@@ -130,27 +140,30 @@ export function useReelsVideoStage(src: string, options?: UseReelsVideoStageOpti
     navReserve,
     navGap,
     maxStageHeight,
-    uniformMaxWidth,
   ]);
 
   const aspectSize = videoSize ?? placeholderVideoSize;
 
   const stageClassName = cn(
     'relative shrink-0 overflow-hidden bg-black',
-    isImmersive ? 'h-full w-full' : roundedClass,
-    !isImmersive && !stageDimensions && 'h-full max-h-full w-full max-w-full',
+    roundedClass,
+    !stageDimensions && 'h-full max-h-full w-full max-w-full',
   );
 
-  const stageStyle =
-    !isImmersive && stageDimensions
+  const stageStyle = stageDimensions
+    ? isImmersive
       ? {
+          width: stageDimensions.width,
+          height: stageDimensions.height,
+        }
+      : {
           width: stageDimensions.width,
           height: stageDimensions.height,
           ...(aspectSize && {
             aspectRatio: `${aspectSize.width} / ${aspectSize.height}`,
           }),
         }
-      : undefined;
+    : undefined;
 
   return {
     containerRef,
